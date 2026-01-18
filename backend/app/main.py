@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException
+import logging
 from app.core.config import settings
 from app.schemas.chat import ChatRequest, ChatResponse
 from app.services.ai_service import AIService
@@ -12,6 +13,10 @@ from fastapi.staticfiles import StaticFiles
 import os
 
 from app.api.v1.endpoints import auth, payments
+
+# Configurar logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title=settings.PROJECT_NAME)
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
@@ -37,7 +42,7 @@ def on_startup():
         logger.info("Base de datos inicializada correctamente.")
     except Exception as e:
         logger.error(f"FATAL: Error al inicializar la base de datos: {str(e)}")
-        # No levantamos la excepción aquí para que el log se vea en Render antes del crash
+        raise e
 
 @app.get("/")
 async def root():
