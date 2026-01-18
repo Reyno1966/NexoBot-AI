@@ -17,6 +17,16 @@ def get_engine():
     if db_url.startswith("postgres://"):
         db_url = db_url.replace("postgres://", "postgresql://", 1)
 
+    # AUTO-FIX: Si la contraseña tiene un '?' antes del '@', lo escapamos a '%3F'
+    # Esto evita errores comunes de formato en strings de conexión
+    if "@" in db_url:
+        auth_part, rest = db_url.split("@", 1)
+        if ":" in auth_part:
+            prefix, password = auth_part.rsplit(":", 1)
+            if "?" in password:
+                password = password.replace("?", "%3F")
+                db_url = f"{prefix}:{password}@{rest}"
+
     # Log para diagnóstico (protegiendo la contraseña)
     masked_url = db_url.split("@")[-1] if "@" in db_url else db_url
     print(f"DEBUG: Attempting to connect to database at: ...@{masked_url}", file=sys.stderr)
