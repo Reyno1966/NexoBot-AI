@@ -32,7 +32,12 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.on_event("startup")
 def on_startup():
-    init_db()
+    try:
+        init_db()
+        logger.info("Base de datos inicializada correctamente.")
+    except Exception as e:
+        logger.error(f"FATAL: Error al inicializar la base de datos: {str(e)}")
+        # No levantamos la excepción aquí para que el log se vea en Render antes del crash
 
 @app.get("/")
 async def root():
