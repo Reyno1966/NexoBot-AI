@@ -5,7 +5,8 @@ from app.schemas.chat import ChatRequest, ChatResponse
 from app.services.ai_service import AIService
 import json
 
-from app.db import init_db, get_session
+# Deferimos los imports de BD para debugging
+# from app.db import init_db, get_session
 from sqlmodel import Session
 
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,6 +14,10 @@ from fastapi.staticfiles import StaticFiles
 import os
 
 from app.api.v1.endpoints import auth, payments
+
+def get_db():
+    from app.db import get_session
+    yield from get_session()
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
@@ -38,12 +43,15 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 @app.on_event("startup")
 def on_startup():
     import sys
+    import traceback
     print("STARTUP: Initializing database...", file=sys.stderr)
     try:
+        from app.db import init_db
         init_db()
         print("STARTUP: Database initialized successfully!", file=sys.stderr)
     except Exception as e:
-        print(f"STARTUP ERROR: Fatal error during database initialization: {str(e)}", file=sys.stderr)
+        print("STARTUP ERROR: Fatal error during database initialization!", file=sys.stderr)
+        traceback.print_exc() # Esto imprimirá el error exacto y la línea que falla
         raise e
 
 @app.get("/")
@@ -51,7 +59,7 @@ async def root():
     return {"message": f"Welcome to {settings.PROJECT_NAME} API"}
 
 @app.post("/api/v1/chat", response_model=ChatResponse)
-async def chat_endpoint(request: ChatRequest, session: Session = Depends(get_session)):
+async def chat_endpoint(request: ChatRequest, session: Session = Depends(get_db)):
     # 1. Buscar el Negocio (Tenant)
     from app.models.base import Tenant, Customer
     from sqlmodel import select

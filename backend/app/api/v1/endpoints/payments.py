@@ -7,10 +7,14 @@ import stripe
 from app.core.config import settings
 from typing import Optional
 
+def get_db():
+    from app.db import get_session
+    yield from get_session()
+
 router = APIRouter()
 
 @router.post("/create-checkout-session")
-def create_checkout(tenant_id: str, amount: float = 19.99, session: Session = Depends(get_session)):
+def create_checkout(tenant_id: str, amount: float = 19.99, session: Session = Depends(get_db)):
     tenant = session.get(Tenant, tenant_id)
     if not tenant:
         raise HTTPException(status_code=404, detail="Negocio no encontrado")

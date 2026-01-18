@@ -8,11 +8,15 @@ from app.core.security import get_password_hash, verify_password, create_access_
 from app.schemas.auth import UserCreate, Token, UserResponse, TenantRead
 from app.core.config import settings
 
+def get_db():
+    from app.db import get_session
+    yield from get_session()
+
 from uuid import UUID
 router = APIRouter()
 
 @router.get("/public/tenant/{tenant_id}", response_model=TenantRead)
-def get_public_tenant_info(tenant_id: UUID, session: Session = Depends(get_session)):
+def get_public_tenant_info(tenant_id: UUID, session: Session = Depends(get_db)):
     tenant = session.get(Tenant, tenant_id)
     if not tenant:
         raise HTTPException(status_code=404, detail="Negocio no encontrado")
@@ -20,7 +24,7 @@ def get_public_tenant_info(tenant_id: UUID, session: Session = Depends(get_sessi
 
 @router.get("/me", response_model=UserResponse)
 def get_current_user_info(
-    session: Session = Depends(get_session),
+    session: Session = Depends(get_db),
     token: str = Header(...)
 ):
     try:
@@ -35,12 +39,12 @@ def get_current_user_info(
         raise HTTPException(status_code=401, detail="Sesión inválida")
 
 @router.get("/status")
-def get_auth_status(session: Session = Depends(get_session)):
+def get_auth_status(session: Session = Depends(get_db)):
     # Este endpoint ayudará a mostrar los días restantes
     return {"status": "active"} # Simplificado por ahora
 
 @router.post("/register", response_model=UserResponse)
-def register_user(user_in: UserCreate, session: Session = Depends(get_session)):
+def register_user(user_in: UserCreate, session: Session = Depends(get_db)):
     # Verificar si el usuario ya existe
     existing_user = session.exec(select(User).where(User.email == user_in.email)).first()
     if existing_user:
@@ -75,7 +79,7 @@ def register_user(user_in: UserCreate, session: Session = Depends(get_session)):
 @router.post("/login", response_model=Token)
 def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
-    session: Session = Depends(get_session)
+    session: Session = Depends(get_db)
 ):
     user = session.exec(select(User).where(User.email == form_data.username)).first()
     if not user or not verify_password(form_data.password, user.hashed_password):
