@@ -37,11 +37,13 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.on_event("startup")
 def on_startup():
+    import sys
+    print("STARTUP: Initializing database...", file=sys.stderr)
     try:
         init_db()
-        logger.info("Base de datos inicializada correctamente.")
+        print("STARTUP: Database initialized successfully!", file=sys.stderr)
     except Exception as e:
-        logger.error(f"FATAL: Error al inicializar la base de datos: {str(e)}")
+        print(f"STARTUP ERROR: Fatal error during database initialization: {str(e)}", file=sys.stderr)
         raise e
 
 @app.get("/")
