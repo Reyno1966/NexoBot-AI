@@ -1,5 +1,10 @@
 from fastapi import FastAPI, Depends, HTTPException
 import logging
+import sys
+
+# IMPRESIÓN INMEDIATA PARA DIAGNÓSTICO
+print(">>> [MAIN.PY] CARGANDO MÓDULO MAIN...", file=sys.stderr)
+
 from app.core.config import settings
 from app.schemas.chat import ChatRequest, ChatResponse
 from app.services.ai_service import AIService

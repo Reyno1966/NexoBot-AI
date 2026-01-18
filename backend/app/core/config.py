@@ -13,6 +13,10 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str = "sqlite:///./database.db"
     
+    @property
+    def clean_database_url(self) -> str:
+        return self.DATABASE_URL.strip().replace('"', '').replace("'", "")
+    
     # AI
     GEMINI_API_KEY: Optional[str] = "TU_KEY_PERSONAL_AQUI"
     STRIPE_SECRET_KEY: Optional[str] = None
