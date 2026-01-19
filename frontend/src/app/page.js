@@ -115,6 +115,7 @@ export default function BizBotDashboard() {
     const [token, setToken] = useState(null);
     const [user, setUser] = useState(null);
     const [lang, setLang] = useState('es');
+    const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
     const t = translations[lang] || translations['es'];
 
     // Revisar si ya hay sesión al cargar
@@ -313,6 +314,50 @@ export default function BizBotDashboard() {
                         <Settings size={20} />
                         <span className="font-medium">Mi Negocio</span>
                     </button>
+
+                    {/* Selector de Idioma */}
+                    <div className="relative pt-4">
+                        <button
+                            onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
+                            className="sidebar-item w-full flex items-center justify-between group"
+                        >
+                            <div className="flex items-center gap-3">
+                                <Share2 size={20} className="text-slate-400 group-hover:text-cyan-400" />
+                                <span className="font-medium">Idioma: <span className="uppercase text-cyan-400">{lang}</span></span>
+                            </div>
+                            <ChevronDown size={14} className={`transition-transform ${isLangMenuOpen ? 'rotate-180' : ''}`} />
+                        </button>
+                        <AnimatePresence>
+                            {isLangMenuOpen && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: -10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -10 }}
+                                    className="absolute left-0 right-0 mt-2 bg-[#1e2126] border border-white/10 rounded-xl overflow-hidden z-50 shadow-2xl"
+                                >
+                                    {[
+                                        { id: 'es', name: 'Español' },
+                                        { id: 'en', name: 'English' },
+                                        { id: 'de', name: 'Deutsch' },
+                                        { id: 'it', name: 'Italiano' },
+                                        { id: 'fr', name: 'Français' },
+                                        { id: 'pt', name: 'Português' }
+                                    ].map((l) => (
+                                        <button
+                                            key={l.id}
+                                            onClick={() => {
+                                                setLang(l.id);
+                                                setIsLangMenuOpen(false);
+                                            }}
+                                            className={`w-full text-left px-4 py-2.5 text-xs font-bold hover:bg-white/5 transition-colors ${lang === l.id ? 'text-cyan-400 bg-cyan-400/5' : 'text-slate-400'}`}
+                                        >
+                                            {l.name}
+                                        </button>
+                                    ))}
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
                 </nav>
 
                 <div className="mt-auto space-y-4">
@@ -469,10 +514,17 @@ export default function BizBotDashboard() {
                                             <div className="flex gap-3">
                                                 <input
                                                     readOnly
-                                                    value={`http://127.0.0.1:3000/public/${user?.tenant_id || 'demo'}`}
+                                                    value={`${typeof window !== 'undefined' ? window.location.origin : ''}/public/${user?.tenant_id || 'demo'}`}
                                                     className="flex-1 bg-white/5 border border-white/5 p-3 rounded-xl text-xs font-mono outline-none"
                                                 />
-                                                <button className="px-4 py-2 bg-indigo-600 rounded-xl text-xs font-bold hover:bg-indigo-500 transition-all">
+                                                <button
+                                                    onClick={() => {
+                                                        const link = `${window.location.origin}/public/${user?.tenant_id}`;
+                                                        navigator.clipboard.writeText(link);
+                                                        alert('Link copiado');
+                                                    }}
+                                                    className="px-4 py-2 bg-indigo-600 rounded-xl text-xs font-bold hover:bg-indigo-500 transition-all"
+                                                >
                                                     Copiar
                                                 </button>
                                             </div>
@@ -492,7 +544,7 @@ export default function BizBotDashboard() {
 
                                     <div className="bg-white/5 p-8 rounded-[2.5rem] border border-white/10 flex flex-col items-center justify-center text-center">
                                         <div className="w-40 h-40 bg-white p-3 rounded-3xl mb-4 shadow-2xl shadow-white/5">
-                                            <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://127.0.0.1:3000/public/${user?.tenant_id || 'demo'}`} alt="QR Code" className="w-full h-full" />
+                                            <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${typeof window !== 'undefined' ? encodeURIComponent(window.location.origin + '/public/' + (user?.tenant_id || 'demo')) : ''}`} alt="QR Code" className="w-full h-full" />
                                         </div>
                                         <p className="font-bold mb-1">Tu Código QR de Negocio</p>
                                         <p className="text-xs text-slate-500">Imprímelo para tu local o ponlo en tus historias.</p>

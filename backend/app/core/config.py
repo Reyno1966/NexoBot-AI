@@ -21,7 +21,8 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: Optional[str] = "TU_KEY_PERSONAL_AQUI"
     STRIPE_SECRET_KEY: Optional[str] = None
     VECTOR_DB_URL: Optional[str] = None
-    BASE_URL: str = "http://127.0.0.1:8000"
+    BASE_URL: str = "https://nexobot-ai.onrender.com" # Cambiar por la URL real de Render
+    FRONTEND_URL: str = "https://nexobot-ai.vercel.app" # Cambiar por la URL real de Vercel
 
     class Config:
         case_sensitive = True

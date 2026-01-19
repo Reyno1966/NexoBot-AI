@@ -20,8 +20,8 @@ def create_checkout(tenant_id: str, amount: float = 19.99, session: Session = De
         raise HTTPException(status_code=404, detail="Negocio no encontrado")
     
     # URL de éxito y cancelación
-    success_url = "http://localhost:3000?session_id={CHECKOUT_SESSION_ID}"
-    cancel_url = "http://localhost:3000?payment=failed"
+    success_url = f"{settings.FRONTEND_URL}?session_id={{CHECKOUT_SESSION_ID}}"
+    cancel_url = f"{settings.FRONTEND_URL}?payment=failed"
     
     checkout_url = StripeService.create_checkout_session(
         customer_email=f"admin@{tenant.id}.com",
