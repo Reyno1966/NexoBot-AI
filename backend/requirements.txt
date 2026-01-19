@@ -16,3 +16,5 @@ pgvector
 reportlab
 stripe
 email-validator
+requests
+gunicorn

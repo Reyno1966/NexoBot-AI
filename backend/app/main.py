@@ -49,15 +49,17 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 def on_startup():
     import sys
     import traceback
-    print("STARTUP: Initializing database...", file=sys.stderr)
+    print("STARTUP: Running NexoBot initialization...", file=sys.stderr)
     try:
         from app.db import init_db
+        # Intentamos inicializar pero capturamos el error para no matar el proceso STATUS 3
         init_db()
         print("STARTUP: Database initialized successfully!", file=sys.stderr)
     except Exception as e:
-        print("STARTUP ERROR: Fatal error during database initialization!", file=sys.stderr)
-        traceback.print_exc() # Esto imprimirá el error exacto y la línea que falla
-        raise e
+        print("STARTUP ERROR: The database failed but we will keep the server LIVE for diagnosis.", file=sys.stderr)
+        print(f"ERROR DETAIL: {str(e)}", file=sys.stderr)
+        # traceback.print_exc() 
+        # NOTA: No hacemos raise e para evitar el estado 3 inmediato por ahora
 
 @app.get("/")
 async def root():

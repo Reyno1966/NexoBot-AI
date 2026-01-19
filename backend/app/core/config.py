@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
 
     # Database
-    DATABASE_URL: str = "sqlite:///./database.db"
+    DATABASE_URL: Optional[str] = "sqlite:///./database.db"
     
     @property
     def clean_database_url(self) -> str:

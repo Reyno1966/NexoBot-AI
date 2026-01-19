@@ -1,5 +1,5 @@
 from sqlmodel import Session, select
-from app.db import engine, init_db
+from app.db import get_db_engine, init_db
 from app.models.base import Tenant, Customer
 import uuid
 
@@ -7,6 +7,7 @@ def seed_data():
     print("🌱 Iniciando siembra de datos...")
     init_db()
     
+    engine = get_db_engine()
     with Session(engine) as session:
         # 1. Crear un Inquilino (Negocio) de prueba
         existing_tenant = session.exec(select(Tenant).where(Tenant.name == "Barbería Estilo")).first()
