@@ -39,7 +39,7 @@ export default function AuthPage({ onAuthSuccess }) {
         setError('');
 
         const endpoint = isLogin ? '/api/v1/auth/login' : '/api/v1/auth/register';
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://nexobot-ai.onrender.com';
 
         try {
             let response;

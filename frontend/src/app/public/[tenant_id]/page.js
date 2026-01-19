@@ -19,7 +19,7 @@ export default function PublicChat({ params }) {
         // Cargar datos públicos del negocio
         const fetchBusiness = async () => {
             try {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://nexobot-ai.onrender.com';
                 const response = await fetch(`${apiUrl}/api/v1/auth/public/tenant/${tenant_id}`);
                 const data = await response.json();
                 if (response.ok) {

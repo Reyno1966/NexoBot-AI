@@ -129,7 +129,7 @@ export default function BizBotDashboard() {
 
     const loadUserData = async (authToken) => {
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://nexobot-ai.onrender.com';
             const response = await fetch(`${apiUrl}/api/v1/auth/me`, {
                 headers: { 'token': authToken }
             });
@@ -221,7 +221,7 @@ export default function BizBotDashboard() {
         setIsLoading(true);
 
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://nexobot-ai.onrender.com';
             const response = await fetch(`${apiUrl}/api/v1/chat`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -247,7 +247,7 @@ export default function BizBotDashboard() {
     const handleSubscription = async () => {
         if (!user?.tenant_id) return;
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://nexobot-ai.onrender.com';
             const price = currentIndustry.price || 19.99;
             const response = await fetch(`${apiUrl}/api/v1/payments/create-checkout-session?tenant_id=${user.tenant_id}&amount=${price}`, {
                 method: 'POST'
