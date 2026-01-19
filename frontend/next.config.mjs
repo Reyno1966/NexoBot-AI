@@ -7,6 +7,7 @@ const nextConfig = withPWA({
     disable: process.env.NODE_ENV === 'development',
 })({
     /* config options here */
+    turbopack: {}
 });
 
 export default nextConfig;
