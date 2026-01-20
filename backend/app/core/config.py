@@ -24,6 +24,13 @@ class Settings(BaseSettings):
     BASE_URL: str = "https://nexobot-ai.onrender.com" # Cambiar por la URL real de Render
     FRONTEND_URL: str = "https://nexobot-ai.vercel.app" # Cambiar por la URL real de Vercel
 
+    # Email / SMTP (Gmail)
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    SMTP_USER: Optional[str] = None
+    SMTP_PASSWORD: Optional[str] = None
+    EMAILS_FROM_NAME: str = "NexoBot AI"
+
     class Config:
         case_sensitive = True
         env_file = ".env"

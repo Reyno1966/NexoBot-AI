@@ -107,7 +107,7 @@ const mockFinancialData = [
 ];
 
 
-export default function BizBotDashboard() {
+export default function NexoBotDashboard() {
     const [activeTab, setActiveTab] = useState('Citas');
     const [isChatOpen, setIsChatOpen] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -148,6 +148,7 @@ export default function BizBotDashboard() {
                         mainInterest: data.tenant.main_interest,
                         isLocked: true,
                         currency: data.tenant.currency || 'USD',
+                        stripe_customer_id: data.tenant.stripe_customer_id,
                         services: JSON.parse(data.tenant.services || '[]')
                     });
 
@@ -208,6 +209,7 @@ export default function BizBotDashboard() {
         country: '',
         currency: 'USD',
         mainInterest: 'Citas',
+        stripe_customer_id: null,
         services: []
     });
 
@@ -362,13 +364,16 @@ export default function BizBotDashboard() {
 
                 <div className="mt-auto space-y-4">
                     <div className="bg-gradient-to-br from-cyan-600/20 to-blue-600/20 rounded-2xl p-4 border border-cyan-500/20">
-                        <p className="text-xs font-bold text-cyan-400 uppercase tracking-widest mb-1">Prueba Activa</p>
-                        <p className="text-sm font-medium text-slate-300 mb-3">Te quedan <span className="text-white font-bold">7 días</span> de acceso total.</p>
+                        <p className="text-xs font-bold text-cyan-400 uppercase tracking-widest mb-1">Prueba de 7 Días</p>
+                        <p className="text-[10px] font-medium text-slate-300 mb-3 leading-relaxed">
+                            Activa tu cuenta con tarjeta. <span className="text-white font-bold">No se cobrará nada hoy</span>.
+                            El abono de ${currentIndustry.price}/mes iniciará automáticamente al terminar el periodo gratis.
+                        </p>
                         <button
                             onClick={handleSubscription}
                             className="w-full py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 rounded-xl text-xs font-bold transition-all shadow-lg shadow-cyan-500/20"
                         >
-                            Suscribirme por ${currentIndustry.price}/mes
+                            Empezar 7 Días Gratis
                         </button>
                     </div>
 
@@ -730,6 +735,28 @@ export default function BizBotDashboard() {
                                         ))}
                                     </div>
                                 </div>
+
+                                {businessConfig.stripe_customer_id && (
+                                    <div className="pt-2 border-t border-white/5">
+                                        <button
+                                            onClick={async () => {
+                                                try {
+                                                    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://nexobot-ai.onrender.com';
+                                                    const response = await fetch(`${apiUrl}/api/v1/payments/create-portal-session?tenant_id=${user.tenant_id}`, {
+                                                        method: 'POST'
+                                                    });
+                                                    const data = await response.json();
+                                                    if (data.url) window.location.href = data.url;
+                                                } catch (err) {
+                                                    alert("No se pudo abrir el portal de suscripción.");
+                                                }
+                                            }}
+                                            className="w-full py-3 bg-red-500/10 text-red-400 border border-red-500/20 rounded-2xl text-[10px] font-bold uppercase hover:bg-red-500/20 transition-all font-bold"
+                                        >
+                                            Gestionar o Cancelar Suscripción
+                                        </button>
+                                    </div>
+                                )}
 
                                 <div className="pt-4">
                                     <button

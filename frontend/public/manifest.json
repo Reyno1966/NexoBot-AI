@@ -1,7 +1,7 @@
 {
-    "name": "BizBot Assistant",
-    "short_name": "BizBot",
-    "description": "El Cerebro Operativo para tu Negocio",
+    "name": "NexoBot AI Assistant",
+    "short_name": "NexoBot",
+    "description": "El Cerebro Operativo para tu Negocio Inteligente",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#0f1115",

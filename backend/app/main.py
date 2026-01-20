@@ -41,9 +41,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Servir archivos estáticos (PDFs generados)
-os.makedirs("static", exist_ok=True)
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# Configuración de archivos estáticos (Compatibilidad con Vercel)
+# Vercel tiene un sistema de archivos de solo lectura, excepto /tmp
+IS_VERCEL = os.getenv("VERCEL") == "1"
+STATIC_DIR = "/tmp" if IS_VERCEL else "static"
+
+if not os.path.exists(STATIC_DIR):
+    os.makedirs(STATIC_DIR, exist_ok=True)
+
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 @app.on_event("startup")
 def on_startup():
@@ -65,8 +71,10 @@ def on_startup():
 async def root():
     return {"message": f"Welcome to {settings.PROJECT_NAME} API"}
 
+from fastapi import Request
+
 @app.post("/api/v1/chat", response_model=ChatResponse)
-async def chat_endpoint(request: ChatRequest, session: Session = Depends(get_db)):
+async def chat_endpoint(request: ChatRequest, raw_request: Request, session: Session = Depends(get_db)):
     # 1. Buscar el Negocio (Tenant)
     from app.models.base import Tenant, Customer
     from sqlmodel import select
@@ -112,23 +120,31 @@ async def chat_endpoint(request: ChatRequest, session: Session = Depends(get_db)
     entities = ai_output.get('entities', {})
     intent = ai_output.get('intent')
     
-    # Notificaciones al Celular/WhatsApp del dueño
-    if tenant and tenant.phone:
+    # Notificaciones al Celular/WhatsApp y Email del dueño
+    if tenant:
+        admin_user = tenant.users[0] if tenant.users else None
+        admin_email = admin_user.email if admin_user else None
+        tenant_phone = tenant.phone
+
         if intent == "book_appointment":
             NotificationService.notify_appointment(
-                tenant.name, tenant.phone, entities.get('cliente', 'Usuario'), entities
+                tenant.name, tenant_phone, admin_email, entities.get('cliente', 'Usuario'), entities
             )
         elif intent in ["generate_invoice", "generate_contract", "generate_summary"]:
             NotificationService.notify_request(
-                tenant.name, tenant.phone, entities.get('cliente', 'Usuario'), intent.replace("generate_", "").capitalize()
+                tenant.name, tenant_phone, admin_email, entities.get('cliente', 'Usuario'), intent.replace("generate_", "").capitalize()
+            )
+        elif intent == "support_escalation":
+            NotificationService.notify_support_issue(
+                tenant.name, tenant_phone, admin_email, entities.get('cliente', 'Usuario'), entities.get('problema', 'Problema no especificado')
             )
 
     if intent == "generate_contract":
         filename = AIService.generate_contract_pdf(entities, tenant_context['name'])
-        download_url = f"{settings.BASE_URL}/static/{filename}"
+        download_url = f"{raw_request.base_url}static/{filename}"
     if intent == "generate_invoice":
         filename = AIService.generate_invoice_pdf(entities, tenant_context['name'])
-        download_url = f"{settings.BASE_URL}/static/{filename}"
+        download_url = f"{raw_request.base_url}static/{filename}"
         # Lógica de Inventario: Descontar stock
         if tenant:
             try:
@@ -143,8 +159,10 @@ async def chat_endpoint(request: ChatRequest, session: Session = Depends(get_db)
                             
                             # Alerta de Stock Bajo (<= 3 unidades)
                             if new_stock <= 3:
+                                admin_user = tenant.users[0] if tenant.users else None
+                                admin_email = admin_user.email if admin_user else None
                                 NotificationService.notify_low_stock(
-                                    tenant.name, tenant.phone, svc['name'], new_stock
+                                    tenant.name, tenant.phone, admin_email, svc['name'], new_stock
                                 )
                             break
                 tenant.services = json.dumps(services)
@@ -154,7 +172,7 @@ async def chat_endpoint(request: ChatRequest, session: Session = Depends(get_db)
                 print(f"Error actualizando inventario: {e}")
     elif intent == "generate_summary":
         filename = AIService.generate_summary_pdf(entities, tenant_context['name'])
-        download_url = f"{settings.BASE_URL}/static/{filename}"
+        download_url = f"{raw_request.base_url}static/{filename}"
 
     if download_url:
         ai_output['response_text'] = f"{ai_output.get('response_text')} ¡He generado el documento! Puedes descárgalo aquí: {download_url}"

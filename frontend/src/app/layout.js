@@ -4,8 +4,8 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-    title: "BizBot Assistant | El Cerebro de tu Negocio",
-    description: "Gestiona citas, facturas y contabilidad con inteligencia artificial.",
+    title: "NexoBot AI | Tu Asistente de Negocios Inteligente",
+    description: "El cerebro operativo para emprendedores modernos. Gestiona citas, facturas y stock con el poder de Gemini 2.0 Flash.",
 };
 
 export default function RootLayout({ children }) {

@@ -24,6 +24,7 @@ class Tenant(TenantBase, table=True):
     currency: str = "USD"
     services: str = "[]"
     is_locked: bool = False
+    stripe_customer_id: Optional[str] = None # Para gestión de suscripciones
     
     users: List["User"] = Relationship(back_populates="tenant")
     customers: List["Customer"] = Relationship(back_populates="tenant")

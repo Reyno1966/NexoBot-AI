@@ -14,36 +14,37 @@ class AIService:
         Procesa el lenguaje natural con Gemini 2.0 Flash (el modelo más moderno)
         """
         system_prompt = f"""
-        Eres NexoBot, una IA de ejecución inmediata para un negocio de {tenant_context['industry']}.
-        El objetivo principal de este usuario es: {tenant_context['main_interest']}.
-        
-        ESTE ES EL CATÁLOGO E INVENTARIO (nombres, precios y stock): {tenant_context['catalog']}.
-        
-        REGLAS DE INVENTARIO:
-        1. Si el usuario pide algo que tiene stock 0, INFÓRMALE que no hay disponibilidad.
-        2. Si el usuario pregunta "cuánto queda", responde con los datos de stock.
-        3. Al generar una factura, el sistema descontará automáticamente 1 unidad del stock.
+        Eres NexoBot, el cerebro operativo de un negocio de {tenant_context['industry']}.
+        Tu objetivo es que el negocio funcione solo, pero con un protocolo de escalado humano.
 
+        REGLAS DE ATENCIÓN Y SOPORTE:
+        1. SOPORTE / PROBLEMAS: Si el cliente expresa un problema, queja, error o insatisfacción:
+           - Identifica la intención como "support_escalation".
+           - Responde con empatía y profesionalismo: "Lamento el inconveniente. He notificado al dueño del negocio ahora mismo para que lo revisemos personalmente. ¿Hay algo más en lo que pueda ayudarte mientras tanto?"
+           - Extrae la descripción del problema en la entidad "problema".
+        2. GESTIÓN AUTÓNOMA: Para citas, facturas e inventario, procede normalmente según el catálogo: {tenant_context['catalog']}.
+        
         TU TAREA:
-        1. Identificar la intención del usuario y extraer datos.
-        2. FORMATO: Responde ÚNICAMENTE con JSON puro. Sin texto antes ni después.
-        3. IDIOMA: Responde ESTRICTAMENTE en el idioma: {tenant_context['language']}.
+        1. Identificar la intención y extraer datos.
+        2. FORMATO: Responde ÚNICAMENTE con JSON puro.
+        3. IDIOMA: Responde en: {tenant_context['language']}.
 
         INTENTOS (intent):
-        - generate_invoice: El usuario quiere crear una factura y da monto/cliente.
-        - generate_contract: El usuario quiere un contrato y da propiedad/cliente.
-        - generate_summary: El usuario pide un reporte, memoria o resumen.
-        - book_appointment: El usuario quiere agendar una cita o reserva.
+        - support_escalation: El cliente tiene un problema o queja.
+        - generate_invoice: Crear factura.
+        - generate_contract: Crear contrato.
+        - generate_summary: Reporte/Resumen.
+        - book_appointment: Agendar cita.
         - chat: Consultas generales.
 
         ENTIDADES (entities):
-        Extrae: "cliente", "monto", "propiedad", "servicios", "total", "noches".
+        - Extrae: "cliente", "problema", "monto", "servicios".
 
-        EJEMPLO DE RESPUESTA:
+        EJEMPLO DE ESCALADO:
         {{
-            "intent": "generate_invoice",
-            "entities": {{"cliente": "Juan", "monto": 50, "servicios": "Asesoría"}},
-            "response_text": "Factura generada para Juan por $50."
+            "intent": "support_escalation",
+            "entities": {{"cliente": "Carlos", "problema": "La aplicación no me deja pagar"}},
+            "response_text": "He avisado al equipo de soporte sobre el error en el pago. Te contactaremos pronto."
         }}
         """
         
@@ -82,8 +83,9 @@ class AIService:
         from datetime import datetime
 
         filename = f"contrato_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-        filepath = os.path.join("static", filename)
-        os.makedirs("static", exist_ok=True)
+        static_dir = "/tmp" if os.getenv("VERCEL") == "1" else "static"
+        filepath = os.path.join(static_dir, filename)
+        os.makedirs(static_dir, exist_ok=True)
 
         c = canvas.Canvas(filepath, pagesize=LETTER)
         c.setFont("Helvetica-Bold", 16)
@@ -121,7 +123,8 @@ class AIService:
         from datetime import datetime
 
         filename = f"factura_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-        filepath = os.path.join("static", filename)
+        static_dir = "/tmp" if os.getenv("VERCEL") == "1" else "static"
+        filepath = os.path.join(static_dir, filename)
         
         c = canvas.Canvas(filepath, pagesize=LETTER)
         c.setFont("Helvetica-Bold", 18)
@@ -150,7 +153,8 @@ class AIService:
         from datetime import datetime
 
         filename = f"memoria_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-        filepath = os.path.join("static", filename)
+        static_dir = "/tmp" if os.getenv("VERCEL") == "1" else "static"
+        filepath = os.path.join(static_dir, filename)
         
         c = canvas.Canvas(filepath, pagesize=LETTER)
         c.setFont("Helvetica-Bold", 18)

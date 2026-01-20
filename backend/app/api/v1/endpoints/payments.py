@@ -35,6 +35,23 @@ def create_checkout(tenant_id: str, amount: float = 19.99, session: Session = De
         
     return {"url": checkout_url}
 
+@router.post("/create-portal-session")
+def create_portal(tenant_id: str, session: Session = Depends(get_db)):
+    tenant = session.get(Tenant, tenant_id)
+    if not tenant or not tenant.stripe_customer_id:
+        raise HTTPException(status_code=400, detail="No se encontró suscripción activa para este negocio.")
+    
+    return_url = settings.FRONTEND_URL
+    portal_url = StripeService.create_customer_portal_session(
+        customer_id=tenant.stripe_customer_id,
+        return_url=return_url
+    )
+    
+    if not portal_url:
+        raise HTTPException(status_code=400, detail="Error al conectar con el portal de pagos.")
+        
+    return {"url": portal_url}
+
 @router.post("/webhook")
 async def stripe_webhook(request: Request, stripe_signature: Optional[str] = Header(None)):
     payload = await request.body()

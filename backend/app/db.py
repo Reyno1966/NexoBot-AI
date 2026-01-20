@@ -16,13 +16,12 @@ from urllib.parse import urlparse, urlunparse, quote_plus
 
 def get_engine():
     raw_url = settings.DATABASE_URL or os.getenv("DATABASE_URL")
-    print(f">>> [DB.PY] URL RAW RECIBIDA (primeros 15): {raw_url[:15]}...", file=sys.stderr)
-    
     if not raw_url:
-        raise ValueError("DATABASE_URL is not set")
-
-    # 1. Limpieza básica
-    db_url = raw_url.strip().replace('"', '').replace("'", "")
+        print(">>> [DB.PY] ADVERTENCIA: DATABASE_URL no configurada. Usando SQLite temporal.", file=sys.stderr)
+        db_url = "sqlite:///./database.db"
+    else:
+        # 1. Limpieza básica
+        db_url = raw_url.strip().replace('"', '').replace("'", "")
     
     # 2. Corregir prefijo postgres:// -> postgresql://
     if db_url.startswith("postgres://"):
