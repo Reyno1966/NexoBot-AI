@@ -4,7 +4,7 @@ import { Bot, User, Send, ChevronRight, Phone, MapPin, Globe, Scissors, Stethosc
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function PublicChat({ params }) {
-    const { tenant_id } = params;
+    const { tenant_id } = React.use(params);
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
