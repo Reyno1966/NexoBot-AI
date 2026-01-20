@@ -1,4 +1,5 @@
 "use client";
+// Vercel Deployment Trigger: 2026-01-20
 import React, { useState, useEffect } from 'react';
 import AuthPage from './auth';
 import { translations } from './i18n';
