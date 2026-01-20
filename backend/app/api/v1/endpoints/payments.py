@@ -24,6 +24,8 @@ def create_checkout(tenant_id: str, amount: float = 19.99, session: Session = De
     cancel_url = f"{settings.FRONTEND_URL}?payment=failed"
     
     checkout_url = StripeService.create_checkout_session(
+        tenant_id=tenant.id,
+        tenant_name=tenant.name,
         customer_email=f"admin@{tenant.id}.com",
         success_url=success_url,
         cancel_url=cancel_url,
@@ -53,7 +55,11 @@ def create_portal(tenant_id: str, session: Session = Depends(get_db)):
     return {"url": portal_url}
 
 @router.post("/webhook")
-async def stripe_webhook(request: Request, stripe_signature: Optional[str] = Header(None)):
+async def stripe_webhook(
+    request: Request, 
+    stripe_signature: Optional[str] = Header(None),
+    db: Session = Depends(get_db)
+):
     payload = await request.body()
     
     try:
@@ -61,12 +67,37 @@ async def stripe_webhook(request: Request, stripe_signature: Optional[str] = Hea
             payload, stripe_signature, settings.STRIPE_WEBHOOK_SECRET
         )
     except Exception as e:
+        print(f"⚠️ Error Webhook Stripe: {str(e)}")
         return {"error": str(e)}
 
-    # Manejar el evento de pago exitoso
+    # 1. Pago de suscripción completado con éxito
     if event['type'] == 'checkout.session.completed':
-        session = event['data']['object']
-        # Aquí buscaríamos al tenant por email o metadata y activaríamos su suscripción
-        print(f"💰 ¡Pago exitoso recibido! Sesión: {session['id']}")
+        session_data = event['data']['object']
+        tenant_id = session_data.get('metadata', {}).get('tenant_id')
+        customer_id = session_data.get('customer')
+        
+        if tenant_id:
+            tenant = db.get(Tenant, tenant_id)
+            if tenant:
+                tenant.is_locked = False
+                tenant.stripe_customer_id = customer_id
+                db.add(tenant)
+                db.commit()
+                print(f"💰 [WEBHOOK] Suscripción activada para Tenant: {tenant.name} ({tenant_id})")
+
+    # 2. Suscripción cancelada o terminada
+    elif event['type'] == 'customer.subscription.deleted':
+        subscription = event['data']['object']
+        customer_id = subscription.get('customer')
+        
+        # Buscar al tenant por su stripe_customer_id
+        statement = select(Tenant).where(Tenant.stripe_customer_id == customer_id)
+        tenant = db.exec(statement).first()
+        
+        if tenant:
+            tenant.is_locked = True
+            db.add(tenant)
+            db.commit()
+            print(f"🔒 [WEBHOOK] Suscripción cancelada. Negocio bloqueado: {tenant.name}")
         
     return {"status": "success"}

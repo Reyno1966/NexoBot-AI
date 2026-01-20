@@ -5,18 +5,19 @@ stripe.api_key = settings.STRIPE_SECRET_KEY # Cargado desde el archivo .env
 
 class StripeService:
     @staticmethod
-    def create_checkout_session(customer_email: str, success_url: str, cancel_url: str, amount: float = 19.99):
+    def create_checkout_session(tenant_id: str, tenant_name: str, customer_email: str, success_url: str, cancel_url: str, amount: float = 19.99):
         try:
             unit_amount = int(amount * 100) # De dólares a centavos
             checkout_session = stripe.checkout.Session.create(
                 customer_email=customer_email,
                 payment_method_types=['card'],
+                metadata={"tenant_id": tenant_id},
                 line_items=[
                     {
                         'price_data': {
                             'currency': 'usd',
                             'product_data': {
-                                'name': 'NexoBot Premium Subscription',
+                                'name': f'NexoBot Premium: {tenant_name}',
                                 'description': 'Full access to all NexoBot business features (7 Days Free Trial)',
                             },
                             'unit_amount': unit_amount,

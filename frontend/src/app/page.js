@@ -146,7 +146,7 @@ export default function NexoBotDashboard() {
                         country: data.tenant.country || '',
                         logoUrl: data.tenant.logo_url || '/logo.jpg',
                         mainInterest: data.tenant.main_interest,
-                        isLocked: true,
+                        isLocked: data.tenant.is_locked,
                         currency: data.tenant.currency || 'USD',
                         stripe_customer_id: data.tenant.stripe_customer_id,
                         services: JSON.parse(data.tenant.services || '[]')
