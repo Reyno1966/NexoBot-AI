@@ -1,4 +1,5 @@
 # NexoBot 🤖💼 - Tu Asistente de Negocios Inteligente
+> 🚀 **Lanzamiento Oficial: Versión Premium - Enero 2026**
 
 ¡Bienvenido a **NexoBot**! El cerebro operativo diseñado para emprendedores modernos. NexoBot no solo chatea; ejecuta, recuerda y gestiona tu negocio desde la palma de tu mano.
 
