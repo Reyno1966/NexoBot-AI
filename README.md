@@ -10,15 +10,15 @@
 - **Facturación Instantánea**: Genera PDFs de facturas solo con tu voz.
 
 ## 🛠️ Estructura del Proyecto
-- `/nexo-bot-ai`: Servidor FastAPI con lógica de IA y Base de Datos (SQLModel).
+- `/backend`: Servidor FastAPI con lógica de IA y Base de Datos (SQLModel).
 - `/frontend`: Aplicación web moderna (Next.js) con diseño optimizado para móviles.
 - `/docs`: Documentación detallada y PRD.
 
 ## 🚀 Cómo empezar
 
-### 1. Configuración del Backend (NexoBot AI)
+### 1. Configuración del Backend
 ```bash
-cd nexo-bot-ai
+cd backend
 # Asegúrate de tener Python 3.10+
 python3 -m venv venv
 source venv/bin/activate
