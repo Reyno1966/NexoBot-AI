@@ -21,8 +21,8 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: Optional[str] = "TU_KEY_PERSONAL_AQUI"
     STRIPE_SECRET_KEY: Optional[str] = None
     VECTOR_DB_URL: Optional[str] = None
-    BASE_URL: str = "https://nexobot-ai.onrender.com" # Cambiar por la URL real de Render
-    FRONTEND_URL: str = "https://nexobot-ai.vercel.app" # Cambiar por la URL real de Vercel
+    BASE_URL: str = "https://nexobot-ai.onrender.com" 
+    FRONTEND_URL: str = "*" # Permitimos todo para evitar errores de CORS en el lanzamiento
 
     # Email / SMTP (Gmail)
     SMTP_HOST: str = "smtp.gmail.com"
