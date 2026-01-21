@@ -29,24 +29,19 @@ def get_engine():
 
     # 3. Escapado profesional de la contraseña
     try:
+        # Si la URL ya contiene @, sospechamos que tiene credenciales
         if "://" in db_url and "@" in db_url:
-            scheme_part, remainder = db_url.split("://", 1)
-            # El último '@' separa las credenciales del host
-            creds_part, host_part = remainder.rsplit("@", 1)
-            
-            if ":" in creds_part:
-                user, password = creds_part.split(":", 1)
-                safe_password = quote_plus(password)
-                db_url = f"{scheme_part}://{user}:{safe_password}@{host_part}"
-                print(">>> [DB.PY] Contraseña pre-procesada y escapada", file=sys.stderr)
-            else:
-                # Caso sin password explicito o formato raro, usamos urlparse como fallback
-                parsed = urlparse(db_url)
-                if parsed.password:
-                    safe_password = quote_plus(parsed.password)
-                    new_netloc = f"{parsed.username}:{safe_password}@{parsed.hostname}"
-                    if parsed.port: new_netloc += f":{parsed.port}"
-                    db_url = urlunparse(parsed._replace(netloc=new_netloc))
+            protocol, rest = db_url.split("://", 1)
+            # Solo procesamos si no es SQLite
+            if protocol != "sqlite":
+                auth_part, host_part = rest.rsplit("@", 1)
+                if ":" in auth_part:
+                    user, password = auth_part.split(":", 1)
+                    # Solo escapamos si no parece estar ya escapado
+                    if "%" not in password:
+                        safe_password = quote_plus(password)
+                        db_url = f"{protocol}://{user}:{safe_password}@{host_part}"
+                        print(">>> [DB.PY] Contraseña pre-procesada y escapada", file=sys.stderr)
     except Exception as e:
         print(f">>> [DB.PY] Advertencia al procesar URL: {e}", file=sys.stderr)
 

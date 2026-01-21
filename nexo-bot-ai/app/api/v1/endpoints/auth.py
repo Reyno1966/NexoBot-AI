@@ -45,36 +45,49 @@ def get_auth_status(session: Session = Depends(get_db)):
 
 @router.post("/register", response_model=UserResponse)
 def register_user(user_in: UserCreate, session: Session = Depends(get_db)):
+    print(f">>> [AUTH] Iniciando registro para: {user_in.email}", file=sys.stderr)
     # Verificar si el usuario ya existe
     existing_user = session.exec(select(User).where(User.email == user_in.email)).first()
     if existing_user:
+        print(f">>> [AUTH] Error: Correo {user_in.email} ya existe", file=sys.stderr)
         raise HTTPException(status_code=400, detail="El correo ya está registrado.")
     
-    # Crear un Tenant (Negocio) con los datos elegidos
-    new_tenant = Tenant(
-        name=f"Negocio de {user_in.email.split('@')[0]}",
-        industry=user_in.industry,
-        phone=user_in.phone,
-        address=user_in.address,
-        country=user_in.country,
-        main_interest=user_in.main_interest,
-        is_locked=True # Bloqueamos la elección para que sea su función dedicada
-    )
-    session.add(new_tenant)
-    session.commit()
-    session.refresh(new_tenant)
+    try:
+        # Crear un Tenant (Negocio) con los datos elegidos
+        print(f">>> [AUTH] Creando Tenant para {user_in.industry}...", file=sys.stderr)
+        new_tenant = Tenant(
+            name=f"Negocio de {user_in.email.split('@')[0]}",
+            industry=user_in.industry,
+            phone=user_in.phone,
+            address=user_in.address,
+            country=user_in.country,
+            main_interest=user_in.main_interest,
+            is_locked=True 
+        )
+        session.add(new_tenant)
+        session.commit()
+        session.refresh(new_tenant)
+        print(f">>> [AUTH] Tenant creado con ID: {new_tenant.id}", file=sys.stderr)
 
-    # Crear el usuario
-    new_user = User(
-        email=user_in.email,
-        hashed_password=get_password_hash(user_in.password),
-        tenant_id=new_tenant.id
-    )
-    session.add(new_user)
-    session.commit()
-    session.refresh(new_user)
-    
-    return new_user
+        # Crear el usuario
+        print(f">>> [AUTH] Creando Usuario...", file=sys.stderr)
+        new_user = User(
+            email=user_in.email,
+            hashed_password=get_password_hash(user_in.password),
+            tenant_id=new_tenant.id
+        )
+        session.add(new_user)
+        session.commit()
+        session.refresh(new_user)
+        print(f">>> [AUTH] Registro completado con éxito para {user_in.email}", file=sys.stderr)
+        
+        return new_user
+    except Exception as e:
+        session.rollback()
+        print(f">>> [AUTH] ERROR CRITICAL EN REGISTRO: {str(e)}", file=sys.stderr)
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error interno al crear la cuenta: {str(e)}")
 
 @router.post("/login", response_model=Token)
 def login_for_access_token(

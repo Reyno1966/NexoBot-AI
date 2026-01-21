@@ -33,13 +33,40 @@ app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
 app.include_router(payments.router, prefix="/api/v1/payments", tags=["payments"])
 
 # Configuración de CORS
+origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:8000",
+    settings.FRONTEND_URL,
+]
+
+# Si settings.FRONTEND_URL no es *, lo añadimos. Si es *, permitimos todo.
+if settings.FRONTEND_URL == "*":
+    origins = ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # En producción poner la URL real
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Manejador de excepciones global para diagnóstico rápido en producción
+from fastapi.responses import JSONResponse
+@app.exception_handler(Exception)
+async def global_exception_handler(request, exc):
+    import traceback
+    error_detail = traceback.format_exc()
+    print(f"CRITICAL ERROR: {error_detail}", file=sys.stderr)
+    return JSONResponse(
+        status_code=500,
+        content={
+            "detail": "Internal Server Error",
+            "error": str(exc),
+            "diagnostics": error_detail if not IS_VERCEL else "Check logs"
+        }
+    )
 
 # Configuración de archivos estáticos (Compatibilidad con Vercel)
 # Vercel tiene un sistema de archivos de solo lectura, excepto /tmp
