@@ -71,7 +71,20 @@ def init_db():
             print(">>> [DB.PY] CONEXIÓN EXITOSA CON EL SERVIDOR", file=sys.stderr)
         
         SQLModel.metadata.create_all(engine)
-        print(">>> [DB.PY] TABLAS SINCRONIZADAS CORRECTAMENTE", file=sys.stderr)
+        
+        # Parche manual para columnas nuevas si la tabla ya existía
+        with engine.begin() as conn:
+            from sqlalchemy import text
+            print(">>> [DB.PY] APLICANDO PARCHES DE ESQUEMA (SI SON NECESARIOS)...", file=sys.stderr)
+            conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS stripe_customer_id VARCHAR;"))
+            conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS industry VARCHAR;"))
+            conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS phone VARCHAR;"))
+            conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS address VARCHAR;"))
+            conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS country VARCHAR;"))
+            conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS main_interest VARCHAR;"))
+            conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS is_locked BOOLEAN DEFAULT FALSE;"))
+            
+        print(">>> [DB.PY] TABLAS Y ESQUEMA SINCRONIZADOS CORRECTAMENTE", file=sys.stderr)
     except Exception as e:
         print(f">>> [DB.PY] ERROR DE CONEXIÓN: {str(e)}", file=sys.stderr)
         print(">>> [DB.PY] TIP: Si el error es 'Network is unreachable', verifica que estés usando el puerto 6543 de Supabase.", file=sys.stderr)
