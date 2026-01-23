@@ -98,11 +98,11 @@ export default function AuthPage({ onAuthSuccess }) {
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className={`w-full transition-all duration-500 ${isLogin ? 'max-w-md' : 'max-w-2xl'}`}
+                className={`w-full transition-all duration-500 overflow-hidden ${isLogin ? 'max-w-md' : 'max-w-md md:max-w-2xl'}`}
             >
                 <div className="bg-[#181a1f]/80 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-8 shadow-2xl relative z-10">
                     <div className="flex justify-between items-center mb-6">
-                        <div className="flex items-center gap-2 bg-white/5 p-1 rounded-xl border border-white/5">
+                        <div className="flex items-center gap-2 bg-white/5 p-1 rounded-xl border border-white/5 scale-90 md:scale-100 origin-left">
                             {Object.keys(translations).map((l) => (
                                 <button
                                     key={l}
@@ -113,7 +113,7 @@ export default function AuthPage({ onAuthSuccess }) {
                                 </button>
                             ))}
                         </div>
-                        <Globe size={16} className="text-slate-500" />
+                        <Globe size={16} className="hidden md:block text-slate-500" />
                     </div>
 
                     <div className="flex flex-col items-center mb-8">
@@ -139,7 +139,7 @@ export default function AuthPage({ onAuthSuccess }) {
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     placeholder="ejemplo@empresa.com"
-                                    className="w-full bg-[#0f1115] border border-white/5 rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-cyan-500/50 transition-all text-white font-medium"
+                                    className="w-full bg-[#0f1115] border border-white/5 rounded-2xl py-3 md:py-4 pl-12 pr-4 outline-none focus:border-cyan-500/50 transition-all text-white font-medium text-sm md:text-base"
                                 />
                             </div>
                         </div>
@@ -155,7 +155,7 @@ export default function AuthPage({ onAuthSuccess }) {
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         placeholder="••••••••"
-                                        className="w-full bg-[#0f1115] border border-white/5 rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-orange-500/50 transition-all text-white font-medium shadow-inner"
+                                        className="w-full bg-[#0f1115] border border-white/5 rounded-2xl py-3 md:py-4 pl-12 pr-4 outline-none focus:border-orange-500/50 transition-all text-white font-medium shadow-inner text-sm md:text-base"
                                     />
                                 </div>
                             </div>
@@ -186,16 +186,16 @@ export default function AuthPage({ onAuthSuccess }) {
                             >
                                 <div>
                                     <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-4 block mb-3">Elegir Herramienta de Trabajo</label>
-                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3">
                                         {industries.map((ind) => (
                                             <button
                                                 key={ind.id}
                                                 type="button"
                                                 onClick={() => setIndustry(ind.id)}
-                                                className={`p-4 rounded-2xl border text-[10px] font-bold uppercase transition-all flex flex-col items-center gap-3 relative overflow-hidden group/item ${industry === ind.id ? 'bg-cyan-600 border-cyan-400 text-white shadow-xl shadow-cyan-600/20 scale-[1.02]' : 'bg-[#0f1115] border-white/5 text-slate-400 hover:border-white/10'}`}
+                                                className={`p-3 md:p-4 rounded-2xl border text-[9px] md:text-[10px] font-bold uppercase transition-all flex flex-col items-center gap-2 md:gap-3 relative overflow-hidden group/item ${industry === ind.id ? 'bg-cyan-600 border-cyan-400 text-white shadow-xl shadow-cyan-600/20 scale-[1.02]' : 'bg-[#0f1115] border-white/5 text-slate-400 hover:border-white/10'}`}
                                             >
-                                                {industry === ind.id && <div className="absolute top-0 right-0 p-1 bg-white/20 rounded-bl-xl text-[8px]">Seleccionado</div>}
-                                                <ind.icon size={22} className={industry === ind.id ? 'text-white' : 'text-slate-500 group-hover/item:text-cyan-400 transition-colors'} />
+                                                {industry === ind.id && <div className="absolute top-0 right-0 p-1 bg-white/20 rounded-bl-xl text-[7px] md:text-[8px]">Ok</div>}
+                                                <ind.icon size={18} className={industry === ind.id ? 'text-white' : 'text-slate-500 group-hover/item:text-cyan-400 transition-colors'} />
                                                 <span className="text-center leading-tight">{ind.name}</span>
                                             </button>
                                         ))}
@@ -215,9 +215,9 @@ export default function AuthPage({ onAuthSuccess }) {
                                                 key={opt.id}
                                                 type="button"
                                                 onClick={() => setInterest(opt.id)}
-                                                className={`p-4 rounded-2xl border text-[10px] font-bold uppercase transition-all flex items-center gap-3 ${interest === opt.id ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg shadow-indigo-500/20' : 'bg-[#0f1115] border-white/5 text-slate-400 hover:border-white/10'}`}
+                                                className={`p-3 md:p-4 rounded-2xl border text-[9px] md:text-[10px] font-bold uppercase transition-all flex items-center gap-2 md:gap-3 ${interest === opt.id ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg shadow-indigo-500/20' : 'bg-[#0f1115] border-white/5 text-slate-400 hover:border-white/10'}`}
                                             >
-                                                <opt.icon size={18} className={interest === opt.id ? 'text-white' : 'text-slate-500'} />
+                                                <opt.icon size={16} className={interest === opt.id ? 'text-white' : 'text-slate-500'} />
                                                 <span>{opt.label}</span>
                                             </button>
                                         ))}

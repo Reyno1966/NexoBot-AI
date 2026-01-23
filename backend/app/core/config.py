@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     # AI
     GEMINI_API_KEY: Optional[str] = "TU_KEY_PERSONAL_AQUI"
     STRIPE_SECRET_KEY: Optional[str] = None
+    STRIPE_WEBHOOK_SECRET: Optional[str] = None
     VECTOR_DB_URL: Optional[str] = None
     BASE_URL: str = "https://nexobot-ai.onrender.com" 
     FRONTEND_URL: str = "*" # Permitimos todo para evitar errores de CORS en el lanzamiento

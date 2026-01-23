@@ -30,7 +30,9 @@ import {
     ExternalLink,
     Copy,
     Check,
-    Trash2
+    Trash2,
+    Menu,
+    X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -112,6 +114,7 @@ export default function NexoBotDashboard() {
     const [activeTab, setActiveTab] = useState('Citas');
     const [isChatOpen, setIsChatOpen] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [token, setToken] = useState(null);
     const [user, setUser] = useState(null);
@@ -271,17 +274,41 @@ export default function NexoBotDashboard() {
     }
 
     return (
-        <div className="flex min-h-screen bg-[#0f1115] text-white font-sans">
-            {/* Sidebar */}
-            <aside className="w-64 bg-[#181a1f] border-r border-white/5 flex flex-col p-6">
-                <div className="flex items-center gap-3 mb-10 px-2">
-                    <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center shadow-lg shadow-cyan-500/20 bg-white/5">
-                        <img src={businessConfig.logoUrl} alt="Logo" className="w-full h-full object-contain" />
+        <div className="min-h-screen bg-[#0f1115] text-white font-sans overflow-x-hidden md:flex">
+            {/* Sidebar Backdrop (Mobile Only) */}
+            <AnimatePresence>
+                {isSidebarOpen && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => setIsSidebarOpen(false)}
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[55] md:hidden"
+                    />
+                )}
+            </AnimatePresence>
+
+            {/* Sidebar (Mobile Overlay & Desktop Sidebar) */}
+            <aside className={`
+                ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} 
+                fixed md:relative inset-y-0 left-0 z-[70] 
+                w-72 md:w-64 bg-[#181a1f] border-r border-white/5 
+                flex flex-col p-6 transition-transform duration-300 ease-in-out
+                md:flex md:static
+            `}>
+                <div className="flex items-center justify-between mb-10 px-2 lg:px-0">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center shadow-lg shadow-cyan-500/20 bg-white/5">
+                            <img src={businessConfig.logoUrl} alt="Logo" className="w-full h-full object-contain" />
+                        </div>
+                        <div>
+                            <h1 className="text-lg font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-orange-400">NexoBot</h1>
+                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Intelligent Brain</p>
+                        </div>
                     </div>
-                    <div>
-                        <h1 className="text-lg font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-orange-400">NexoBot</h1>
-                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Intelligent Brain</p>
-                    </div>
+                    <button onClick={() => setIsSidebarOpen(false)} className="md:hidden p-2 text-slate-400">
+                        <X size={24} />
+                    </button>
                 </div>
 
                 <nav className="flex-1 space-y-2">
@@ -303,7 +330,10 @@ export default function NexoBotDashboard() {
                     ].map((item) => (
                         <button
                             key={item.name}
-                            onClick={() => setActiveTab(item.name)}
+                            onClick={() => {
+                                setActiveTab(item.name);
+                                if (window.innerWidth < 768) setIsSidebarOpen(false);
+                            }}
                             className={`sidebar-item w-full ${activeTab === item.name ? 'sidebar-item-active' : ''}`}
                         >
                             <item.icon size={20} />
@@ -415,168 +445,188 @@ export default function NexoBotDashboard() {
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 p-8 overflow-y-auto">
-                <header className="flex justify-between items-center mb-8">
-                    <div className="flex items-center gap-4">
-                        <div className={`p-3 bg-white/5 rounded-2xl ${currentIndustry.color}`}>
-                            <currentIndustry.icon size={24} />
-                        </div>
-                        <div>
-                            <h2 className="text-3xl font-bold tracking-tight">{businessConfig.name}</h2>
-                            <p className="text-sm text-slate-500 font-medium">{currentIndustry.name}</p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-6">
-                        <button className="p-2 text-slate-400 hover:text-white transition-colors">
-                            <Search size={22} />
+            <main className="flex-1 w-full md:w-auto min-h-screen bg-[#0f1115] overflow-y-auto">
+                {/* Mobile Header (Hidden on Desktop) */}
+                <div className="md:hidden flex items-center justify-between p-4 bg-[#181a1f] border-b border-white/5 sticky top-0 z-50">
+                    <div className="flex items-center gap-3">
+                        <button onClick={() => setIsSidebarOpen(true)} className="p-2 -ml-2 text-slate-400 hover:text-white">
+                            <Menu size={24} />
                         </button>
-                        <div className="relative">
-                            <button className="p-2 text-slate-400 hover:text-white transition-colors">
-                                <Bell size={22} />
-                            </button>
-                            <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 rounded-full text-[10px] flex items-center justify-center text-white font-bold border-2 border-[#0f1115]">
-                                3
-                            </span>
-                        </div>
-                        <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/10">
-                            <img src="https://i.pravatar.cc/150?u=admin" alt="Admin" />
+                        <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-lg overflow-hidden bg-white/5">
+                                <img src={businessConfig.logoUrl} alt="Logo" className="w-full h-full object-contain" />
+                            </div>
+                            <span className="font-bold text-sm tracking-tight text-gradient-premium">NexoBot</span>
                         </div>
                     </div>
-                </header>
+                    <div className="w-8 h-8 rounded-full overflow-hidden border border-white/10">
+                        <img src="https://i.pravatar.cc/150?u=admin" alt="Admin" />
+                    </div>
+                </div>
 
-                <div className="grid grid-cols-1 gap-8">
-                    {/* Calendar Section (Dynamic Title) */}
-                    <section className="dashboard-card p-6">
-                        <div className="flex justify-between items-center mb-8">
-                            <div className="flex items-center gap-4">
-                                <div className="flex gap-1">
-                                    <button className="p-2 bg-white/5 rounded-lg hover:bg-white/10"><ChevronLeft size={18} /></button>
-                                    <button className="p-2 bg-white/5 rounded-lg hover:bg-white/10"><ChevronRight size={18} /></button>
-                                </div>
-                                <h3 className="text-xl font-bold">Gestión de {activeTab}</h3>
+                <div className="p-4 md:p-8 max-w-7xl mx-auto">
+                    <header className="hidden md:flex justify-between items-center mb-10">
+                        <div className="flex items-center gap-4">
+                            <div className={`p-4 bg-white/5 rounded-2xl ${currentIndustry.color} shadow-lg shadow-black/20`}>
+                                <currentIndustry.icon size={28} />
                             </div>
-                            <div className="flex gap-3">
+                            <div>
+                                <h1 className="text-3xl font-bold tracking-tight">{businessConfig.name}</h1>
+                                <p className="text-sm text-slate-500 font-medium uppercase tracking-widest">{currentIndustry.name}</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-6">
+                            <button className="p-2.5 bg-white/5 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-all">
+                                <Search size={20} />
+                            </button>
+                            <div className="relative">
+                                <button className="p-2.5 bg-white/5 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-all">
+                                    <Bell size={20} />
+                                </button>
+                                <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-[10px] flex items-center justify-center text-white font-bold border-2 border-[#0f1115]">
+                                    3
+                                </span>
+                            </div>
+                            <div className="w-11 h-11 rounded-xl overflow-hidden border-2 border-white/5 shadow-xl">
+                                <img src="https://i.pravatar.cc/150?u=admin" alt="Admin" />
+                            </div>
+                        </div>
+                    </header>
+
+                    <div className="grid grid-cols-1 gap-8">
+                        {/* Calendar Section (Dynamic Title) */}
+                        <section className="dashboard-card p-6">
+                            <div className="flex justify-between items-center mb-8">
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                                    <div className="flex gap-1">
+                                        <button className="p-2 bg-white/5 rounded-lg hover:bg-white/10"><ChevronLeft size={18} /></button>
+                                        <button className="p-2 bg-white/5 rounded-lg hover:bg-white/10"><ChevronRight size={18} /></button>
+                                    </div>
+                                    <h3 className="text-lg md:text-xl font-bold">Gestión de {activeTab}</h3>
+                                </div>
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => handleQuickAction(activeTab === currentIndustry.labels.main ? 'Cita' : activeTab === currentIndustry.labels.items ? 'Cliente' : 'Factura')}
+                                        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors"
+                                    >
+                                        <Plus size={16} /> {activeTab === currentIndustry.labels.main ? currentIndustry.labels.action : `Nueva ${activeTab}`}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="border-t border-white/5 pt-6 text-center py-20 bg-white/[0.02] rounded-2xl">
+                                {activeTab === currentIndustry.labels.main && <Calendar size={48} className="mx-auto mb-4 text-slate-600" />}
+                                {activeTab === 'Facturas' || activeTab === 'Facturación' && <FileText size={48} className="mx-auto mb-4 text-slate-600" />}
+                                {activeTab === currentIndustry.labels.items && <Users size={48} className="mx-auto mb-4 text-slate-600" />}
+                                {activeTab === 'Finanzas' && <PieChart size={48} className="mx-auto mb-4 text-slate-600" />}
+
+                                <p className="text-slate-400">Aquí se mostrará la gestión de <span className="text-white font-bold">{activeTab}</span> para <span className="text-white font-bold">{businessConfig.name}</span></p>
+                                <p className="text-xs text-slate-500 mt-2">Dile a <span className="text-cyan-400 font-bold">NexoBot</span> en el chat que te ayude con esto.</p>
+                            </div>
+                        </section>
+
+                        {/* Financial Summary */}
+                        <section className="dashboard-card p-6">
+                            <div className="flex justify-between items-center mb-10">
+                                <h3 className="text-xl font-bold">Rendimiento Financiero</h3>
                                 <button
-                                    onClick={() => handleQuickAction(activeTab === currentIndustry.labels.main ? 'Cita' : activeTab === currentIndustry.labels.items ? 'Cliente' : 'Factura')}
-                                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors"
+                                    onClick={() => handleQuickAction('Memoria')}
+                                    className="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-2"
                                 >
-                                    <Plus size={16} /> {activeTab === currentIndustry.labels.main ? currentIndustry.labels.action : `Nueva ${activeTab}`}
+                                    <FileText size={14} /> Generar Memoria PDF
                                 </button>
                             </div>
-                        </div>
+                            <div className="h-[250px] w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart data={mockFinancialData}>
+                                        <defs>
+                                            <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                                                <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                                            </linearGradient>
+                                        </defs>
+                                        <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.03)" />
+                                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }} dy={10} />
+                                        <YAxis axisLine={false} tickLine={false} tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }} />
+                                        <Tooltip contentStyle={{ backgroundColor: '#1e2126', border: 'none', borderRadius: '12px' }} />
+                                        <Area type="monotone" dataKey="value" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </section>
 
-                        <div className="border-t border-white/5 pt-6 text-center py-20 bg-white/[0.02] rounded-2xl">
-                            {activeTab === currentIndustry.labels.main && <Calendar size={48} className="mx-auto mb-4 text-slate-600" />}
-                            {activeTab === 'Facturas' || activeTab === 'Facturación' && <FileText size={48} className="mx-auto mb-4 text-slate-600" />}
-                            {activeTab === currentIndustry.labels.items && <Users size={48} className="mx-auto mb-4 text-slate-600" />}
-                            {activeTab === 'Finanzas' && <PieChart size={48} className="mx-auto mb-4 text-slate-600" />}
+                        {activeTab === 'Marketing' && (
+                            <section className="dashboard-card p-8 bg-gradient-to-br from-[#181a1f] to-[#121418] relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 blur-[100px] rounded-full" />
+                                <div className="relative z-10">
+                                    <h3 className="text-2xl font-bold mb-2">🚀 Modo Viral: Tu Asistente en Redes</h3>
+                                    <p className="text-slate-400 mb-8 max-w-xl">Publica a NexoBot en Instagram, Facebook o WhatsApp y deja que trabaje por ti 24/7 atendiendo clientes.</p>
 
-                            <p className="text-slate-400">Aquí se mostrará la gestión de <span className="text-white font-bold">{activeTab}</span> para <span className="text-white font-bold">{businessConfig.name}</span></p>
-                            <p className="text-xs text-slate-500 mt-2">Dile a <span className="text-cyan-400 font-bold">NexoBot</span> en el chat que te ayude con esto.</p>
-                        </div>
-                    </section>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                        <div className="space-y-6">
+                                            <div className="bg-[#0f1115] p-6 rounded-[2rem] border border-white/5">
+                                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 block">Tu Enlace Público de Ventas</label>
+                                                <div className="flex gap-3">
+                                                    <input
+                                                        readOnly
+                                                        value={`${typeof window !== 'undefined' ? window.location.origin : ''}/public/${user?.tenant_id || 'demo'}`}
+                                                        className="flex-1 bg-white/5 border border-white/5 p-3 rounded-xl text-xs font-mono outline-none"
+                                                    />
+                                                    <button
+                                                        onClick={() => {
+                                                            const link = `${window.location.origin}/public/${user?.tenant_id}`;
+                                                            navigator.clipboard.writeText(link);
+                                                            alert('Link copiado');
+                                                        }}
+                                                        className="px-4 py-2 bg-indigo-600 rounded-xl text-xs font-bold hover:bg-indigo-500 transition-all"
+                                                    >
+                                                        Copiar
+                                                    </button>
+                                                </div>
+                                            </div>
 
-                    {/* Financial Summary */}
-                    <section className="dashboard-card p-6">
-                        <div className="flex justify-between items-center mb-10">
-                            <h3 className="text-xl font-bold">Rendimiento Financiero</h3>
-                            <button
-                                onClick={() => handleQuickAction('Memoria')}
-                                className="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-2"
-                            >
-                                <FileText size={14} /> Generar Memoria PDF
-                            </button>
-                        </div>
-                        <div className="h-[250px] w-full">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={mockFinancialData}>
-                                    <defs>
-                                        <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                                            <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                                        </linearGradient>
-                                    </defs>
-                                    <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.03)" />
-                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }} dy={10} />
-                                    <YAxis axisLine={false} tickLine={false} tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }} />
-                                    <Tooltip contentStyle={{ backgroundColor: '#1e2126', border: 'none', borderRadius: '12px' }} />
-                                    <Area type="monotone" dataKey="value" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
-                                </AreaChart>
-                            </ResponsiveContainer>
-                        </div>
-                    </section>
-
-                    {activeTab === 'Marketing' && (
-                        <section className="dashboard-card p-8 bg-gradient-to-br from-[#181a1f] to-[#121418] relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 blur-[100px] rounded-full" />
-                            <div className="relative z-10">
-                                <h3 className="text-2xl font-bold mb-2">🚀 Modo Viral: Tu Asistente en Redes</h3>
-                                <p className="text-slate-400 mb-8 max-w-xl">Publica a NexoBot en Instagram, Facebook o WhatsApp y deja que trabaje por ti 24/7 atendiendo clientes.</p>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    <div className="space-y-6">
-                                        <div className="bg-[#0f1115] p-6 rounded-[2rem] border border-white/5">
-                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 block">Tu Enlace Público de Ventas</label>
-                                            <div className="flex gap-3">
-                                                <input
-                                                    readOnly
-                                                    value={`${typeof window !== 'undefined' ? window.location.origin : ''}/public/${user?.tenant_id || 'demo'}`}
-                                                    className="flex-1 bg-white/5 border border-white/5 p-3 rounded-xl text-xs font-mono outline-none"
-                                                />
-                                                <button
-                                                    onClick={() => {
-                                                        const link = `${window.location.origin}/public/${user?.tenant_id}`;
-                                                        navigator.clipboard.writeText(link);
-                                                        alert('Link copiado');
-                                                    }}
-                                                    className="px-4 py-2 bg-indigo-600 rounded-xl text-xs font-bold hover:bg-indigo-500 transition-all"
-                                                >
-                                                    Copiar
+                                            <div className="flex gap-4">
+                                                <button className="flex-1 py-4 bg-[#25D366]/10 border border-[#25D366]/20 rounded-2xl flex flex-col items-center gap-2 hover:bg-[#25D366]/20 transition-all">
+                                                    <MessageSquare className="text-[#25D366]" size={24} />
+                                                    <span className="text-[10px] font-bold uppercase">WhatsApp</span>
+                                                </button>
+                                                <button className="flex-1 py-4 bg-[#E1306C]/10 border border-[#E1306C]/20 rounded-2xl flex flex-col items-center gap-2 hover:bg-[#E1306C]/20 transition-all">
+                                                    <Share2 className="text-[#E1306C]" size={24} />
+                                                    <span className="text-[10px] font-bold uppercase">Instagram</span>
                                                 </button>
                                             </div>
                                         </div>
 
-                                        <div className="flex gap-4">
-                                            <button className="flex-1 py-4 bg-[#25D366]/10 border border-[#25D366]/20 rounded-2xl flex flex-col items-center gap-2 hover:bg-[#25D366]/20 transition-all">
-                                                <MessageSquare className="text-[#25D366]" size={24} />
-                                                <span className="text-[10px] font-bold uppercase">WhatsApp</span>
-                                            </button>
-                                            <button className="flex-1 py-4 bg-[#E1306C]/10 border border-[#E1306C]/20 rounded-2xl flex flex-col items-center gap-2 hover:bg-[#E1306C]/20 transition-all">
-                                                <Share2 className="text-[#E1306C]" size={24} />
-                                                <span className="text-[10px] font-bold uppercase">Instagram</span>
-                                            </button>
+                                        <div className="bg-white/5 p-8 rounded-[2.5rem] border border-white/10 flex flex-col items-center justify-center text-center">
+                                            <div className="w-40 h-40 bg-white p-3 rounded-3xl mb-4 shadow-2xl shadow-white/5">
+                                                <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${typeof window !== 'undefined' ? encodeURIComponent(window.location.origin + '/public/' + (user?.tenant_id || 'demo')) : ''}`} alt="QR Code" className="w-full h-full" />
+                                            </div>
+                                            <p className="font-bold mb-1">Tu Código QR de Negocio</p>
+                                            <p className="text-xs text-slate-500">Imprímelo para tu local o ponlo en tus historias.</p>
                                         </div>
                                     </div>
 
-                                    <div className="bg-white/5 p-8 rounded-[2.5rem] border border-white/10 flex flex-col items-center justify-center text-center">
-                                        <div className="w-40 h-40 bg-white p-3 rounded-3xl mb-4 shadow-2xl shadow-white/5">
-                                            <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${typeof window !== 'undefined' ? encodeURIComponent(window.location.origin + '/public/' + (user?.tenant_id || 'demo')) : ''}`} alt="QR Code" className="w-full h-full" />
-                                        </div>
-                                        <p className="font-bold mb-1">Tu Código QR de Negocio</p>
-                                        <p className="text-xs text-slate-500">Imprímelo para tu local o ponlo en tus historias.</p>
-                                    </div>
-                                </div>
-
-                                <div className="mt-12 bg-indigo-600/10 border border-indigo-500/20 p-8 rounded-[2.5rem]">
-                                    <div className="flex items-center gap-6">
-                                        <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-xl shadow-indigo-600/20">
-                                            <Bell size={32} />
-                                        </div>
-                                        <div>
-                                            <h4 className="text-xl font-bold">Alertas Inteligentes en tu Celular</h4>
-                                            <p className="text-slate-400 text-sm">Cada vez que un cliente hable con tu NexoBot, te avisaremos al instante por WhatsApp.</p>
-                                        </div>
-                                        <div className="ml-auto flex items-center gap-3 bg-[#0f1115] p-2 rounded-2xl border border-white/5">
-                                            <span className="pl-4 text-sm font-bold text-indigo-400 uppercase tracking-widest">Activo</span>
-                                            <div className="w-12 h-6 bg-indigo-600 rounded-full relative">
-                                                <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full shadow-lg" />
+                                    <div className="mt-12 bg-indigo-600/10 border border-indigo-500/20 p-8 rounded-[2.5rem]">
+                                        <div className="flex items-center gap-6">
+                                            <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-xl shadow-indigo-600/20">
+                                                <Bell size={32} />
+                                            </div>
+                                            <div>
+                                                <h4 className="text-xl font-bold">Alertas Inteligentes en tu Celular</h4>
+                                                <p className="text-slate-400 text-sm">Cada vez que un cliente hable con tu NexoBot, te avisaremos al instante por WhatsApp.</p>
+                                            </div>
+                                            <div className="ml-auto flex items-center gap-3 bg-[#0f1115] p-2 rounded-2xl border border-white/5">
+                                                <span className="pl-4 text-sm font-bold text-indigo-400 uppercase tracking-widest">Activo</span>
+                                                <div className="w-12 h-6 bg-indigo-600 rounded-full relative">
+                                                    <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full shadow-lg" />
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        </section>
-                    )}
+                            </section>
+                        )}
+                    </div>
                 </div>
             </main>
 
@@ -591,9 +641,14 @@ export default function NexoBotDashboard() {
                         />
                         <motion.div
                             initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-                            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-[#181a1f] p-8 rounded-[2.5rem] border border-white/10 shadow-2xl z-[110]"
+                            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[95%] max-w-2xl max-h-[90vh] overflow-y-auto bg-[#181a1f] p-4 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border border-white/10 shadow-2xl z-[110]"
                         >
-                            <h3 className="text-2xl font-bold mb-6">Transforma tu Negocio</h3>
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="text-xl md:text-2xl font-bold">Transforma tu Negocio</h3>
+                                <button onClick={() => setIsSettingsOpen(false)} className="md:hidden p-2 text-slate-400">
+                                    <X size={20} />
+                                </button>
+                            </div>
 
                             <div className="space-y-6">
                                 <div>
@@ -626,15 +681,15 @@ export default function NexoBotDashboard() {
                                     <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 block">
                                         ¿A qué te dedicas? {businessConfig.isLocked && <span className="text-red-400 opacity-60">(Función bloqueada por suscripción)</span>}
                                     </label>
-                                    <div className={`grid grid-cols-3 gap-3 ${businessConfig.isLocked ? 'pointer-events-none opacity-50' : ''}`}>
+                                    <div className={`grid grid-cols-2 md:grid-cols-3 gap-3 ${businessConfig.isLocked ? 'pointer-events-none opacity-50' : ''}`}>
                                         {industries.map((ind) => (
                                             <button
                                                 key={ind.id}
                                                 onClick={() => setBusinessConfig({ ...businessConfig, industry: ind.id })}
-                                                className={`p-4 rounded-2xl border transition-all flex flex-col items-center gap-2 ${businessConfig.industry === ind.id ? 'bg-indigo-600 border-indigo-400' : 'bg-[#0f1115] border-white/5 text-slate-400'}`}
+                                                className={`p-3 md:p-4 rounded-2xl border transition-all flex flex-col items-center gap-2 ${businessConfig.industry === ind.id ? 'bg-indigo-600 border-indigo-400' : 'bg-[#0f1115] border-white/5 text-slate-400'}`}
                                             >
-                                                <ind.icon size={20} />
-                                                <span className="text-[10px] font-bold uppercase tracking-tight text-center">{ind.name}</span>
+                                                <ind.icon size={18} md:size={20} />
+                                                <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-tight text-center">{ind.name}</span>
                                             </button>
                                         ))}
                                     </div>
@@ -793,9 +848,9 @@ export default function NexoBotDashboard() {
                         <motion.div
                             initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
                             transition={{ type: 'spring', damping: 20, stiffness: 100 }}
-                            className="fixed bottom-0 right-8 w-[400px] h-[650px] bg-[#181a1f] rounded-t-3xl border-x border-t border-white/10 shadow-2xl z-[70] overflow-hidden flex flex-col"
+                            className="fixed bottom-0 right-0 md:right-8 w-full md:w-[400px] h-[85vh] md:h-[650px] bg-[#181a1f] rounded-t-3xl border-x border-t border-white/10 shadow-2xl z-[70] overflow-hidden flex flex-col"
                         >
-                            <div className="bg-indigo-600 p-6 flex justify-between items-center text-white">
+                            <div className="bg-indigo-600 p-4 md:p-6 flex justify-between items-center text-white">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center border-2 border-white/20">
                                         <img src="/logo.jpg" alt="NexoBot" className="w-full h-full object-cover" />
