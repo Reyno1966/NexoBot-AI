@@ -37,16 +37,18 @@ origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "http://localhost:8000",
-    settings.FRONTEND_URL,
+    "http://localhost:5173", # Vite default
 ]
 
-# Si settings.FRONTEND_URL no es *, lo añadimos. Si es *, permitimos todo.
-if settings.FRONTEND_URL == "*":
-    origins = ["*"]
+if settings.FRONTEND_URL and settings.FRONTEND_URL != "*":
+    # Asegurarnos de limpiar espacios o barras finales
+    clean_frontend_url = settings.FRONTEND_URL.strip().rstrip("/")
+    if clean_frontend_url not in origins:
+        origins.append(clean_frontend_url)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins if settings.FRONTEND_URL != "*" else ["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
