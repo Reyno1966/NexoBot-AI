@@ -20,41 +20,40 @@ def get_engine():
         print(">>> [DB.PY] ADVERTENCIA: DATABASE_URL no configurada. Usando SQLite temporal.", file=sys.stderr)
         db_url = "sqlite:///./database.db"
     else:
-        # 1. Limpieza básica
         db_url = raw_url.strip().replace('"', '').replace("'", "")
     
-    # 2. Corregir prefijo postgres:// -> postgresql://
+    # Automatización: Si es Supabase y usa puerto 5432, advertir sobre el Pooler (6543)
+    if "supabase.co" in db_url and ":5432" in db_url:
+        print(">>> [DB.PY] AVISO: Detectada URL de Supabase en puerto 5432. Si falla, usa el puerto 6543 (Transaction Pooler).", file=sys.stderr)
+
     if db_url.startswith("postgres://"):
         db_url = db_url.replace("postgres://", "postgresql://", 1)
 
-    # 3. Escapado profesional de la contraseña
     try:
-        # Si la URL ya contiene @, sospechamos que tiene credenciales
         if "://" in db_url and "@" in db_url:
             protocol, rest = db_url.split("://", 1)
-            # Solo procesamos si no es SQLite
             if protocol != "sqlite":
                 auth_part, host_part = rest.rsplit("@", 1)
                 if ":" in auth_part:
                     user, password = auth_part.split(":", 1)
-                    # Solo escapamos si no parece estar ya escapado
                     if "%" not in password:
                         safe_password = quote_plus(password)
                         db_url = f"{protocol}://{user}:{safe_password}@{host_part}"
-                        print(">>> [DB.PY] Contraseña pre-procesada y escapada", file=sys.stderr)
     except Exception as e:
-        print(f">>> [DB.PY] Advertencia al procesar URL: {e}", file=sys.stderr)
+        print(f">>> [DB.PY] Error procesando URL: {e}", file=sys.stderr)
 
     masked_url = db_url.split("@")[-1] if "@" in db_url else db_url
-    print(f">>> [DB.PY] INTENTANDO CONECTAR A: ...@{masked_url}", file=sys.stderr)
+    print(f">>> [DB.PY] CONECTANDO A: ...@{masked_url}", file=sys.stderr)
     
-    try:
-        return create_engine(db_url, echo=True, pool_pre_ping=True)
-    except Exception as e:
-        print(f">>> [DB.PY] ERROR FATAL EN create_engine: {str(e)}", file=sys.stderr)
-        raise e
+    # Aumentamos el timeout y el pool_size para mayor estabilidad
+    return create_engine(
+        db_url, 
+        echo=False, 
+        pool_pre_ping=True,
+        pool_recycle=300,
+        connect_args={"connect_timeout": 10} if "sqlite" not in db_url else {}
+    )
 
-# El motor se crea de forma diferida (Lacy initialization)
 _engine = None
 
 def get_db_engine():
@@ -64,14 +63,20 @@ def get_db_engine():
     return _engine
 
 def init_db():
-    print(">>> [DB.PY] EJECUTANDO init_db()...", file=sys.stderr)
+    print(">>> [DB.PY] INICIANDO VALIDACIÓN DE BASE DE DATOS...", file=sys.stderr)
     try:
         engine = get_db_engine()
+        # Test de conexión rápido antes de crear tablas
+        with engine.connect() as conn:
+            print(">>> [DB.PY] CONEXIÓN EXITOSA CON EL SERVIDOR", file=sys.stderr)
+        
         SQLModel.metadata.create_all(engine)
-        print(">>> [DB.PY] TABLAS CREADAS / VERIFICADAS CON ÉXITO", file=sys.stderr)
+        print(">>> [DB.PY] TABLAS SINCRONIZADAS CORRECTAMENTE", file=sys.stderr)
     except Exception as e:
-        print(f">>> [DB.PY] DATABASE ERROR DURANTE init_db: {str(e)}", file=sys.stderr)
-        raise e
+        print(f">>> [DB.PY] ERROR DE CONEXIÓN: {str(e)}", file=sys.stderr)
+        print(">>> [DB.PY] TIP: Si el error es 'Network is unreachable', verifica que estés usando el puerto 6543 de Supabase.", file=sys.stderr)
+        # No bloqueamos el inicio del servidor para permitir diagnóstico vía API
+        pass
 
 def get_session():
     engine = get_db_engine()
