@@ -688,7 +688,7 @@ export default function NexoBotDashboard() {
                                                 onClick={() => setBusinessConfig({ ...businessConfig, industry: ind.id })}
                                                 className={`p-3 md:p-4 rounded-2xl border transition-all flex flex-col items-center gap-2 ${businessConfig.industry === ind.id ? 'bg-indigo-600 border-indigo-400' : 'bg-[#0f1115] border-white/5 text-slate-400'}`}
                                             >
-                                                <ind.icon size={18} md:size={20} />
+                                                <ind.icon size={20} />
                                                 <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-tight text-center">{ind.name}</span>
                                             </button>
                                         ))}
