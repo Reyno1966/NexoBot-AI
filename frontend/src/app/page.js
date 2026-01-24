@@ -446,8 +446,7 @@ export default function NexoBotDashboard() {
 
             {/* Main Content */}
             <main className="flex-1 w-full md:w-auto min-h-screen bg-[#0f1115] overflow-y-auto">
-                {/* Mobile Header (Hidden on Desktop) */}
-                <div className="md:hidden flex items-center justify-between p-4 bg-[#181a1f] border-b border-white/5 sticky top-0 z-50">
+                <div data-version="v3-final-mobile" className="md:hidden flex items-center justify-between p-4 bg-[#181a1f] border-b border-white/5 sticky top-0 z-50">
                     <div className="flex items-center gap-3">
                         <button onClick={() => setIsSidebarOpen(true)} className="p-2 -ml-2 text-slate-400 hover:text-white">
                             <Menu size={24} />
