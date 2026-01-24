@@ -32,7 +32,9 @@ import {
     Check,
     Trash2,
     Menu,
-    X
+    X,
+    Mic,
+    Send
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -203,6 +205,45 @@ export default function NexoBotDashboard() {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [isListening, setIsListening] = useState(false);
+
+    const handleClearMessages = () => {
+        if (messages.length > 0 && window.confirm('¿Estás seguro de que quieres borrar la conversación?')) {
+            setMessages([]);
+        }
+    };
+
+    const startListening = () => {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            alert("Tu navegador no soporta el reconocimiento de voz. Intenta con Chrome o Edge.");
+            return;
+        }
+
+        const recognition = new SpeechRecognition();
+        recognition.lang = lang === 'es' ? 'es-ES' : (lang === 'en' ? 'en-US' : lang);
+        recognition.continuous = false;
+        recognition.interimResults = false;
+
+        recognition.onstart = () => setIsListening(true);
+        recognition.onend = () => setIsListening(false);
+        recognition.onerror = (event) => {
+            console.error('Speech recognition error', event.error);
+            setIsListening(false);
+        };
+
+        recognition.onresult = (event) => {
+            const transcript = event.results[event.results.length - 1][0].transcript;
+            setInput(transcript); // Reemplazamos el texto para mayor claridad en dictados cortos
+        };
+
+        recognition.onend = () => {
+            setIsListening(false);
+            // Si el usuario termina de hablar y hay texto, podrías llamar a handleSendMessage() aquí si fuera auto-envío
+        };
+
+        recognition.start();
+    };
 
     const [businessConfig, setBusinessConfig] = useState({
         name: 'Tu Negocio Inteligente',
@@ -923,9 +964,18 @@ export default function NexoBotDashboard() {
                                         </div>
                                     </div>
                                 </div>
-                                <button onClick={() => setIsChatOpen(false)} className="text-white/60 hover:text-white">
-                                    <Plus className="rotate-45" size={24} />
-                                </button>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={handleClearMessages}
+                                        className="p-2 text-white/60 hover:text-red-400 transition-colors"
+                                        title="Borrar conversación"
+                                    >
+                                        <Trash2 size={20} />
+                                    </button>
+                                    <button onClick={() => setIsChatOpen(false)} className="text-white/60 hover:text-white">
+                                        <Plus className="rotate-45" size={24} />
+                                    </button>
+                                </div>
                             </div>
 
                             <div className="flex-1 p-6 space-y-4 overflow-y-auto bg-[#0f1115]/50 scroll-smooth">
@@ -993,16 +1043,27 @@ export default function NexoBotDashboard() {
 
                             <div className="p-4 bg-[#181a1f] border-t border-white/5">
                                 <div className="bg-[#0f1115] rounded-xl flex items-center p-2 border border-white/5 focus-within:border-indigo-500/50 transition-all">
+                                    <button
+                                        onClick={startListening}
+                                        className={`p-2 rounded-lg transition-all ${isListening ? 'text-red-500 animate-pulse bg-red-500/10' : 'text-slate-400 hover:text-indigo-400'}`}
+                                        title="Dictar mensaje"
+                                    >
+                                        <Mic size={20} />
+                                    </button>
                                     <input
                                         type="text"
                                         value={input}
                                         onChange={(e) => setInput(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                                        placeholder="Escribe un mensaje..."
+                                        placeholder={isListening ? "Escuchando..." : "Escribe un mensaje..."}
                                         className="bg-transparent flex-1 px-4 py-2 text-sm outline-none"
                                     />
-                                    <button className="bg-indigo-600 p-2 rounded-lg hover:bg-indigo-500 transition-colors">
-                                        <Plus size={20} />
+                                    <button
+                                        onClick={handleSendMessage}
+                                        disabled={!input.trim() || isLoading}
+                                        className="bg-indigo-600 p-2 rounded-lg hover:bg-indigo-500 transition-colors disabled:opacity-50"
+                                    >
+                                        <Send size={20} />
                                     </button>
                                 </div>
                             </div>

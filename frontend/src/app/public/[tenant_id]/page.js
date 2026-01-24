@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
-import { Bot, User, Send, ChevronRight, Phone, MapPin, Globe, Scissors, Stethoscope, Gavel, Home, Hotel, Briefcase, Calendar, Clock, Star, Zap, Info } from 'lucide-react';
+import { Bot, User, Send, ChevronRight, Phone, MapPin, Globe, Scissors, Stethoscope, Gavel, Home, Hotel, Briefcase, Calendar, Clock, Star, Zap, Info, Mic, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function PublicChat({ params }) {
@@ -8,6 +8,27 @@ export default function PublicChat({ params }) {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [isListening, setIsListening] = useState(false);
+
+    const handleClearMessages = () => {
+        if (messages.length > 0 && window.confirm('¿Quieres limpiar la conversación?')) {
+            setMessages([]);
+        }
+    };
+
+    const startListening = () => {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            alert("Navegador no compatible.");
+            return;
+        }
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'es-ES';
+        recognition.onstart = () => setIsListening(true);
+        recognition.onend = () => setIsListening(false);
+        recognition.onresult = (e) => setInput(prev => prev + ' ' + e.results[0][0].transcript);
+        recognition.start();
+    };
     const [businessInfo, setBusinessInfo] = useState({
         name: 'Cargando...',
         industry: 'general',
@@ -97,6 +118,9 @@ export default function PublicChat({ params }) {
                     </div>
                 </div>
                 <div className="flex gap-2">
+                    <button onClick={handleClearMessages} className="p-2 bg-white/5 rounded-xl text-slate-400 hover:text-red-400 transition-all">
+                        <Trash2 size={20} />
+                    </button>
                     <button className="p-2 bg-white/5 rounded-xl text-slate-400 hover:text-white transition-all">
                         <Phone size={20} />
                     </button>
@@ -219,13 +243,19 @@ export default function PublicChat({ params }) {
             {/* Input Area */}
             <div className="p-6 bg-gradient-to-t from-[#0f1115] via-[#0f1115] to-transparent sticky bottom-0 z-50">
                 <div className="max-w-3xl mx-auto relative group">
+                    <button
+                        onClick={startListening}
+                        className={`absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full transition-all ${isListening ? 'text-red-500 animate-pulse bg-red-500/10' : 'text-slate-400 hover:text-indigo-400'}`}
+                    >
+                        <Mic size={20} />
+                    </button>
                     <input
                         type="text"
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                        placeholder="Escribe tu mensaje aquí..."
-                        className="w-full bg-[#1e2126]/80 backdrop-blur-xl border border-white/10 rounded-[2rem] py-5 pl-8 pr-16 outline-none focus:border-indigo-500/50 transition-all shadow-2xl placeholder:text-slate-500 font-medium"
+                        placeholder={isListening ? "Escuchando..." : "Escribe tu mensaje aquí..."}
+                        className="w-full bg-[#1e2126]/80 backdrop-blur-xl border border-white/10 rounded-[2rem] py-5 pl-14 pr-16 outline-none focus:border-indigo-500/50 transition-all shadow-2xl placeholder:text-slate-500 font-medium"
                     />
                     <button
                         onClick={handleSend}
