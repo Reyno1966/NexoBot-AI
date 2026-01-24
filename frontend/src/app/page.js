@@ -116,6 +116,7 @@ export default function NexoBotDashboard() {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [isSubscribing, setIsSubscribing] = useState(false);
     const [token, setToken] = useState(null);
     const [user, setUser] = useState(null);
     const [lang, setLang] = useState('es');
@@ -252,20 +253,35 @@ export default function NexoBotDashboard() {
     };
 
     const handleSubscription = async () => {
-        if (!user?.tenant_id) return;
+        if (!user?.tenant_id) {
+            alert('Error: No se encontró la información de tu negocio. Intenta cerrar sesión y volver a entrar.');
+            return;
+        }
+
+        setIsSubscribing(true);
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://nexobot-ai.onrender.com';
             const price = currentIndustry.price || 19.99;
+
+            console.log("Solicitando checkout para:", user.tenant_id, "precio:", price);
+
             const response = await fetch(`${apiUrl}/api/v1/payments/create-checkout-session?tenant_id=${user.tenant_id}&amount=${price}`, {
                 method: 'POST'
             });
+
             const data = await response.json();
-            if (data.url) {
+
+            if (response.ok && data.url) {
                 window.location.href = data.url; // Redirigir a Stripe
+            } else {
+                console.error("Error de Stripe:", data);
+                alert(`Error: ${data.detail || 'No se pudo crear la sesión de pago'}`);
             }
         } catch (error) {
             console.error('Error al iniciar pago:', error);
-            alert('No se pudo conectar con Stripe. Intenta de nuevo.');
+            alert('No se pudo conectar con el servidor de pagos. Verifica tu conexión.');
+        } finally {
+            setIsSubscribing(false);
         }
     };
 
@@ -402,9 +418,10 @@ export default function NexoBotDashboard() {
                         </p>
                         <button
                             onClick={handleSubscription}
-                            className="w-full py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 rounded-xl text-xs font-bold transition-all shadow-lg shadow-cyan-500/20"
+                            disabled={isSubscribing}
+                            className={`w-full py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 rounded-xl text-xs font-bold transition-all shadow-lg shadow-cyan-500/20 ${isSubscribing ? 'opacity-70 cursor-not-allowed' : ''}`}
                         >
-                            Empezar 7 Días Gratis
+                            {isSubscribing ? 'Conectando...' : 'Empezar 7 Días Gratis'}
                         </button>
                     </div>
 

@@ -13,18 +13,25 @@ def get_db():
 
 router = APIRouter()
 
+from uuid import UUID
+
 @router.post("/create-checkout-session")
-def create_checkout(tenant_id: str, amount: float = 19.99, session: Session = Depends(get_db)):
+def create_checkout(tenant_id: UUID, amount: float = 19.99, session: Session = Depends(get_db)):
     tenant = session.get(Tenant, tenant_id)
     if not tenant:
         raise HTTPException(status_code=404, detail="Negocio no encontrado")
     
     # URL de éxito y cancelación
-    success_url = f"{settings.FRONTEND_URL}?session_id={{CHECKOUT_SESSION_ID}}"
-    cancel_url = f"{settings.FRONTEND_URL}?payment=failed"
+    # Si FRONTEND_URL es '*', intentamos usar el referrer o un fallback seguro
+    base_frontend = settings.FRONTEND_URL
+    if base_frontend == "*":
+        base_frontend = "https://nexobot-ai.vercel.app" # Fallback producción
+    
+    success_url = f"{base_frontend}?session_id={{CHECKOUT_SESSION_ID}}"
+    cancel_url = f"{base_frontend}?payment=failed"
     
     checkout_url = StripeService.create_checkout_session(
-        tenant_id=tenant.id,
+        tenant_id=str(tenant.id),
         tenant_name=tenant.name,
         customer_email=f"admin@{tenant.id}.com",
         success_url=success_url,
@@ -38,12 +45,15 @@ def create_checkout(tenant_id: str, amount: float = 19.99, session: Session = De
     return {"url": checkout_url}
 
 @router.post("/create-portal-session")
-def create_portal(tenant_id: str, session: Session = Depends(get_db)):
+def create_portal(tenant_id: UUID, session: Session = Depends(get_db)):
     tenant = session.get(Tenant, tenant_id)
     if not tenant or not tenant.stripe_customer_id:
         raise HTTPException(status_code=400, detail="No se encontró suscripción activa para este negocio.")
     
     return_url = settings.FRONTEND_URL
+    if return_url == "*":
+        return_url = "https://nexobot-ai.vercel.app"
+        
     portal_url = StripeService.create_customer_portal_session(
         customer_id=tenant.stripe_customer_id,
         return_url=return_url

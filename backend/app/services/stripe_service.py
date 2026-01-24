@@ -21,6 +21,7 @@ class StripeService:
                                 'description': 'Full access to all NexoBot business features (7 Days Free Trial)',
                             },
                             'unit_amount': unit_amount,
+                            'recurring': {'interval': 'month'},
                         },
                         'quantity': 1,
                     },
