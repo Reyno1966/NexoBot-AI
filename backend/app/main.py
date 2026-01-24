@@ -138,6 +138,8 @@ async def chat_endpoint(request: ChatRequest, raw_request: Request, session: Ses
 
     try:
         ai_output = json.loads(clean_output)
+        if not isinstance(ai_output, dict):
+            ai_output = {"intent": "chat", "response_text": str(ai_output), "entities": {}}
     except Exception:
         # Fallback si Gemini no devuelve JSON puro
         ai_output = {"intent": "chat", "response_text": clean_output, "entities": {}}
@@ -147,6 +149,8 @@ async def chat_endpoint(request: ChatRequest, raw_request: Request, session: Ses
     
     download_url = None
     entities = ai_output.get('entities', {})
+    if not isinstance(entities, dict):
+        entities = {}
     intent = ai_output.get('intent')
     
     # Notificaciones al Celular/WhatsApp y Email del dueño

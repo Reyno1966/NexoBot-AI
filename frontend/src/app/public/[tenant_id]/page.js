@@ -57,7 +57,7 @@ export default function PublicChat({ params }) {
         setIsLoading(true);
 
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://nexobot-ai.onrender.com';
             const response = await fetch(`${apiUrl}/api/v1/chat`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
