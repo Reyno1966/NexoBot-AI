@@ -14,6 +14,11 @@ def get_db():
     yield from get_session()
 
 from uuid import UUID
+from app.schemas.auth import (
+    UserCreate, Token, UserResponse, TenantRead, 
+    ForgotPasswordRequest, ResetPasswordRequest
+)
+from app.services.notification_service import NotificationService
 router = APIRouter()
 
 @router.get("/public/tenant/{tenant_id}", response_model=TenantRead)
@@ -109,3 +114,66 @@ def login_for_access_token(
         expires_delta=access_token_expires
     )
     return {"access_token": access_token, "token_type": "bearer"}
+
+@router.post("/forgot-password")
+async def forgot_password(request: ForgotPasswordRequest, session: Session = Depends(get_db)):
+    user = session.exec(select(User).where(User.email == request.email)).first()
+    
+    # Por seguridad, no revelamos si el correo existe o no
+    if not user:
+        return {"message": "Si el correo está registrado, recibirás las instrucciones en breve."}
+    
+    # Generar un token temporal de recuperación (reutilizamos la lógica de JWT por simplificar)
+    recovery_token = create_access_token(
+        data={"sub": user.email, "type": "recovery"},
+        expires_delta=timedelta(hours=1)
+    )
+    
+    # Intentar obtener la URL del frontend de la configuración o del origen de la petición
+    frontend_base = settings.FRONTEND_URL
+    if frontend_base == "*":
+        # Fallback para desarrollo: asumimos localhost si no está configurado
+        frontend_base = "http://localhost:3000"
+    
+    reset_link = f"{frontend_base}/reset-password?token={recovery_token}"
+    
+    html_msg = f"""
+    <div style="font-family: sans-serif; background: #0f1115; color: white; padding: 40px; border-radius: 20px;">
+        <h2 style="color: #2db5b9;">🔑 Recuperación de Contraseña</h2>
+        <p>Has solicitado restablecer tu contraseña en <b>NexoBot AI</b>.</p>
+        <p>Haz clic en el siguiente botón para continuar (válido por 1 hora):</p>
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="{reset_link}" style="background: #2db5b9; color: white; padding: 15px 25px; border-radius: 12px; text-decoration: none; font-weight: bold;">Restablecer Contraseña</a>
+        </div>
+        <hr style="border: 0; border-top: 1px solid #1a1f24; margin: 20px 0;">
+        <p style="font-size: 12px; color: #64748b;">Si no solicitaste este cambio, puedes ignorar este correo.</p>
+    </div>
+    """
+    
+    NotificationService.send_email_alert(user.email, "🔑 Recuperación de Contraseña - NexoBot AI", html_msg)
+    
+    return {"message": "Si el correo está registrado, recibirás las instrucciones en breve."}
+
+@router.post("/reset-password")
+async def reset_password(request: ResetPasswordRequest, session: Session = Depends(get_db)):
+    try:
+        from app.core.security import jwt, settings
+        payload = jwt.decode(request.token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        
+        if payload.get("type") != "recovery":
+            raise HTTPException(status_code=400, detail="Token no válido")
+            
+        email = payload.get("sub")
+        user = session.exec(select(User).where(User.email == email)).first()
+        
+        if not user:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+            
+        user.hashed_password = get_password_hash(request.new_password)
+        session.add(user)
+        session.commit()
+        
+        return {"message": "Contraseña actualizada con éxito"}
+        
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="El enlace ha expirado o es inválido")

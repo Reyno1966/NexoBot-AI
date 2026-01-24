@@ -1,7 +1,7 @@
 "use client";
 // Vercel Deployment Trigger: 2026-01-20
 import React, { useState, useEffect } from 'react';
-import AuthPage from './auth';
+import AuthPage from './AuthPage';
 import { translations } from './i18n';
 import {
     Calendar,
@@ -310,21 +310,47 @@ export default function NexoBotDashboard() {
                 fixed md:relative inset-y-0 left-0 z-[70] 
                 w-72 md:w-64 bg-[#181a1f] border-r border-white/5 
                 flex flex-col p-6 transition-transform duration-300 ease-in-out
-                md:flex md:static
+                md:flex md:static overflow-y-auto scrollbar-hide
             `}>
-                <div className="flex items-center justify-between mb-10 px-2 lg:px-0">
+                <div className="flex items-center justify-between mb-6 md:mb-10 px-2 lg:px-0">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center shadow-lg shadow-cyan-500/20 bg-white/5">
+                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl overflow-hidden flex items-center justify-center shadow-lg shadow-cyan-500/20 bg-white/5">
                             <img src={businessConfig.logoUrl} alt="Logo" className="w-full h-full object-contain" />
                         </div>
                         <div>
-                            <h1 className="text-lg font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-orange-400">NexoBot</h1>
-                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Intelligent Brain</p>
+                            <h1 className="text-base md:text-lg font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-orange-400 leading-none">NexoBot</h1>
+                            <p className="text-[8px] md:text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Intelligent Brain</p>
                         </div>
                     </div>
                     <button onClick={() => setIsSidebarOpen(false)} className="md:hidden p-2 text-slate-400">
                         <X size={24} />
                     </button>
+                </div>
+
+                <div className="hidden md:block bg-[#1e2126] rounded-2xl p-4 border border-white/5 space-y-3 mb-6">
+                    <div className="flex items-center gap-2 text-indigo-400">
+                        <Bot size={18} />
+                        <p className="text-[10px] font-bold uppercase tracking-widest">Canal Público</p>
+                    </div>
+                    <p className="text-[10px] text-slate-500 font-medium leading-relaxed">Enlace para tus clientes.</p>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => window.open(`/public/${user?.tenant_id}`, '_blank')}
+                            className="flex-1 py-3 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 border border-indigo-500/20 rounded-xl text-[10px] font-bold uppercase transition-all flex items-center justify-center gap-2"
+                        >
+                            <ExternalLink size={14} /> Ver
+                        </button>
+                        <button
+                            onClick={() => {
+                                const link = `${window.location.origin}/public/${user?.tenant_id}`;
+                                navigator.clipboard.writeText(link);
+                                alert('Link copiado');
+                            }}
+                            className="p-3 bg-white/5 hover:bg-white/10 text-slate-400 rounded-xl transition-all border border-white/5"
+                        >
+                            <Copy size={14} />
+                        </button>
+                    </div>
                 </div>
 
                 <nav className="flex-1 space-y-2">
@@ -407,9 +433,11 @@ export default function NexoBotDashboard() {
                             )}
                         </AnimatePresence>
                     </div>
+
+
                 </nav>
 
-                <div className="mt-auto space-y-4">
+                <div className="mt-8 space-y-4">
                     <div className="bg-gradient-to-br from-cyan-600/20 to-blue-600/20 rounded-2xl p-4 border border-cyan-500/20">
                         <p className="text-xs font-bold text-cyan-400 uppercase tracking-widest mb-1">Prueba de 7 Días</p>
                         <p className="text-[10px] font-medium text-slate-300 mb-3 leading-relaxed">
@@ -424,33 +452,6 @@ export default function NexoBotDashboard() {
                             {isSubscribing ? 'Conectando...' : 'Empezar 7 Días Gratis'}
                         </button>
                     </div>
-
-                    <div className="bg-[#1e2126] rounded-2xl p-4 border border-white/5 space-y-3">
-                        <div className="flex items-center gap-2 text-indigo-400">
-                            <Bot size={18} />
-                            <p className="text-[10px] font-bold uppercase tracking-widest">Canal Público</p>
-                        </div>
-                        <p className="text-[10px] text-slate-500 font-medium leading-relaxed">Este es el link que debes compartir con tus clientes para que hablen con tu IA.</p>
-                        <div className="flex gap-2">
-                            <button
-                                onClick={() => window.open(`/public/${user?.tenant_id}`, '_blank')}
-                                className="flex-1 py-3 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 border border-indigo-500/20 rounded-xl text-[10px] font-bold uppercase transition-all flex items-center justify-center gap-2 shadow-inner"
-                            >
-                                <ExternalLink size={14} /> Ver Chat
-                            </button>
-                            <button
-                                onClick={() => {
-                                    const link = `${window.location.origin}/public/${user?.tenant_id}`;
-                                    navigator.clipboard.writeText(link);
-                                    alert('Link copiado al portapapeles');
-                                }}
-                                className="p-3 bg-white/5 hover:bg-white/10 text-slate-400 rounded-xl transition-all border border-white/5"
-                                title="Copiar Link"
-                            >
-                                <Copy size={14} />
-                            </button>
-                        </div>
-                    </div>
                     <button
                         onClick={handleLogout}
                         className="flex items-center gap-3 text-slate-500 hover:text-red-400 transition-colors px-2 w-full text-left"
@@ -458,6 +459,8 @@ export default function NexoBotDashboard() {
                         <LogIn size={20} className="rotate-180" />
                         <span className="text-sm font-medium">Cerrar Sesión</span>
                     </button>
+                    {/* Padding bottom for mobile safely */}
+                    <div className="h-20 md:hidden" />
                 </div>
             </aside>
 
@@ -475,12 +478,52 @@ export default function NexoBotDashboard() {
                             <span className="font-bold text-sm tracking-tight text-gradient-premium">NexoBot</span>
                         </div>
                     </div>
-                    <div className="w-8 h-8 rounded-full overflow-hidden border border-white/10">
-                        <img src="https://i.pravatar.cc/150?u=admin" alt="Admin" />
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => window.open(`/public/${user?.tenant_id}`, '_blank')}
+                            className="p-2 text-indigo-400 hover:text-indigo-300 transition-colors flex items-center justify-center"
+                            title="Ver como cliente"
+                        >
+                            <ExternalLink size={18} />
+                        </button>
+                        <div className="w-8 h-8 rounded-full overflow-hidden border border-white/10">
+                            <img src="https://i.pravatar.cc/150?u=admin" alt="Admin" />
+                        </div>
                     </div>
                 </div>
 
                 <div className="p-4 md:p-8 max-w-7xl mx-auto">
+                    {/* MOBILE QUICK ACCESS: Canal Público - Always on top for mobile */}
+                    <div className="md:hidden mb-6 bg-gradient-to-r from-indigo-900/40 to-indigo-800/20 rounded-[2rem] p-6 border border-indigo-500/30 shadow-2xl shadow-indigo-500/10">
+                        <div className="flex items-center gap-4 mb-4">
+                            <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-600/30">
+                                <Bot size={24} className="text-white" />
+                            </div>
+                            <div>
+                                <h2 className="text-lg font-bold">Canal Público</h2>
+                                <p className="text-[10px] text-indigo-300 font-bold uppercase tracking-widest">Tu IA lista para clientes</p>
+                            </div>
+                        </div>
+                        <p className="text-xs text-slate-400 mb-6 leading-relaxed">Comparte este enlace con tus clientes para que agenden citas o hagan consultas automáticamente.</p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => window.open(`/public/${user?.tenant_id}`, '_blank')}
+                                className="flex-1 py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl text-xs font-bold uppercase transition-all flex items-center justify-center gap-2 shadow-xl shadow-indigo-600/20 active:scale-95"
+                            >
+                                <ExternalLink size={16} /> Ver Vista Cliente
+                            </button>
+                            <button
+                                onClick={() => {
+                                    const link = `${window.location.origin}/public/${user?.tenant_id}`;
+                                    navigator.clipboard.writeText(link);
+                                    alert('Link copiado al portapapeles');
+                                }}
+                                className="p-4 bg-white/5 hover:bg-white/10 text-slate-300 rounded-2xl transition-all border border-white/10 active:scale-95"
+                            >
+                                <Copy size={18} />
+                            </button>
+                        </div>
+                    </div>
                     <header className="hidden md:flex justify-between items-center mb-10">
                         <div className="flex items-center gap-4">
                             <div className={`p-4 bg-white/5 rounded-2xl ${currentIndustry.color} shadow-lg shadow-black/20`}>
@@ -644,10 +687,10 @@ export default function NexoBotDashboard() {
                         )}
                     </div>
                 </div>
-            </main>
+            </main >
 
             {/* SETTINGS MODAL - Business Personalization */}
-            <AnimatePresence>
+            < AnimatePresence >
                 {isSettingsOpen && (
                     <>
                         <motion.div
@@ -841,19 +884,20 @@ export default function NexoBotDashboard() {
                             </div>
                         </motion.div>
                     </>
-                )}
-            </AnimatePresence>
+                )
+                }
+            </AnimatePresence >
 
             {/* Floating Chat Button */}
-            <button
+            < button
                 onClick={() => setIsChatOpen(true)}
                 className="fixed bottom-8 right-8 w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-2xl shadow-indigo-600/40 hover:scale-105 active:scale-95 transition-all z-50"
             >
                 <MessageSquare className="text-white" size={28} />
-            </button>
+            </button >
 
             {/* Chat Overlay */}
-            <AnimatePresence>
+            < AnimatePresence >
                 {isChatOpen && (
                     <>
                         <motion.div
@@ -965,7 +1009,7 @@ export default function NexoBotDashboard() {
                         </motion.div>
                     </>
                 )}
-            </AnimatePresence>
-        </div>
+            </AnimatePresence >
+        </div >
     );
 }

@@ -35,7 +35,9 @@ export const translations = {
             login_btn: "Entrar a NexoBot",
             register_btn: "Registrar Negocio",
             no_account: "¿No tienes cuenta? Regístrate gratis",
-            back_to_login: "Volver al Login"
+            back_to_login: "Volver al Login",
+            forgot_pass: "¿Olvidaste tu contraseña?",
+            reset_send: "Enviar instrucciones"
         }
     },
     en: {
@@ -74,7 +76,9 @@ export const translations = {
             login_btn: "Login to NexoBot",
             register_btn: "Register Business",
             no_account: "Don't have an account? Register free",
-            back_to_login: "Back to Login"
+            back_to_login: "Back to Login",
+            forgot_pass: "Forgot your password?",
+            reset_send: "Send instructions"
         }
     },
     de: {
@@ -113,7 +117,9 @@ export const translations = {
             login_btn: "Bei NexoBot anmelden",
             register_btn: "Geschäft registrieren",
             no_account: "Noch kein Konto? Kostenlos registrieren",
-            back_to_login: "Zurück zum Login"
+            back_to_login: "Zurück zum Login",
+            forgot_pass: "Passwort vergessen?",
+            reset_send: "Anweisungen senden"
         }
     },
     it: {
@@ -152,7 +158,9 @@ export const translations = {
             login_btn: "Entra in NexoBot",
             register_btn: "Registra Azienda",
             no_account: "Non hai un account? Registrati gratis",
-            back_to_login: "Torna al Login"
+            back_to_login: "Torna al Login",
+            forgot_pass: "Password dimenticata?",
+            reset_send: "Invia istruzioni"
         }
     },
     fr: {
@@ -191,7 +199,9 @@ export const translations = {
             login_btn: "Se connecter à NexoBot",
             register_btn: "Enregistrer l'entreprise",
             no_account: "Vous n'avez pas de compte ? Inscrivez-vous gratuitement",
-            back_to_login: "Retour à la connexion"
+            back_to_login: "Retour à la connexion",
+            forgot_pass: "Mot de passe oublié ?",
+            reset_send: "Envoyer les instructions"
         }
     },
     pt: {
@@ -230,7 +240,9 @@ export const translations = {
             login_btn: "Entrar no NexoBot",
             register_btn: "Registar Negócio",
             no_account: "Não tem conta? Registe-se grátis",
-            back_to_login: "Voltar ao Login"
+            back_to_login: "Voltar ao Login",
+            forgot_pass: "Esqueceu a sua palavra-passe?",
+            reset_send: "Enviar instruções"
         }
     }
 };
