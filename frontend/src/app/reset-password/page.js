@@ -1,10 +1,10 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { Lock, ChevronRight, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { useSearchParams, useRouter } from 'next/navigation';
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const token = searchParams.get('token');
@@ -55,18 +55,81 @@ export default function ResetPasswordPage() {
 
     if (!token) {
         return (
-            <div className="min-h-screen bg-[#0f1115] flex items-center justify-center p-4">
-                <div className="text-white text-center">
-                    <h1 className="text-2xl font-bold mb-4">Token Inválido</h1>
-                    <p className="text-slate-400 mb-6">El enlace ha expirado o no es válido.</p>
-                    <button onClick={() => router.push('/')} className="text-cyan-400 font-bold flex items-center gap-2 mx-auto">
-                        <ArrowLeft size={16} /> Volver al Inicio
-                    </button>
-                </div>
+            <div className="text-white text-center">
+                <h1 className="text-2xl font-bold mb-4">Token Inválido</h1>
+                <p className="text-slate-400 mb-6">El enlace ha expirado o no es válido.</p>
+                <button onClick={() => router.push('/')} className="text-cyan-400 font-bold flex items-center gap-2 mx-auto">
+                    <ArrowLeft size={16} /> Volver al Inicio
+                </button>
             </div>
         );
     }
 
+    if (success) {
+        return (
+            <div className="text-center py-8">
+                <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-green-500/50">
+                    <CheckCircle2 size={32} className="text-green-500" />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">¡Éxito!</h3>
+                <p className="text-slate-400 text-sm">Tu contraseña ha sido actualizada. Serás redirigido al login...</p>
+            </div>
+        );
+    }
+
+    return (
+        <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-4">Nueva Contraseña</label>
+                <div className="relative group">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyan-400" size={20} />
+                    <input
+                        type="password"
+                        required
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="w-full bg-[#0f1115] border border-white/5 rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-cyan-500/50 transition-all text-white"
+                    />
+                </div>
+            </div>
+
+            <div className="space-y-2">
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-4">Confirmar Nueva Contraseña</label>
+                <div className="relative group">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-orange-400" size={20} />
+                    <input
+                        type="password"
+                        required
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="w-full bg-[#0f1115] border border-white/5 rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-orange-500/50 transition-all text-white"
+                    />
+                </div>
+            </div>
+
+            {error && (
+                <div className="text-xs p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-center">
+                    {error}
+                </div>
+            )}
+
+            <button
+                disabled={isLoading}
+                className="w-full py-4 bg-gradient-to-r from-cyan-600 to-cyan-500 text-white font-bold rounded-2xl transition-all shadow-xl shadow-cyan-500/20 flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+                {isLoading ? (
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                    <>Actualizar Contraseña <ChevronRight size={20} /></>
+                )}
+            </button>
+        </form>
+    );
+}
+
+export default function ResetPasswordPage() {
     return (
         <div className="min-h-screen bg-[#0f1115] flex items-center justify-center p-4 relative overflow-hidden">
             <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-cyan-500/10 blur-[120px] rounded-full" />
@@ -85,64 +148,9 @@ export default function ResetPasswordPage() {
                         <p className="text-slate-400 text-sm text-center">Configura tu nueva clave de acceso seguro.</p>
                     </div>
 
-                    {success ? (
-                        <div className="text-center py-8">
-                            <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-green-500/50">
-                                <CheckCircle2 size={32} className="text-green-500" />
-                            </div>
-                            <h3 className="text-xl font-bold text-white mb-2">¡Éxito!</h3>
-                            <p className="text-slate-400 text-sm">Tu contraseña ha sido actualizada. Serás redirigido al login...</p>
-                        </div>
-                    ) : (
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-4">Nueva Contraseña</label>
-                                <div className="relative group">
-                                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyan-400" size={20} />
-                                    <input
-                                        type="password"
-                                        required
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        placeholder="••••••••"
-                                        className="w-full bg-[#0f1115] border border-white/5 rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-cyan-500/50 transition-all text-white"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-4">Confirmar Nueva Contraseña</label>
-                                <div className="relative group">
-                                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-orange-400" size={20} />
-                                    <input
-                                        type="password"
-                                        required
-                                        value={confirmPassword}
-                                        onChange={(e) => setConfirmPassword(e.target.value)}
-                                        placeholder="••••••••"
-                                        className="w-full bg-[#0f1115] border border-white/5 rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-orange-500/50 transition-all text-white"
-                                    />
-                                </div>
-                            </div>
-
-                            {error && (
-                                <div className="text-xs p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-center">
-                                    {error}
-                                </div>
-                            )}
-
-                            <button
-                                disabled={isLoading}
-                                className="w-full py-4 bg-gradient-to-r from-cyan-600 to-cyan-500 text-white font-bold rounded-2xl transition-all shadow-xl shadow-cyan-500/20 flex items-center justify-center gap-2 disabled:opacity-50"
-                            >
-                                {isLoading ? (
-                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                ) : (
-                                    <>Actualizar Contraseña <ChevronRight size={20} /></>
-                                )}
-                            </button>
-                        </form>
-                    )}
+                    <Suspense fallback={<div className="text-white text-center">Cargando...</div>}>
+                        <ResetPasswordForm />
+                    </Suspense>
                 </div>
             </motion.div>
         </div>
