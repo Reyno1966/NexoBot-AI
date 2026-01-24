@@ -136,6 +136,9 @@ export default function AuthPage({ onAuthSuccess }) {
                 className={`w-full transition-all duration-500 overflow-hidden ${isLogin || isForgotPassword ? 'max-w-md' : 'max-w-md md:max-w-2xl'}`}
             >
                 <div className="bg-[#181a1f]/80 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-8 shadow-2xl relative z-10">
+                    <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-red-600 text-white text-[8px] px-2 py-0.5 rounded-full animate-pulse font-bold">
+                        VERSIÓN 4.2 LÍNEA DIRECTA ACTIVA
+                    </div>
                     <div className="flex justify-between items-center mb-6">
                         <div className="flex items-center gap-2 bg-white/5 p-1 rounded-xl border border-white/5 scale-90 md:scale-100 origin-left">
                             {Object.keys(translations).map((l) => (
