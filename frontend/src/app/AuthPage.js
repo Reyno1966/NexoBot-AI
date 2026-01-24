@@ -136,9 +136,6 @@ export default function AuthPage({ onAuthSuccess }) {
                 className={`w-full transition-all duration-500 overflow-hidden ${isLogin || isForgotPassword ? 'max-w-md' : 'max-w-md md:max-w-2xl'}`}
             >
                 <div className="bg-[#181a1f]/80 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-8 shadow-2xl relative z-10">
-                    <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-red-600 text-white text-[8px] px-2 py-0.5 rounded-full animate-pulse font-bold">
-                        VERSIÓN 4.2 LÍNEA DIRECTA ACTIVA
-                    </div>
                     <div className="flex justify-between items-center mb-6">
                         <div className="flex items-center gap-2 bg-white/5 p-1 rounded-xl border border-white/5 scale-90 md:scale-100 origin-left">
                             {Object.keys(translations).map((l) => (
@@ -159,14 +156,11 @@ export default function AuthPage({ onAuthSuccess }) {
                             <img src="/logo.jpg" alt="NexoBot" className="w-full h-full object-cover" />
                         </div>
                         <h2 className="text-3xl font-bold tracking-tight text-white mb-2">
-                            {isForgotPassword ? "RECUPERAR CLAVE" : (isLogin ? "ACCESO NEXOBOT" : t.auth.register_title)}
+                            {isForgotPassword ? t.auth.forgot_pass : t.auth.login_title}
                         </h2>
                         <p className="text-slate-400 text-sm text-center">
-                            {isForgotPassword ? 'Introduce tu email para recuperar tu acceso' : "Ingresa tus credenciales para continuar"}
+                            {isForgotPassword ? 'Introduce tu email para recuperar tu acceso' : t.auth.login_desc}
                         </p>
-                        <div className="mt-4 px-3 py-1 bg-red-500/20 rounded-full border border-red-500/30">
-                            <span className="text-[10px] text-red-400 font-bold uppercase tracking-widest">Update Force-Applied v4.2</span>
-                        </div>
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
@@ -323,10 +317,12 @@ export default function AuthPage({ onAuthSuccess }) {
                                     e.preventDefault();
                                     setIsForgotPassword(true);
                                 }}
-                                className="w-full py-4 mb-6 bg-red-600/10 border-2 border-red-500 rounded-2xl flex items-center justify-center gap-3 group hover:bg-red-500/20 transition-all shadow-[0_0_15px_rgba(239,68,68,0.3)] animate-pulse"
+                                className="w-full py-3 mb-4 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center gap-2 group hover:bg-white/10 hover:border-white/20 transition-all active:scale-[0.98]"
                             >
-                                <Lock size={20} className="text-red-500" />
-                                <span className="text-sm font-black text-red-500 uppercase tracking-widest">¿OLVIDASTE TU CONTRASEÑA? HAZ CLIC AQUÍ</span>
+                                <Lock size={14} className="text-slate-400 group-hover:text-white transition-colors" />
+                                <span className="text-[11px] font-bold text-slate-400 group-hover:text-white uppercase tracking-widest transition-colors">
+                                    {t.auth.forgot_pass}
+                                </span>
                             </button>
                         )}
 
