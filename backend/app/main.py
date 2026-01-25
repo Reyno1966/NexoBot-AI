@@ -201,13 +201,13 @@ async def chat_endpoint(request: ChatRequest, raw_request: Request, session: Ses
             tenant.name, tenant_phone, admin_email, entities.get('cliente', 'Usuario'), entities
         )
     elif intent in ["generate_invoice", "generate_contract", "generate_summary"]:
-            NotificationService.notify_request(
-                tenant.name, tenant_phone, admin_email, entities.get('cliente', 'Usuario'), intent.replace("generate_", "").capitalize()
-            )
-        elif intent == "support_escalation":
-            NotificationService.notify_support_issue(
-                tenant.name, tenant_phone, admin_email, entities.get('cliente', 'Usuario'), entities.get('problema', 'Problema no especificado')
-            )
+        NotificationService.notify_request(
+            tenant.name, tenant_phone, admin_email, entities.get('cliente', 'Usuario'), intent.replace("generate_", "").capitalize()
+        )
+    elif intent == "support_escalation":
+        NotificationService.notify_support_issue(
+            tenant.name, tenant_phone, admin_email, entities.get('cliente', 'Usuario'), entities.get('problema', 'Problema no especificado')
+        )
 
     if intent == "generate_contract":
         filename = AIService.generate_contract_pdf(entities, tenant_context['name'])

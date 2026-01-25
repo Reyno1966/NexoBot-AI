@@ -56,7 +56,8 @@ export default function PublicChat({ params }) {
                         phone: data.phone || '',
                         address: data.address || '',
                         services: JSON.parse(data.services || '[]'),
-                        businessHours: JSON.parse(data.business_hours || '{}')
+                        businessHours: JSON.parse(data.business_hours || '{}'),
+                        stripePublicKey: data.stripe_public_key || null
                     });
                 }
             } catch (error) {
@@ -169,7 +170,17 @@ export default function PublicChat({ params }) {
                                                         <p className="text-sm font-bold text-white">{svc.name}</p>
                                                         {svc.stock !== '0' && <p className="text-[10px] text-slate-500">Stock disponible: {svc.stock}</p>}
                                                     </div>
-                                                    <span className="text-indigo-400 font-bold">${svc.price}</span>
+                                                    <div className="flex flex-col items-end gap-2">
+                                                        <span className="text-indigo-400 font-bold">${svc.price}</span>
+                                                        {businessInfo.stripePublicKey && (
+                                                            <button
+                                                                onClick={() => alert(`Iniciando pago de ${svc.name} por $${svc.price}... (Función en desarrollo)`)}
+                                                                className="px-3 py-1 bg-green-500/20 text-green-400 border border-green-500/20 rounded-lg text-[8px] font-bold uppercase hover:bg-green-500/30 transition-all"
+                                                            >
+                                                                💳 Pagar Ahora
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             ))}
                                         </div>

@@ -16,12 +16,12 @@ def get_db():
 from uuid import UUID
 from app.schemas.auth import (
     UserCreate, Token, UserResponse, TenantRead, TenantUpdate,
-    ForgotPasswordRequest, ResetPasswordRequest
+    ForgotPasswordRequest, ResetPasswordRequest, TenantPublicRead
 )
 from app.services.notification_service import NotificationService
 router = APIRouter()
 
-@router.get("/public/tenant/{tenant_id}", response_model=TenantRead)
+@router.get("/public/tenant/{tenant_id}", response_model=TenantPublicRead)
 def get_public_tenant_info(tenant_id: UUID, session: Session = Depends(get_db)):
     tenant = session.get(Tenant, tenant_id)
     if not tenant:

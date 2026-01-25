@@ -134,6 +134,8 @@ export default function NexoBotDashboard() {
                         isLocked: data.tenant.is_locked,
                         currency: data.tenant.currency || 'USD',
                         stripe_customer_id: data.tenant.stripe_customer_id,
+                        stripe_public_key: data.tenant.stripe_public_key || '',
+                        stripe_secret_key: data.tenant.stripe_secret_key || '',
                         services: JSON.parse(data.tenant.services || '[]'),
                         businessHours: {
                             monday: { open: '09:00', close: '18:00', enabled: true },
@@ -258,6 +260,8 @@ export default function NexoBotDashboard() {
         currency: 'USD',
         mainInterest: 'Citas',
         stripe_customer_id: null,
+        stripe_public_key: '',
+        stripe_secret_key: '',
         services: [],
         businessHours: {
             monday: { open: '09:00', close: '18:00', enabled: true },
@@ -288,6 +292,8 @@ export default function NexoBotDashboard() {
                     country: businessConfig.country,
                     logo_url: businessConfig.logoUrl,
                     main_interest: businessConfig.mainInterest,
+                    stripe_public_key: businessConfig.stripe_public_key,
+                    stripe_secret_key: businessConfig.stripe_secret_key,
                     services: JSON.stringify(businessConfig.services),
                     business_hours: JSON.stringify(businessConfig.businessHours)
                 })
@@ -1080,6 +1086,34 @@ export default function NexoBotDashboard() {
                                                 </div>
                                             </div>
                                         ))}
+                                    </div>
+                                </div>
+
+                                {/* Nueva Sección: Pagos Privados (Pasarela Propia) */}
+                                <div className="space-y-4 pt-4 border-t border-white/5">
+                                    <label className="text-[10px] font-bold text-orange-400 uppercase tracking-widest ml-2 block">💸 Pasarela de Pagos Privada (Para cobrar a tus clientes)</label>
+                                    <p className="text-[10px] text-slate-500 ml-2">Configura tus llaves de Stripe si deseas que tus clientes puedan pagarte directamente a través del asistente.</p>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-2 block">Stripe Public Key</label>
+                                            <input
+                                                type="text"
+                                                value={businessConfig.stripe_public_key}
+                                                onChange={(e) => setBusinessConfig({ ...businessConfig, stripe_public_key: e.target.value })}
+                                                placeholder="pk_live_..."
+                                                className="w-full bg-[#0f1115] border border-white/5 p-3 rounded-xl outline-none focus:border-orange-500 text-xs font-mono"
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-2 block">Stripe Secret Key</label>
+                                            <input
+                                                type="password"
+                                                value={businessConfig.stripe_secret_key}
+                                                onChange={(e) => setBusinessConfig({ ...businessConfig, stripe_secret_key: e.target.value })}
+                                                placeholder="sk_live_..."
+                                                className="w-full bg-[#0f1115] border border-white/5 p-3 rounded-xl outline-none focus:border-orange-500 text-xs font-mono"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
 

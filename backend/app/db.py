@@ -77,6 +77,8 @@ def init_db():
             from sqlalchemy import text
             print(">>> [DB.PY] APLICANDO PARCHES DE ESQUEMA (SI SON NECESARIOS)...", file=sys.stderr)
             conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS stripe_customer_id VARCHAR;"))
+            conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS stripe_public_key VARCHAR;"))
+            conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS stripe_secret_key VARCHAR;"))
             conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS industry VARCHAR;"))
             conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS phone VARCHAR;"))
             conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS address VARCHAR;"))
