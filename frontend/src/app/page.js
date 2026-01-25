@@ -179,6 +179,25 @@ export default function NexoBotDashboard() {
         setToken(null);
     };
 
+    const handleSocialShare = (platform) => {
+        const shareLink = `${window.location.origin}/public/${user?.tenant_id || 'demo'}`;
+        const text = lang === 'es'
+            ? `¡Hola! Mira el asistente inteligente de ${businessConfig.name} para agendar citas y comprar online: ${shareLink}`
+            : `Hi! Check out ${businessConfig.name}'s new AI assistant for bookings and orders: ${shareLink}`;
+
+        if (platform === 'whatsapp') {
+            window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+        } else if (platform === 'facebook') {
+            window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareLink)}`, '_blank');
+        } else if (platform === 'instagram') {
+            navigator.clipboard.writeText(shareLink);
+            alert(lang === 'es'
+                ? '¡Link copiado! Pégalo en tu biografía de Instagram para que tus clientes te encuentren.'
+                : 'Link copied! Paste it into your Instagram bio so your customers can find you.');
+            window.open('https://instagram.com', '_blank');
+        }
+    };
+
     const handleQuickAction = (action) => {
         setIsChatOpen(true);
         let prompt = '';
@@ -802,13 +821,26 @@ export default function NexoBotDashboard() {
                                                 </div>
                                             </div>
 
-                                            <div className="flex gap-4">
-                                                <button className="flex-1 py-4 bg-[#25D366]/10 border border-[#25D366]/20 rounded-2xl flex flex-col items-center gap-2 hover:bg-[#25D366]/20 transition-all">
+                                            <div className="grid grid-cols-3 gap-4">
+                                                <button
+                                                    onClick={() => handleSocialShare('whatsapp')}
+                                                    className="py-4 bg-[#25D366]/10 border border-[#25D366]/20 rounded-2xl flex flex-col items-center gap-2 hover:bg-[#25D366]/20 transition-all active:scale-95"
+                                                >
                                                     <MessageSquare className="text-[#25D366]" size={24} />
                                                     <span className="text-[10px] font-bold uppercase">WhatsApp</span>
                                                 </button>
-                                                <button className="flex-1 py-4 bg-[#E1306C]/10 border border-[#E1306C]/20 rounded-2xl flex flex-col items-center gap-2 hover:bg-[#E1306C]/20 transition-all">
-                                                    <Share2 className="text-[#E1306C]" size={24} />
+                                                <button
+                                                    onClick={() => handleSocialShare('facebook')}
+                                                    className="py-4 bg-[#1877F2]/10 border border-[#1877F2]/20 rounded-2xl flex flex-col items-center gap-2 hover:bg-[#1877F2]/20 transition-all active:scale-95"
+                                                >
+                                                    <Share2 className="text-[#1877F2]" size={20} />
+                                                    <span className="text-[10px] font-bold uppercase">Facebook</span>
+                                                </button>
+                                                <button
+                                                    onClick={() => handleSocialShare('instagram')}
+                                                    className="py-4 bg-[#E1306C]/10 border border-[#E1306C]/20 rounded-2xl flex flex-col items-center gap-2 hover:bg-[#E1306C]/20 transition-all active:scale-95"
+                                                >
+                                                    <Share2 className="text-[#E1306C]" size={20} />
                                                     <span className="text-[10px] font-bold uppercase">Instagram</span>
                                                 </button>
                                             </div>
