@@ -87,6 +87,10 @@ export const translations = {
             back_to_login: "Volver al Login",
             forgot_pass: "¿Olvidaste tu contraseña?",
             reset_send: "Enviar instrucciones"
+        },
+        social_proof: {
+            joined: "+{count} empresas ya transforman su negocio con NexoBot",
+            active_now: "{count} usuarios conectados ahora mismo"
         }
     },
     en: {
@@ -177,6 +181,10 @@ export const translations = {
             back_to_login: "Back to Login",
             forgot_pass: "Forgot your password?",
             reset_send: "Send instructions"
+        },
+        social_proof: {
+            joined: "+{count} companies already transforming with NexoBot",
+            active_now: "{count} users online right now"
         }
     },
     de: {

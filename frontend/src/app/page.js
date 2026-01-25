@@ -84,6 +84,18 @@ export default function NexoBotDashboard() {
     const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
     const t = translations[lang] || translations['es'];
 
+    // Simulation for Social Proof
+    const [userCount, setUserCount] = useState(12430);
+    const [onlineCount, setOnlineCount] = useState(842);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setUserCount(prev => prev + Math.floor(Math.random() * 2));
+            setOnlineCount(prev => prev + (Math.floor(Math.random() * 5) - 2));
+        }, 5000);
+        return () => clearInterval(interval);
+    }, []);
+
     // Industries Dinámicas basadas en el Idioma
     const industries = industryPresets.map(preset => ({
         ...preset,
@@ -391,7 +403,7 @@ export default function NexoBotDashboard() {
                 flex flex-col p-6 transition-transform duration-300 ease-in-out
                 md:flex md:static overflow-y-auto scrollbar-hide
             `}>
-                <div className="flex items-center justify-between mb-6 md:mb-10 px-2 lg:px-0">
+                <div className="flex items-center justify-between mb-8 px-2 lg:px-0">
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl overflow-hidden flex items-center justify-center shadow-lg shadow-cyan-500/20 bg-white/5">
                             <img src={businessConfig.logoUrl} alt="Logo" className="w-full h-full object-contain" />
@@ -404,6 +416,24 @@ export default function NexoBotDashboard() {
                     <button onClick={() => setIsSidebarOpen(false)} className="md:hidden p-2 text-slate-400">
                         <X size={24} />
                     </button>
+                </div>
+
+                {/* Community Snapshot */}
+                <div className="mb-8 px-2">
+                    <div className="flex items-center gap-2 mb-3">
+                        <div className="flex -space-x-1.5">
+                            {[11, 12, 13].map((i) => (
+                                <img key={i} src={`https://i.pravatar.cc/100?u=user${i}`} className="w-5 h-5 rounded-full border border-[#181a1f]" alt="U" />
+                            ))}
+                        </div>
+                        <span className="text-[9px] font-bold text-green-500 uppercase tracking-tight flex items-center gap-1">
+                            <span className="w-1 h-1 bg-green-500 rounded-full animate-pulse" />
+                            {onlineCount} {lang === 'es' ? 'en línea' : 'online'}
+                        </span>
+                    </div>
+                    <p className="text-[10px] font-bold text-slate-400 leading-tight">
+                        {t.social_proof.joined.replace('{count}', userCount.toLocaleString())}
+                    </p>
                 </div>
 
                 <div className="hidden md:block bg-[#1e2126] rounded-2xl p-4 border border-white/5 space-y-3 mb-6">

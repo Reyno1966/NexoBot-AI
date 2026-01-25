@@ -124,6 +124,17 @@ export default function AuthPage({ onAuthSuccess }) {
         }
     };
 
+    const [userCount, setUserCount] = useState(12430);
+    const [onlineCount, setOnlineCount] = useState(842);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setUserCount(prev => prev + Math.floor(Math.random() * 2));
+            setOnlineCount(prev => prev + (Math.floor(Math.random() * 5) - 2));
+        }, 5000);
+        return () => clearInterval(interval);
+    }, []);
+
     return (
         <div className="min-h-screen bg-[#0f1115] flex items-center justify-center p-4 relative overflow-hidden">
             {/* Background Decorations */}
@@ -135,6 +146,27 @@ export default function AuthPage({ onAuthSuccess }) {
                 animate={{ opacity: 1, y: 0 }}
                 className={`w-full transition-all duration-500 overflow-hidden ${isLogin || isForgotPassword ? 'max-w-md' : 'max-w-md md:max-w-2xl'}`}
             >
+                {/* Social Proof Header */}
+                <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex flex-col items-center mb-6"
+                >
+                    <div className="flex -space-x-2 mb-3">
+                        {[1, 2, 3, 4, 5].map((i) => (
+                            <img key={i} src={`https://i.pravatar.cc/100?u=user${i}`} alt="User" className="w-8 h-8 rounded-full border-2 border-[#181a1f] shadow-lg" />
+                        ))}
+                        <div className="w-8 h-8 rounded-full bg-cyan-600 border-2 border-[#181a1f] flex items-center justify-center text-[10px] font-bold text-white shadow-lg">
+                            +
+                        </div>
+                    </div>
+                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center px-4">
+                        <span className="text-cyan-400">{t.social_proof.joined.replace('{count}', userCount.toLocaleString())}</span>
+                        <span className="mx-2 opacity-30">|</span>
+                        <span className="text-green-500">{t.social_proof.active_now.replace('{count}', onlineCount)}</span>
+                    </p>
+                </motion.div>
+
                 <div className="bg-[#181a1f]/80 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-8 shadow-2xl relative z-10">
                     <div className="flex justify-between items-center mb-6">
                         <div className="flex items-center gap-2 bg-white/5 p-1 rounded-xl border border-white/5 scale-90 md:scale-100 origin-left">
