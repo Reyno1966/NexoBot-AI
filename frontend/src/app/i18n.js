@@ -275,6 +275,10 @@ export const translations = {
             back_to_login: "Zurück zum Login",
             forgot_pass: "Passwort vergessen?",
             reset_send: "Anleitung senden"
+        },
+        social_proof: {
+            joined: "+{count} Unternehmen transformieren bereits ihr Geschäft mit NexoBot",
+            active_now: "{count} Benutzer gerade online"
         }
     },
     it: {
@@ -365,6 +369,10 @@ export const translations = {
             back_to_login: "Torna al Login",
             forgot_pass: "Password dimenticata?",
             reset_send: "Invia istruzioni"
+        },
+        social_proof: {
+            joined: "+{count} aziende stanno già trasformando il loro business con NexoBot",
+            active_now: "{count} utenti online ora"
         }
     },
     fr: {
@@ -455,6 +463,10 @@ export const translations = {
             back_to_login: "Retour à la connexion",
             forgot_pass: "Mot de passe oublié ?",
             reset_send: "Envoyer les instructions"
+        },
+        social_proof: {
+            joined: "+{count} entreprises transforment déjà leur activité avec NexoBot",
+            active_now: "{count} utilisateurs en ligne en ce moment"
         }
     },
     pt: {
@@ -545,6 +557,10 @@ export const translations = {
             back_to_login: "Voltar para o Login",
             forgot_pass: "Esqueceu sua senha?",
             reset_send: "Enviar instruções"
+        },
+        social_proof: {
+            joined: "+{count} empresas já transformam seu negócio com NexoBot",
+            active_now: "{count} usuários conectados agora mesmo"
         }
     }
 };

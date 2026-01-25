@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Lock, Bot, ChevronRight, UserPlus, LogIn, ArrowLeft, Scissors, Stethoscope, Gavel, Home, Hotel, Briefcase, Phone, MapPin, Building, Calendar, FileText, Share2, Globe } from 'lucide-react';
 import { translations } from './i18n';
