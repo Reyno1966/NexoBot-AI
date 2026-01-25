@@ -844,17 +844,48 @@ export default function NexoBotDashboard() {
                                 </div>
 
                                 <div>
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 block">Logo del Negocio</label>
+                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 block">{t.business_logo}</label>
                                     <div className="flex gap-4 items-center">
                                         <div className="w-16 h-16 bg-[#0f1115] rounded-2xl border border-white/5 flex items-center justify-center overflow-hidden">
                                             <img src={businessConfig.logoUrl} className="w-full h-full object-contain" />
                                         </div>
-                                        <input
-                                            type="text"
-                                            placeholder="URL del logo (ej: cloudinary.com/mi-logo.png)"
-                                            onChange={(e) => setBusinessConfig({ ...businessConfig, logoUrl: e.target.value })}
-                                            className="flex-1 bg-[#0f1115] border border-white/5 p-4 rounded-2xl outline-none focus:border-indigo-500 transition-all text-xs font-mono"
-                                        />
+                                        <div className="flex-1 flex flex-col gap-2">
+                                            <input
+                                                type="text"
+                                                value={businessConfig.logoUrl === '/logo.jpg' ? '' : businessConfig.logoUrl}
+                                                placeholder={lang === 'es' ? "URL del logo o sube uno..." : "Logo URL or upload one..."}
+                                                onChange={(e) => setBusinessConfig({ ...businessConfig, logoUrl: e.target.value })}
+                                                className="w-full bg-[#0f1115] border border-white/5 p-4 rounded-2xl outline-none focus:border-indigo-500 transition-all text-xs font-mono"
+                                            />
+                                            <div className="flex gap-2">
+                                                <label className="flex-1 py-2 bg-indigo-600/10 text-indigo-400 border border-indigo-500/20 rounded-xl text-[10px] font-bold uppercase hover:bg-indigo-600/20 transition-all text-center cursor-pointer">
+                                                    📤 {lang === 'es' ? 'Subir Logo' : 'Upload Logo'}
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        className="hidden"
+                                                        onChange={(e) => {
+                                                            const file = e.target.files[0];
+                                                            if (file) {
+                                                                const reader = new FileReader();
+                                                                reader.onloadend = () => {
+                                                                    setBusinessConfig({ ...businessConfig, logoUrl: reader.result });
+                                                                };
+                                                                reader.readAsDataURL(file);
+                                                            }
+                                                        }}
+                                                    />
+                                                </label>
+                                                {businessConfig.logoUrl !== '/logo.jpg' && (
+                                                    <button
+                                                        onClick={() => setBusinessConfig({ ...businessConfig, logoUrl: '/logo.jpg' })}
+                                                        className="px-4 py-2 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl text-[10px] font-bold uppercase hover:bg-red-500/20 transition-all"
+                                                    >
+                                                        {lang === 'es' ? 'Reset' : 'Reset'}
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -1084,8 +1115,8 @@ export default function NexoBotDashboard() {
                         >
                             <div className="bg-indigo-600 p-4 md:p-6 flex justify-between items-center text-white">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center border-2 border-white/20">
-                                        <img src="/logo.jpg" alt="NexoBot" className="w-full h-full object-cover" />
+                                    <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center border-2 border-white/20 bg-white/5">
+                                        <img src={businessConfig.logoUrl} alt="NexoBot" className="w-full h-full object-contain" />
                                     </div>
                                     <div>
                                         <h4 className="font-bold">NexoBot Assistant</h4>
