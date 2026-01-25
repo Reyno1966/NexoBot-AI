@@ -82,7 +82,25 @@ def init_db():
             conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS address VARCHAR;"))
             conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS country VARCHAR;"))
             conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS main_interest VARCHAR;"))
+            conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS business_hours VARCHAR;"))
             conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS is_locked BOOLEAN DEFAULT FALSE;"))
+            
+            # Asegurar tabla de bookings si no se creó con create_all
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS booking (
+                    id UUID PRIMARY KEY,
+                    tenant_id UUID NOT NULL,
+                    property_name VARCHAR NOT NULL,
+                    customer_id UUID,
+                    start_date TIMESTAMP NOT NULL,
+                    end_date TIMESTAMP NOT NULL,
+                    status VARCHAR DEFAULT 'confirmed',
+                    total_price FLOAT DEFAULT 0.0,
+                    notes VARCHAR,
+                    created_at TIMESTAMP,
+                    updated_at TIMESTAMP
+                );
+            """))
             
         print(">>> [DB.PY] TABLAS Y ESQUEMA SINCRONIZADOS CORRECTAMENTE", file=sys.stderr)
     except Exception as e:

@@ -155,17 +155,17 @@ export default function AuthPage({ onAuthSuccess }) {
                         <div className="w-20 h-20 rounded-2xl overflow-hidden mb-4 shadow-2xl shadow-cyan-500/20">
                             <img src="/logo.jpg" alt="NexoBot" className="w-full h-full object-cover" />
                         </div>
-                        <h2 className="text-3xl font-bold tracking-tight text-white mb-2">
-                            {isForgotPassword ? t.auth.forgot_pass : t.auth.login_title}
+                        <h2 className="text-3xl font-bold tracking-tight text-white mb-2 text-center">
+                            {isForgotPassword ? t.auth.forgot_pass : (isLogin ? t.auth.login_title : t.auth.register_title)}
                         </h2>
                         <p className="text-slate-400 text-sm text-center">
-                            {isForgotPassword ? 'Introduce tu email para recuperar tu acceso' : t.auth.login_desc}
+                            {isForgotPassword ? (lang === 'es' ? 'Introduce tu email para recuperar tu acceso' : 'Enter your email to recover access') : (isLogin ? t.auth.login_desc : t.auth.register_desc)}
                         </p>
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-4">Email Corporativo</label>
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-4">{t.auth.email}</label>
                             <div className="relative group">
                                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyan-400 transition-colors" size={20} />
                                 <input
@@ -184,7 +184,7 @@ export default function AuthPage({ onAuthSuccess }) {
                                 <div className={`grid gap-5 ${!isLogin ? 'md:grid-cols-2' : 'grid-cols-1'}`}>
                                     <div className="space-y-2">
                                         <div className="flex justify-between items-center ml-4">
-                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Contraseña de Acceso</label>
+                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{t.auth.pass}</label>
                                         </div>
                                         <div className="relative group">
                                             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-orange-400 transition-colors" size={20} />
@@ -201,7 +201,7 @@ export default function AuthPage({ onAuthSuccess }) {
 
                                     {!isLogin && (
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-4">Repetir Contraseña</label>
+                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-4">{t.auth.repeat_pass}</label>
                                             <div className="relative group">
                                                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyan-400 transition-colors" size={20} />
                                                 <input
@@ -224,7 +224,7 @@ export default function AuthPage({ onAuthSuccess }) {
                                         className="space-y-4 pt-4 border-t border-white/5"
                                     >
                                         <div>
-                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-4 block mb-3">Elegir Herramienta de Trabajo</label>
+                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-4 block mb-3">{t.auth.tool_select}</label>
                                             <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3">
                                                 {industries.map((ind) => (
                                                     <button
@@ -235,20 +235,20 @@ export default function AuthPage({ onAuthSuccess }) {
                                                     >
                                                         {industry === ind.id && <div className="absolute top-0 right-0 p-1 bg-white/20 rounded-bl-xl text-[7px] md:text-[8px]">Ok</div>}
                                                         <ind.icon size={18} className={industry === ind.id ? 'text-white' : 'text-slate-500 group-hover/item:text-cyan-400 transition-colors'} />
-                                                        <span className="text-center leading-tight">{ind.name}</span>
+                                                        <span className="text-center leading-tight">{t.industries[ind.id].name}</span>
                                                     </button>
                                                 ))}
                                             </div>
                                         </div>
 
                                         <div className="pt-4 border-t border-white/5">
-                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-4 block mb-3">¿Cuál es tu objetivo principal?</label>
+                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-4 block mb-3">{t.objective_label}</label>
                                             <div className="grid grid-cols-2 gap-3">
                                                 {[
-                                                    { id: 'Citas', label: 'Automatizar Citas', icon: Calendar },
-                                                    { id: 'Facturas', label: 'Gestionar Facturas', icon: FileText },
-                                                    { id: 'Marketing', label: 'Marketing y WhatsApp', icon: Share2 },
-                                                    { id: 'Asistente', label: 'Asistente Virtual 24/7', icon: Bot },
+                                                    { id: 'Citas', label: lang === 'es' ? 'Automatizar Citas' : 'Automate Appointments', icon: Calendar },
+                                                    { id: 'Facturas', label: lang === 'es' ? 'Gestionar Facturas' : 'Manage Invoices', icon: FileText },
+                                                    { id: 'Marketing', label: lang === 'es' ? 'Marketing y WhatsApp' : 'Marketing & WhatsApp', icon: Share2 },
+                                                    { id: 'Asistente', label: lang === 'es' ? 'Asistente Virtual 24/7' : '24/7 Virtual Assistant', icon: Bot },
                                                 ].map((opt) => (
                                                     <button
                                                         key={opt.id}
@@ -265,7 +265,7 @@ export default function AuthPage({ onAuthSuccess }) {
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div className="space-y-1">
-                                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-2">Teléfono de Contacto</label>
+                                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-2">{t.phone_label}</label>
                                                 <div className="relative group">
                                                     <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyan-400 transition-colors" size={18} />
                                                     <input
@@ -279,7 +279,7 @@ export default function AuthPage({ onAuthSuccess }) {
                                                 </div>
                                             </div>
                                             <div className="space-y-1">
-                                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-2">País / Región</label>
+                                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-2">{t.country_label}</label>
                                                 <div className="relative group">
                                                     <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-orange-400 transition-colors" size={18} />
                                                     <input
@@ -293,14 +293,14 @@ export default function AuthPage({ onAuthSuccess }) {
                                                 </div>
                                             </div>
                                             <div className="md:col-span-2 space-y-1">
-                                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-2">Dirección Fiscal (Opcional)</label>
+                                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-2">{t.address_label}</label>
                                                 <div className="relative group">
                                                     <Building className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyan-400 transition-colors" size={18} />
                                                     <input
                                                         type="text"
                                                         value={address}
                                                         onChange={(e) => setAddress(e.target.value)}
-                                                        placeholder="Puedes añadirla más tarde..."
+                                                        placeholder={lang === 'es' ? "Puedes añadirla más tarde..." : "You can add it later..."}
                                                         className="w-full bg-[#0f1115] border border-white/5 rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-cyan-500/50 transition-all text-sm text-white font-medium"
                                                     />
                                                 </div>
@@ -329,7 +329,7 @@ export default function AuthPage({ onAuthSuccess }) {
                         {error && (
                             <motion.div
                                 initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                                className={`text-xs p-4 rounded-xl text-center font-medium ${error.includes('exitoso') || error.includes('instrucciones') ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}
+                                className={`text-xs p-4 rounded-xl text-center font-medium ${error.includes('exitoso') || error.includes('instrucciones') || error.includes('successful') ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}
                             >
                                 {error}
                             </motion.div>
@@ -343,7 +343,7 @@ export default function AuthPage({ onAuthSuccess }) {
                                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                             ) : (
                                 <>
-                                    {isForgotPassword ? "ENVIAR EMAIL DE RECUPERACIÓN" : (isLogin ? "ENTRAR A NEXOBOT" : t.auth.register_btn)}
+                                    {isForgotPassword ? (lang === 'es' ? "ENVIAR EMAIL DE RECUPERACIÓN" : "SEND RECOVERY EMAIL") : (isLogin ? t.auth.login_btn : t.auth.register_btn)}
                                     <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
                                 </>
                             )}

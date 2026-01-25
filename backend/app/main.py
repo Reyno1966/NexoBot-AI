@@ -105,17 +105,28 @@ from fastapi import Request
 @app.post("/api/v1/chat", response_model=ChatResponse)
 async def chat_endpoint(request: ChatRequest, raw_request: Request, session: Session = Depends(get_db)):
     # 1. Buscar el Negocio (Tenant)
-    from app.models.base import Tenant, Customer
+    from app.models.base import Tenant, Customer, Booking
     from sqlmodel import select
     
     tenant = session.get(Tenant, request.tenant_id)
     
+    # Obtener Bookings (Reservas) actuales para saber disponibilidad
+    bookings = session.exec(select(Booking).where(Booking.tenant_id == request.tenant_id)).all()
+    bookings_str = json.dumps([{
+        "property": b.property_name,
+        "from": b.start_date.strftime("%Y-%m-%d"),
+        "to": b.end_date.strftime("%Y-%m-%d"),
+        "status": b.status
+    } for b in bookings])
+
     tenant_context = {
         "name": tenant.name if tenant else "NexoBot Demo",
         "industry": request.industry_override if request.industry_override else (tenant.industry if tenant else "general"),
         "main_interest": tenant.main_interest if tenant else "General",
         "language": request.language or "es",
-        "catalog": tenant.services if tenant else "[]"
+        "catalog": tenant.services if tenant else "[]",
+        "schedule": tenant.business_hours if tenant else "{}",
+        "current_bookings": bookings_str
     }
     
     # 2. Recuperar contexto del cliente (RAG)
@@ -159,11 +170,37 @@ async def chat_endpoint(request: ChatRequest, raw_request: Request, session: Ses
         admin_email = admin_user.email if admin_user else None
         tenant_phone = tenant.phone
 
-        if intent == "book_appointment":
-            NotificationService.notify_appointment(
-                tenant.name, tenant_phone, admin_email, entities.get('cliente', 'Usuario'), entities
-            )
-        elif intent in ["generate_invoice", "generate_contract", "generate_summary"]:
+    if intent == "book_appointment":
+        # Lógica para guardar la reserva en la base de datos
+        try:
+            from app.models.base import Booking
+            from datetime import datetime
+            
+            # Extraer fechas de las entidades de la IA
+            start_date_str = entities.get('fecha_entrada') or entities.get('fecha')
+            end_date_str = entities.get('fecha_salida')
+            
+            if start_date_str and end_date_str:
+                new_booking = Booking(
+                    tenant_id=tenant.id,
+                    property_name=entities.get('propiedad', 'General'),
+                    customer_id=request.customer_id,
+                    start_date=datetime.fromisoformat(start_date_str.replace('Z', '')),
+                    end_date=datetime.fromisoformat(end_date_str.replace('Z', '')),
+                    status="confirmed",
+                    total_price=float(entities.get('monto', 0)),
+                    notes=f"Reserva creada por NexoBot. Noches: {entities.get('noches', 'N/A')}"
+                )
+                session.add(new_booking)
+                session.commit()
+                print(f">>> [CHAT] Reserva guardada para {new_booking.property_name}")
+        except Exception as e:
+            print(f"Error guardando reserva: {e}")
+
+        NotificationService.notify_appointment(
+            tenant.name, tenant_phone, admin_email, entities.get('cliente', 'Usuario'), entities
+        )
+    elif intent in ["generate_invoice", "generate_contract", "generate_summary"]:
             NotificationService.notify_request(
                 tenant.name, tenant_phone, admin_email, entities.get('cliente', 'Usuario'), intent.replace("generate_", "").capitalize()
             )

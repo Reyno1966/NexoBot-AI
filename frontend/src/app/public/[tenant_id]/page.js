@@ -32,9 +32,14 @@ export default function PublicChat({ params }) {
     const [businessInfo, setBusinessInfo] = useState({
         name: 'Cargando...',
         industry: 'general',
-        logoUrl: '/logo.jpg'
+        logoUrl: '/logo.jpg',
+        phone: '',
+        address: '',
+        services: [],
+        businessHours: {}
     });
     const scrollRef = useRef(null);
+    const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
 
     useEffect(() => {
         // Cargar datos públicos del negocio
@@ -47,7 +52,11 @@ export default function PublicChat({ params }) {
                     setBusinessInfo({
                         name: data.name,
                         industry: data.industry,
-                        logoUrl: data.logo_url || '/logo.jpg'
+                        logoUrl: data.logo_url || '/logo.jpg',
+                        phone: data.phone || '',
+                        address: data.address || '',
+                        services: JSON.parse(data.services || '[]'),
+                        businessHours: JSON.parse(data.business_hours || '{}')
                     });
                 }
             } catch (error) {
@@ -118,17 +127,92 @@ export default function PublicChat({ params }) {
                     </div>
                 </div>
                 <div className="flex gap-2">
+                    <button onClick={() => setIsInfoModalOpen(true)} className="p-2 bg-indigo-500/20 text-indigo-400 rounded-xl hover:bg-indigo-500/30 transition-all flex items-center gap-2 px-3">
+                        <Info size={20} />
+                        <span className="text-[10px] font-bold uppercase hidden sm:inline">Info</span>
+                    </button>
                     <button onClick={handleClearMessages} className="p-2 bg-white/5 rounded-xl text-slate-400 hover:text-red-400 transition-all">
                         <Trash2 size={20} />
                     </button>
-                    <button className="p-2 bg-white/5 rounded-xl text-slate-400 hover:text-white transition-all">
-                        <Phone size={20} />
-                    </button>
-                    <button className="p-2 bg-white/5 rounded-xl text-slate-400 hover:text-white transition-all">
-                        <Globe size={20} />
-                    </button>
                 </div>
             </header>
+
+            {/* Information Modal */}
+            <AnimatePresence>
+                {isInfoModalOpen && (
+                    <>
+                        <motion.div
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            onClick={() => setIsInfoModalOpen(false)}
+                            className="fixed inset-0 bg-black/80 backdrop-blur-md z-[60]"
+                        />
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+                            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[95%] max-w-lg max-h-[85vh] overflow-y-auto bg-[#181a1f] p-6 rounded-3xl border border-white/10 shadow-2xl z-[70]"
+                        >
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="text-xl font-bold">Información del Negocio</h3>
+                                <button onClick={() => setIsInfoModalOpen(false)} className="p-2 text-slate-400">
+                                    <Plus className="rotate-45" size={24} />
+                                </button>
+                            </div>
+
+                            <div className="space-y-6">
+                                {/* Services Section */}
+                                {businessInfo.services.length > 0 && (
+                                    <div className="space-y-3">
+                                        <h4 className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest border-b border-white/5 pb-2">Nuestros Servicios y Productos</h4>
+                                        <div className="grid grid-cols-1 gap-2">
+                                            {businessInfo.services.map((svc, idx) => (
+                                                <div key={idx} className="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/5">
+                                                    <div>
+                                                        <p className="text-sm font-bold text-white">{svc.name}</p>
+                                                        {svc.stock !== '0' && <p className="text-[10px] text-slate-500">Stock disponible: {svc.stock}</p>}
+                                                    </div>
+                                                    <span className="text-indigo-400 font-bold">${svc.price}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Business Hours Section */}
+                                {Object.keys(businessInfo.businessHours).length > 0 && (
+                                    <div className="space-y-3">
+                                        <h4 className="text-[10px] font-bold text-teal-400 uppercase tracking-widest border-b border-white/5 pb-2">Horarios de Atención</h4>
+                                        <div className="grid grid-cols-1 gap-2">
+                                            {Object.entries(businessInfo.businessHours).map(([day, config]) => (
+                                                config.enabled && (
+                                                    <div key={day} className="flex justify-between items-center text-xs">
+                                                        <span className="text-slate-400 uppercase font-medium">{day}</span>
+                                                        <span className="text-white font-bold">{config.open} - {config.close}</span>
+                                                    </div>
+                                                )
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Contact Details */}
+                                <div className="pt-4 border-t border-white/5 space-y-3">
+                                    {businessInfo.phone && (
+                                        <div className="flex items-center gap-3 text-sm">
+                                            <Phone size={16} className="text-indigo-400" />
+                                            <span>{businessInfo.phone}</span>
+                                        </div>
+                                    )}
+                                    {businessInfo.address && (
+                                        <div className="flex items-center gap-3 text-sm">
+                                            <MapPin size={16} className="text-indigo-400" />
+                                            <span>{businessInfo.address}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
 
             {/* Chat Area */}
             <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-6 max-w-3xl mx-auto w-full scroll-smooth pt-8">

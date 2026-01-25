@@ -23,6 +23,7 @@ class Tenant(TenantBase, table=True):
     logo_url: Optional[str] = None
     currency: str = "USD"
     services: str = "[]"
+    business_hours: str = "{}"
     is_locked: bool = False
     stripe_customer_id: Optional[str] = None # Para gestión de suscripciones
     
@@ -55,3 +56,13 @@ class Transaction(MultiTenantModel, table=True):
     description: str
     is_income: bool = True
     invoice_url: Optional[str] = None
+
+class Booking(MultiTenantModel, table=True):
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    property_name: str # Nombre del apartamento/habitación (de tenant.services)
+    customer_id: Optional[UUID] = Field(default=None, foreign_key="customer.id")
+    start_date: datetime
+    end_date: datetime
+    status: str = "confirmed" # confirmed, pending, cancelled
+    total_price: float = 0.0
+    notes: str = ""

@@ -19,6 +19,24 @@ class TenantRead(BaseModel):
     address: Optional[str] = None
     country: Optional[str] = None
     main_interest: Optional[str] = None
+    logo_url: Optional[str] = None
+    currency: Optional[str] = "USD"
+    services: Optional[str] = "[]"
+    business_hours: Optional[str] = "{}"
+    is_locked: Optional[bool] = False
+    stripe_customer_id: Optional[str] = None
+
+class TenantUpdate(BaseModel):
+    name: Optional[str] = None
+    industry: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    country: Optional[str] = None
+    main_interest: Optional[str] = None
+    logo_url: Optional[str] = None
+    currency: Optional[str] = None
+    services: Optional[str] = None
+    business_hours: Optional[str] = None
 
 class ForgotPasswordRequest(BaseModel):
     email: EmailStr

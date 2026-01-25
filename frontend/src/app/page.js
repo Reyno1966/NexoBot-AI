@@ -48,55 +48,14 @@ import {
 } from 'recharts';
 
 // Industry Presets con Configuración de Transformación Automática
-const industries = [
-    {
-        id: 'barber',
-        name: 'Barbería / Estética',
-        icon: Scissors,
-        color: 'text-orange-400',
-        price: 9.99,
-        labels: { main: 'Agenda', items: 'Citas', clients: 'Clientes', action: 'Nueva Cita' }
-    },
-    {
-        id: 'health',
-        name: 'Odontólogo / Salud',
-        icon: Stethoscope,
-        color: 'text-teal-400',
-        price: 19.99,
-        labels: { main: 'Consultorio', items: 'Pacientes', clients: 'Historial', action: 'Nueva Consulta' }
-    },
-    {
-        id: 'legal',
-        name: 'Abogado / Legal',
-        icon: Gavel,
-        color: 'text-blue-400',
-        price: 29.99,
-        labels: { main: 'Casos Legales', items: 'Expedientes', clients: 'Representados', action: 'Nuevo Caso' }
-    },
-    {
-        id: 'realestate',
-        name: 'Inmobiliaria',
-        icon: Home,
-        color: 'text-emerald-400',
-        price: 24.99,
-        labels: { main: 'Propiedades', items: 'Listados', clients: 'Compradores', action: 'Captar Propiedad' }
-    },
-    {
-        id: 'rental',
-        name: 'Alquiler / Turismo',
-        icon: Hotel,
-        color: 'text-rose-400',
-        price: 19.99,
-        labels: { main: 'Reservas', items: 'Check-ins', clients: 'Huéspedes', action: 'Bloquear Fechas' }
-    },
-    {
-        id: 'consulting',
-        name: 'Consultoría',
-        icon: Briefcase,
-        color: 'text-indigo-400',
-        price: 29.99,
-        labels: { main: 'Proyectos', items: 'Sesiones', clients: 'Empresas', action: 'Nueva Sesión' }
-    },
+// Industry Presets - UI and Logic settings
+const industryPresets = [
+    { id: 'barber', icon: Scissors, color: 'text-orange-400', price: 9.99 },
+    { id: 'health', icon: Stethoscope, color: 'text-teal-400', price: 19.99 },
+    { id: 'legal', icon: Gavel, color: 'text-blue-400', price: 29.99 },
+    { id: 'realestate', icon: Home, color: 'text-emerald-400', price: 24.99 },
+    { id: 'rental', icon: Hotel, color: 'text-rose-400', price: 19.99 },
+    { id: 'consulting', icon: Briefcase, color: 'text-indigo-400', price: 29.99 },
 ];
 
 // Mock data for the chart based on image
@@ -113,7 +72,7 @@ const mockFinancialData = [
 
 
 export default function NexoBotDashboard() {
-    const [activeTab, setActiveTab] = useState('Citas');
+    const [activeTab, setActiveTab] = useState('main');
     const [isChatOpen, setIsChatOpen] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -124,6 +83,13 @@ export default function NexoBotDashboard() {
     const [lang, setLang] = useState('es');
     const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
     const t = translations[lang] || translations['es'];
+
+    // Industries Dinámicas basadas en el Idioma
+    const industries = industryPresets.map(preset => ({
+        ...preset,
+        name: t.industries[preset.id].name,
+        labels: t.industries[preset.id].labels
+    }));
 
     // Revisar si ya hay sesión al cargar
     useEffect(() => {
@@ -156,20 +122,29 @@ export default function NexoBotDashboard() {
                         isLocked: data.tenant.is_locked,
                         currency: data.tenant.currency || 'USD',
                         stripe_customer_id: data.tenant.stripe_customer_id,
-                        services: JSON.parse(data.tenant.services || '[]')
+                        services: JSON.parse(data.tenant.services || '[]'),
+                        businessHours: {
+                            monday: { open: '09:00', close: '18:00', enabled: true },
+                            tuesday: { open: '09:00', close: '18:00', enabled: true },
+                            wednesday: { open: '09:00', close: '18:00', enabled: true },
+                            thursday: { open: '09:00', close: '18:00', enabled: true },
+                            friday: { open: '09:00', close: '18:00', enabled: true },
+                            saturday: { open: '09:00', close: '14:00', enabled: false },
+                            sunday: { open: '09:00', close: '14:00', enabled: false },
+                            ...JSON.parse(data.tenant.business_hours || '{}')
+                        }
                     });
 
                     // Transformación automática de la UI basada en el Objetivo/Interés
                     const interest = data.tenant.main_interest;
-                    if (interest === 'Facturas') {
-                        setActiveTab('Facturación');
+                    if (interest === 'Facturas' || interest === 'Documents') {
+                        setActiveTab('billing_or_docs');
                     } else if (interest === 'Marketing') {
-                        setActiveTab('Marketing');
+                        setActiveTab('marketing');
                     } else if (interest === 'Finanzas') {
-                        setActiveTab('Finanzas');
+                        setActiveTab('finances');
                     } else {
-                        // Default o Citas
-                        setActiveTab(data.tenant.industry === 'rental' || data.tenant.industry === 'realestate' ? 'Propiedades' : 'Agenda');
+                        setActiveTab('main');
                     }
                 }
             }
@@ -193,10 +168,26 @@ export default function NexoBotDashboard() {
     const handleQuickAction = (action) => {
         setIsChatOpen(true);
         let prompt = '';
-        if (action === 'Factura') prompt = 'Hola NexoBot, quiero crear una nueva factura. ¿Qué datos necesitas?';
-        if (action === 'Cita') prompt = 'Hola, necesito agendar una nueva cita en el calendario.';
-        if (action === 'Memoria') prompt = 'NexoBot, genera una memoria de actividad de mi negocio en PDF por favor.';
-        if (action === 'Cliente') prompt = 'Quiero registrar un nuevo cliente en el sistema.';
+        if (action === 'Factura') {
+            prompt = lang === 'es'
+                ? 'Hola NexoBot, quiero crear una nueva factura. ¿Qué datos necesitas?'
+                : 'Hi NexoBot, I want to create a new invoice. What details do you need?';
+        }
+        if (action === 'Cita') {
+            prompt = lang === 'es'
+                ? 'Hola, necesito agendar una nueva cita en el calendario.'
+                : 'Hi, I need to schedule a new appointment in the calendar.';
+        }
+        if (action === 'Memoria') {
+            prompt = lang === 'es'
+                ? 'NexoBot, genera una memoria de actividad de mi negocio en PDF por favor.'
+                : 'NexoBot, please generate an activity report for my business in PDF.';
+        }
+        if (action === 'Cliente') {
+            prompt = lang === 'es'
+                ? 'Quiero registrar un nuevo cliente en el sistema.'
+                : 'I want to register a new client in the system.';
+        }
 
         setInput(prompt);
     };
@@ -208,7 +199,7 @@ export default function NexoBotDashboard() {
     const [isListening, setIsListening] = useState(false);
 
     const handleClearMessages = () => {
-        if (messages.length > 0 && window.confirm('¿Estás seguro de que quieres borrar la conversación?')) {
+        if (messages.length > 0 && window.confirm(t.confirm_delete)) {
             setMessages([]);
         }
     };
@@ -239,7 +230,6 @@ export default function NexoBotDashboard() {
 
         recognition.onend = () => {
             setIsListening(false);
-            // Si el usuario termina de hablar y hay texto, podrías llamar a handleSendMessage() aquí si fuera auto-envío
         };
 
         recognition.start();
@@ -256,8 +246,56 @@ export default function NexoBotDashboard() {
         currency: 'USD',
         mainInterest: 'Citas',
         stripe_customer_id: null,
-        services: []
+        services: [],
+        businessHours: {
+            monday: { open: '09:00', close: '18:00', enabled: true },
+            tuesday: { open: '09:00', close: '18:00', enabled: true },
+            wednesday: { open: '09:00', close: '18:00', enabled: true },
+            thursday: { open: '09:00', close: '18:00', enabled: true },
+            friday: { open: '09:00', close: '18:00', enabled: true },
+            saturday: { open: '09:00', close: '14:00', enabled: false },
+            sunday: { open: '09:00', close: '14:00', enabled: false },
+        }
     });
+
+    const handleSaveBusinessConfig = async () => {
+        setIsLoading(true);
+        try {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://nexobot-ai.onrender.com';
+            const response = await fetch(`${apiUrl}/api/v1/auth/tenant`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'token': token
+                },
+                body: JSON.stringify({
+                    name: businessConfig.name,
+                    industry: businessConfig.industry,
+                    phone: businessConfig.phone,
+                    address: businessConfig.address,
+                    country: businessConfig.country,
+                    logo_url: businessConfig.logoUrl,
+                    main_interest: businessConfig.mainInterest,
+                    services: JSON.stringify(businessConfig.services),
+                    business_hours: JSON.stringify(businessConfig.businessHours)
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                alert(t.save_success);
+                setIsSettingsOpen(false);
+            } else {
+                const errorData = await response.json();
+                alert(`Error: ${errorData.detail || t.save_error}`);
+            }
+        } catch (error) {
+            console.error('Error guardando configuración:', error);
+            alert('Error de conexión al guardar.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const currentIndustry = industries.find(i => i.id === businessConfig.industry) || industries[0];
 
@@ -360,7 +398,7 @@ export default function NexoBotDashboard() {
                         </div>
                         <div>
                             <h1 className="text-base md:text-lg font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-orange-400 leading-none">NexoBot</h1>
-                            <p className="text-[8px] md:text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Intelligent Brain</p>
+                            <p className="text-[8px] md:text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">{t.tagline}</p>
                         </div>
                     </div>
                     <button onClick={() => setIsSidebarOpen(false)} className="md:hidden p-2 text-slate-400">
@@ -371,21 +409,21 @@ export default function NexoBotDashboard() {
                 <div className="hidden md:block bg-[#1e2126] rounded-2xl p-4 border border-white/5 space-y-3 mb-6">
                     <div className="flex items-center gap-2 text-indigo-400">
                         <Bot size={18} />
-                        <p className="text-[10px] font-bold uppercase tracking-widest">Canal Público</p>
+                        <p className="text-[10px] font-bold uppercase tracking-widest">{t.public_link}</p>
                     </div>
-                    <p className="text-[10px] text-slate-500 font-medium leading-relaxed">Enlace para tus clientes.</p>
+                    <p className="text-[10px] text-slate-500 font-medium leading-relaxed">{t.public_link_desc}</p>
                     <div className="flex gap-2">
                         <button
                             onClick={() => window.open(`/public/${user?.tenant_id}`, '_blank')}
                             className="flex-1 py-3 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 border border-indigo-500/20 rounded-xl text-[10px] font-bold uppercase transition-all flex items-center justify-center gap-2"
                         >
-                            <ExternalLink size={14} /> Ver
+                            <ExternalLink size={14} /> {t.view}
                         </button>
                         <button
                             onClick={() => {
                                 const link = `${window.location.origin}/public/${user?.tenant_id}`;
                                 navigator.clipboard.writeText(link);
-                                alert('Link copiado');
+                                alert(t.copied);
                             }}
                             className="p-3 bg-white/5 hover:bg-white/10 text-slate-400 rounded-xl transition-all border border-white/5"
                         >
@@ -397,27 +435,30 @@ export default function NexoBotDashboard() {
                 <nav className="flex-1 space-y-2">
                     {[
                         {
+                            id: 'main',
                             name: currentIndustry.labels.main,
                             icon: Calendar
                         },
                         {
-                            name: businessConfig.industry === 'legal' || businessConfig.industry === 'consulting' ? 'Documentos' : 'Facturación',
+                            id: 'billing_or_docs',
+                            name: businessConfig.industry === 'legal' || businessConfig.industry === 'consulting' ? t.documents : t.billing,
                             icon: FileText
                         },
                         {
+                            id: 'items',
                             name: currentIndustry.labels.items,
                             icon: Users
                         },
-                        { name: 'Finanzas', icon: PieChart },
-                        { name: 'Marketing', icon: Share2 },
+                        { id: 'finances', name: t.finances, icon: PieChart },
+                        { id: 'marketing', name: t.marketing, icon: Share2 },
                     ].map((item) => (
                         <button
-                            key={item.name}
+                            key={item.id}
                             onClick={() => {
-                                setActiveTab(item.name);
+                                setActiveTab(item.id);
                                 if (window.innerWidth < 768) setIsSidebarOpen(false);
                             }}
-                            className={`sidebar-item w-full ${activeTab === item.name ? 'sidebar-item-active' : ''}`}
+                            className={`sidebar-item w-full ${activeTab === item.id ? 'sidebar-item-active' : ''}`}
                         >
                             <item.icon size={20} />
                             <span className="font-medium">{item.name}</span>
@@ -428,7 +469,7 @@ export default function NexoBotDashboard() {
                         className={`sidebar-item w-full ${isSettingsOpen ? 'sidebar-item-active' : ''}`}
                     >
                         <Settings size={20} />
-                        <span className="font-medium">Mi Negocio</span>
+                        <span className="font-medium">{t.my_business}</span>
                     </button>
 
                     {/* Selector de Idioma */}
@@ -480,17 +521,18 @@ export default function NexoBotDashboard() {
 
                 <div className="mt-8 space-y-4">
                     <div className="bg-gradient-to-br from-cyan-600/20 to-blue-600/20 rounded-2xl p-4 border border-cyan-500/20">
-                        <p className="text-xs font-bold text-cyan-400 uppercase tracking-widest mb-1">Prueba de 7 Días</p>
+                        <p className="text-xs font-bold text-cyan-400 uppercase tracking-widest mb-1">{t.trial_active}</p>
                         <p className="text-[10px] font-medium text-slate-300 mb-3 leading-relaxed">
-                            Activa tu cuenta con tarjeta. <span className="text-white font-bold">No se cobrará nada hoy</span>.
-                            El abono de ${currentIndustry.price}/mes iniciará automáticamente al terminar el periodo gratis.
+                            {t.subscribe_desc}
+                            <br />
+                            {lang === 'es' ? `El abono de $${currentIndustry.price}/mes iniciará automáticamente.` : `A monthly fee of $${currentIndustry.price} will start automatically.`}
                         </p>
                         <button
                             onClick={handleSubscription}
                             disabled={isSubscribing}
                             className={`w-full py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 rounded-xl text-xs font-bold transition-all shadow-lg shadow-cyan-500/20 ${isSubscribing ? 'opacity-70 cursor-not-allowed' : ''}`}
                         >
-                            {isSubscribing ? 'Conectando...' : 'Empezar 7 Días Gratis'}
+                            {isSubscribing ? (lang === 'en' ? 'Connecting...' : 'Conectando...') : t.subscribe}
                         </button>
                     </div>
                     <button
@@ -498,7 +540,7 @@ export default function NexoBotDashboard() {
                         className="flex items-center gap-3 text-slate-500 hover:text-red-400 transition-colors px-2 w-full text-left"
                     >
                         <LogIn size={20} className="rotate-180" />
-                        <span className="text-sm font-medium">Cerrar Sesión</span>
+                        <span className="text-sm font-medium">{t.logout}</span>
                     </button>
                     {/* Padding bottom for mobile safely */}
                     <div className="h-20 md:hidden" />
@@ -594,36 +636,75 @@ export default function NexoBotDashboard() {
                     </header>
 
                     <div className="grid grid-cols-1 gap-8">
-                        {/* Calendar Section (Dynamic Title) */}
-                        <section className="dashboard-card p-6">
-                            <div className="flex justify-between items-center mb-8">
-                                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                                    <div className="flex gap-1">
-                                        <button className="p-2 bg-white/5 rounded-lg hover:bg-white/10"><ChevronLeft size={18} /></button>
-                                        <button className="p-2 bg-white/5 rounded-lg hover:bg-white/10"><ChevronRight size={18} /></button>
+                        {/* Dynamic Section Header */}
+                        {(() => {
+                            let tabLabel = "";
+                            let actionLabel = "";
+                            let actionType = "";
+
+                            if (activeTab === 'main') {
+                                tabLabel = currentIndustry.labels.main;
+                                actionLabel = currentIndustry.labels.action;
+                                actionType = 'Cita';
+                            } else if (activeTab === 'billing_or_docs') {
+                                tabLabel = businessConfig.industry === 'legal' || businessConfig.industry === 'consulting' ? t.documents : t.billing;
+                                actionLabel = lang === 'en' ? `New Item` : `Nueva ${tabLabel}`;
+                                actionType = 'Factura';
+                            } else if (activeTab === 'items') {
+                                tabLabel = currentIndustry.labels.items;
+                                actionLabel = lang === 'en' ? `New ${tabLabel}` : `Nuevo ${tabLabel}`;
+                                actionType = 'Cliente';
+                            } else if (activeTab === 'finances') {
+                                tabLabel = t.finances;
+                            } else if (activeTab === 'marketing') {
+                                tabLabel = t.marketing;
+                            }
+
+                            return (
+                                <section className="dashboard-card p-6">
+                                    <div className="flex justify-between items-center mb-8">
+                                        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                                            <div className="flex gap-1">
+                                                <button className="p-2 bg-white/5 rounded-lg hover:bg-white/10"><ChevronLeft size={18} /></button>
+                                                <button className="p-2 bg-white/5 rounded-lg hover:bg-white/10"><ChevronRight size={18} /></button>
+                                            </div>
+                                            <h3 className="text-lg md:text-xl font-bold">
+                                                {lang === 'es' ? `Gestión de ${tabLabel}` : `${tabLabel} Management`}
+                                            </h3>
+                                        </div>
+                                        {actionLabel && (
+                                            <div className="flex gap-3">
+                                                <button
+                                                    onClick={() => handleQuickAction(actionType)}
+                                                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors"
+                                                >
+                                                    <Plus size={16} /> {actionLabel}
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
-                                    <h3 className="text-lg md:text-xl font-bold">Gestión de {activeTab}</h3>
-                                </div>
-                                <div className="flex gap-3">
-                                    <button
-                                        onClick={() => handleQuickAction(activeTab === currentIndustry.labels.main ? 'Cita' : activeTab === currentIndustry.labels.items ? 'Cliente' : 'Factura')}
-                                        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors"
-                                    >
-                                        <Plus size={16} /> {activeTab === currentIndustry.labels.main ? currentIndustry.labels.action : `Nueva ${activeTab}`}
-                                    </button>
-                                </div>
-                            </div>
 
-                            <div className="border-t border-white/5 pt-6 text-center py-20 bg-white/[0.02] rounded-2xl">
-                                {activeTab === currentIndustry.labels.main && <Calendar size={48} className="mx-auto mb-4 text-slate-600" />}
-                                {activeTab === 'Facturas' || activeTab === 'Facturación' && <FileText size={48} className="mx-auto mb-4 text-slate-600" />}
-                                {activeTab === currentIndustry.labels.items && <Users size={48} className="mx-auto mb-4 text-slate-600" />}
-                                {activeTab === 'Finanzas' && <PieChart size={48} className="mx-auto mb-4 text-slate-600" />}
+                                    <div className="border-t border-white/5 pt-6 text-center py-20 bg-white/[0.02] rounded-2xl">
+                                        {activeTab === 'main' && <Calendar size={48} className="mx-auto mb-4 text-slate-600" />}
+                                        {activeTab === 'billing_or_docs' && <FileText size={48} className="mx-auto mb-4 text-slate-600" />}
+                                        {activeTab === 'items' && <Users size={48} className="mx-auto mb-4 text-slate-600" />}
+                                        {activeTab === 'finances' && <PieChart size={48} className="mx-auto mb-4 text-slate-600" />}
 
-                                <p className="text-slate-400">Aquí se mostrará la gestión de <span className="text-white font-bold">{activeTab}</span> para <span className="text-white font-bold">{businessConfig.name}</span></p>
-                                <p className="text-xs text-slate-500 mt-2">Dile a <span className="text-cyan-400 font-bold">NexoBot</span> en el chat que te ayude con esto.</p>
-                            </div>
-                        </section>
+                                        <p className="text-slate-400">
+                                            {lang === 'es' ? `Aquí se mostrará la gestión de ` : `Here you will find `}
+                                            <span className="text-white font-bold">{tabLabel}</span>
+                                            {lang === 'es' ? ` para ` : ` management for `}
+                                            <span className="text-white font-bold">{businessConfig.name}</span>
+                                        </p>
+                                        <p className="text-xs text-slate-500 mt-2">
+                                            {lang === 'es' ? `Dile a ` : `Ask `}
+                                            <span className="text-cyan-400 font-bold">NexoBot</span>
+                                            {lang === 'es' ? ` en el chat que te ayude con esto.` : ` in the chat to help you with this.`}
+                                        </p>
+                                    </div>
+                                </section>
+                            );
+                        })()}
 
                         {/* Financial Summary */}
                         <section className="dashboard-card p-6">
@@ -655,7 +736,7 @@ export default function NexoBotDashboard() {
                             </div>
                         </section>
 
-                        {activeTab === 'Marketing' && (
+                        {activeTab === 'marketing' && (
                             <section className="dashboard-card p-8 bg-gradient-to-br from-[#181a1f] to-[#121418] relative overflow-hidden">
                                 <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 blur-[100px] rounded-full" />
                                 <div className="relative z-10">
@@ -797,7 +878,7 @@ export default function NexoBotDashboard() {
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1">
-                                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-2 block">Teléfono</label>
+                                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-2 block">{t.phone_label}</label>
                                         <input
                                             type="text"
                                             value={businessConfig.phone}
@@ -806,7 +887,7 @@ export default function NexoBotDashboard() {
                                         />
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-2 block">País</label>
+                                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-2 block">{t.country_label}</label>
                                         <input
                                             type="text"
                                             value={businessConfig.country}
@@ -815,7 +896,7 @@ export default function NexoBotDashboard() {
                                         />
                                     </div>
                                     <div className="col-span-2 space-y-1">
-                                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-2 block">Dirección Fiscal</label>
+                                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-2 block">{t.address_label}</label>
                                         <input
                                             type="text"
                                             value={businessConfig.address}
@@ -825,10 +906,10 @@ export default function NexoBotDashboard() {
                                     </div>
                                 </div>
 
-                                {/* Nueva Sección: Catálogo de Servicios / Productos */}
+                                {/* Sección: Catálogo de Servicios / Productos */}
                                 <div className="space-y-4">
                                     <div className="flex items-center justify-between border-b border-white/5 pb-2">
-                                        <label className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest ml-2 block">Catálogo e Inventario (Precios/Stock)</label>
+                                        <label className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest ml-2 block">{lang === 'es' ? 'Servicios, Citas o Artículos' : 'Services, Appointments or Items'}</label>
                                         <button
                                             onClick={() => {
                                                 const newServices = [...businessConfig.services, { name: '', price: '', stock: '0' }];
@@ -836,18 +917,18 @@ export default function NexoBotDashboard() {
                                             }}
                                             className="text-[10px] bg-indigo-600/20 text-indigo-400 px-3 py-1 rounded-full font-bold hover:bg-indigo-600/30 transition-all"
                                         >
-                                            + Añadir Item
+                                            + {lang === 'es' ? 'Añadir Item' : 'Add Item'}
                                         </button>
                                     </div>
                                     <div className="space-y-2 max-h-[150px] overflow-y-auto pr-2">
                                         {businessConfig.services.length === 0 && (
-                                            <p className="text-[10px] text-slate-500 italic text-center py-2">No has definido inventario aún.</p>
+                                            <p className="text-[10px] text-slate-500 italic text-center py-2">{lang === 'es' ? 'No has definido servicios aún.' : 'No services defined yet.'}</p>
                                         )}
                                         {businessConfig.services.map((svc, idx) => (
                                             <div key={idx} className="flex gap-2 items-center">
                                                 <input
                                                     type="text"
-                                                    placeholder="Producto/Servicio"
+                                                    placeholder={lang === 'es' ? "Nombre" : "Name"}
                                                     value={svc.name}
                                                     onChange={(e) => {
                                                         const newSvc = [...businessConfig.services];
@@ -858,7 +939,7 @@ export default function NexoBotDashboard() {
                                                 />
                                                 <input
                                                     type="number"
-                                                    placeholder="Precio"
+                                                    placeholder={lang === 'es' ? "Precio" : "Price"}
                                                     value={svc.price}
                                                     onChange={(e) => {
                                                         const newSvc = [...businessConfig.services];
@@ -892,6 +973,55 @@ export default function NexoBotDashboard() {
                                     </div>
                                 </div>
 
+                                {/* Nueva Sección: Horarios de Atención */}
+                                <div className="space-y-4">
+                                    <label className="text-[10px] font-bold text-teal-400 uppercase tracking-widest ml-2 block border-b border-white/5 pb-2">Horarios de Atención Personal</label>
+                                    <div className="grid grid-cols-1 gap-2">
+                                        {Object.entries(businessConfig.businessHours).map(([day, config]) => (
+                                            <div key={day} className="flex items-center justify-between bg-[#0f1115] p-2 rounded-xl border border-white/5">
+                                                <div className="flex items-center gap-3">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={config.enabled}
+                                                        onChange={(e) => {
+                                                            const newHours = { ...businessConfig.businessHours };
+                                                            newHours[day].enabled = e.target.checked;
+                                                            setBusinessConfig({ ...businessConfig, businessHours: newHours });
+                                                        }}
+                                                        className="w-4 h-4 rounded border-white/10 bg-white/5 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"
+                                                    />
+                                                    <span className="text-xs font-bold uppercase w-20 text-slate-300">{t[day] || day}</span>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <input
+                                                        type="time"
+                                                        value={config.open}
+                                                        disabled={!config.enabled}
+                                                        onChange={(e) => {
+                                                            const newHours = { ...businessConfig.businessHours };
+                                                            newHours[day].open = e.target.value;
+                                                            setBusinessConfig({ ...businessConfig, businessHours: newHours });
+                                                        }}
+                                                        className="bg-white/5 border border-white/10 rounded-lg p-1 text-[10px] text-white outline-none focus:border-teal-500 disabled:opacity-30"
+                                                    />
+                                                    <span className="text-slate-500 text-[10px]">a</span>
+                                                    <input
+                                                        type="time"
+                                                        value={config.close}
+                                                        disabled={!config.enabled}
+                                                        onChange={(e) => {
+                                                            const newHours = { ...businessConfig.businessHours };
+                                                            newHours[day].close = e.target.value;
+                                                            setBusinessConfig({ ...businessConfig, businessHours: newHours });
+                                                        }}
+                                                        className="bg-white/5 border border-white/10 rounded-lg p-1 text-[10px] text-white outline-none focus:border-teal-500 disabled:opacity-30"
+                                                    />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
                                 {businessConfig.stripe_customer_id && (
                                     <div className="pt-2 border-t border-white/5">
                                         <button
@@ -904,22 +1034,23 @@ export default function NexoBotDashboard() {
                                                     const data = await response.json();
                                                     if (data.url) window.location.href = data.url;
                                                 } catch (err) {
-                                                    alert("No se pudo abrir el portal de suscripción.");
+                                                    alert(lang === 'es' ? "No se pudo abrir el portal." : "Could not open portal.");
                                                 }
                                             }}
                                             className="w-full py-3 bg-red-500/10 text-red-400 border border-red-500/20 rounded-2xl text-[10px] font-bold uppercase hover:bg-red-500/20 transition-all font-bold"
                                         >
-                                            Gestionar o Cancelar Suscripción
+                                            {lang === 'es' ? 'Gestionar o Cancelar Suscripción' : 'Manage or Cancel Subscription'}
                                         </button>
                                     </div>
                                 )}
 
                                 <div className="pt-4">
                                     <button
-                                        onClick={() => setIsSettingsOpen(false)}
-                                        className="w-full py-4 bg-white text-black font-bold rounded-2xl hover:scale-[1.02] active:scale-95 transition-all shadow-xl"
+                                        onClick={handleSaveBusinessConfig}
+                                        disabled={isLoading}
+                                        className="w-full py-4 bg-white text-black font-bold rounded-2xl hover:scale-[1.02] active:scale-95 transition-all shadow-xl disabled:opacity-50"
                                     >
-                                        Guardar y Transformar Aplicación
+                                        {isLoading ? (lang === 'es' ? 'Guardando cambios...' : 'Saving changes...') : t.save_transform}
                                     </button>
                                 </div>
                             </div>
@@ -960,7 +1091,9 @@ export default function NexoBotDashboard() {
                                         <h4 className="font-bold">NexoBot Assistant</h4>
                                         <div className="flex items-center gap-1.5">
                                             <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse" />
-                                            <span className="text-[10px] font-bold text-white/70 uppercase">Modo {currentIndustry.name} Activo</span>
+                                            <span className="text-[10px] font-bold text-white/70 uppercase">
+                                                {t.mode_active.replace('{mode}', currentIndustry.name)}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
@@ -1016,7 +1149,7 @@ export default function NexoBotDashboard() {
                                                                 console.log("Abriendo PDF:", part);
                                                             }}
                                                         >
-                                                            📥 Descargar Documento
+                                                            📥 {lang === 'es' ? 'Descargar Documento' : 'Download Document'}
                                                         </a>
                                                     ) : part
                                                 )}
@@ -1055,7 +1188,7 @@ export default function NexoBotDashboard() {
                                         value={input}
                                         onChange={(e) => setInput(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                                        placeholder={isListening ? "Escuchando..." : "Escribe un mensaje..."}
+                                        placeholder={isListening ? t.listening : t.type_message}
                                         className="bg-transparent flex-1 px-4 py-2 text-sm outline-none"
                                     />
                                     <button

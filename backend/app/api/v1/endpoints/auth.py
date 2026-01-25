@@ -15,7 +15,7 @@ def get_db():
 
 from uuid import UUID
 from app.schemas.auth import (
-    UserCreate, Token, UserResponse, TenantRead, 
+    UserCreate, Token, UserResponse, TenantRead, TenantUpdate,
     ForgotPasswordRequest, ResetPasswordRequest
 )
 from app.services.notification_service import NotificationService
@@ -27,6 +27,35 @@ def get_public_tenant_info(tenant_id: UUID, session: Session = Depends(get_db)):
     if not tenant:
         raise HTTPException(status_code=404, detail="Negocio no encontrado")
     return tenant
+
+@router.put("/tenant", response_model=TenantRead)
+def update_tenant_info(
+    tenant_in: TenantUpdate,
+    session: Session = Depends(get_db),
+    token: str = Header(...)
+):
+    try:
+        from app.core.security import jwt, settings
+        payload = jwt.decode(token.replace("Bearer ", ""), settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        tenant_id = payload.get("tenant_id")
+        if not tenant_id:
+            raise HTTPException(status_code=401, detail="Token no válido")
+        
+        tenant = session.get(Tenant, tenant_id)
+        if not tenant:
+            raise HTTPException(status_code=404, detail="Negocio no encontrado")
+        
+        update_data = tenant_in.dict(exclude_unset=True)
+        for key, value in update_data.items():
+            setattr(tenant, key, value)
+        
+        session.add(tenant)
+        session.commit()
+        session.refresh(tenant)
+        return tenant
+    except Exception as e:
+        print(f"Error updating tenant: {e}")
+        raise HTTPException(status_code=401, detail="No autorizado o error interno")
 
 @router.get("/me", response_model=UserResponse)
 def get_current_user_info(
