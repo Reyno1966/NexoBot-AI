@@ -70,6 +70,18 @@ const mockFinancialData = [
     { name: 'Sun', value: 90000 },
 ];
 
+// Helper para parseo seguro
+const safeParse = (str, fallback) => {
+    try {
+        if (!str) return fallback;
+        if (typeof str !== 'string') return str;
+        return JSON.parse(str);
+    } catch (e) {
+        console.warn("Error parsing JSON, using fallback", e);
+        return fallback;
+    }
+};
+
 
 export default function NexoBotDashboard() {
     const [activeTab, setActiveTab] = useState('main');
@@ -153,7 +165,7 @@ export default function NexoBotDashboard() {
                         stripe_customer_id: data.tenant.stripe_customer_id,
                         stripe_public_key: data.tenant.stripe_public_key || '',
                         stripe_secret_key: data.tenant.stripe_secret_key || '',
-                        services: JSON.parse(data.tenant.services || '[]'),
+                        services: safeParse(data.tenant.services, []),
                         businessHours: {
                             monday: { open: '09:00', close: '18:00', enabled: true },
                             tuesday: { open: '09:00', close: '18:00', enabled: true },
@@ -162,7 +174,7 @@ export default function NexoBotDashboard() {
                             friday: { open: '09:00', close: '18:00', enabled: true },
                             saturday: { open: '09:00', close: '14:00', enabled: false },
                             sunday: { open: '09:00', close: '14:00', enabled: false },
-                            ...JSON.parse(data.tenant.business_hours || '{}')
+                            ...safeParse(data.tenant.business_hours, {})
                         },
                         whatsappNotificationsEnabled: data.tenant.whatsapp_notifications_enabled || false
                     });

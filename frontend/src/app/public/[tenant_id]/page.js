@@ -5,6 +5,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 export default function PublicChat({ params }) {
     const { tenant_id } = React.use(params);
+
+    // Helper para parseo seguro
+    const safeParse = (str, fallback) => {
+        try {
+            if (!str) return fallback;
+            if (typeof str !== 'string') return str;
+            return JSON.parse(str);
+        } catch (e) {
+            return fallback;
+        }
+    };
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -55,8 +66,8 @@ export default function PublicChat({ params }) {
                         logoUrl: data.logo_url || '/logo.jpg',
                         phone: data.phone || '',
                         address: data.address || '',
-                        services: JSON.parse(data.services || '[]'),
-                        businessHours: JSON.parse(data.business_hours || '{}'),
+                        services: safeParse(data.services, []),
+                        businessHours: safeParse(data.business_hours, {}),
                         stripePublicKey: data.stripe_public_key || null
                     });
                 }
@@ -261,8 +272,8 @@ export default function PublicChat({ params }) {
                             : 'bg-[#1e2126] border-white/5 rounded-tl-none text-slate-100'
                             }`}>
                             <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                                {msg.text.split(/(https?:\/\/[^\s]+)/g).map((part, j) =>
-                                    part.match(/^https?:\/\//) ? (
+                                {(msg.text || "").split(/(https?:\/\/[^\s]+)/g).map((part, j) =>
+                                    part && part.match(/^https?:\/\//) ? (
                                         <a key={j} href={part} target="_blank" rel="noopener noreferrer" className="block mt-3 px-4 py-3 bg-indigo-500 hover:bg-indigo-400 text-white font-bold rounded-xl text-center shadow-lg transition-all">
                                             📥 Ver Documento
                                         </a>
