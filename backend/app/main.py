@@ -133,6 +133,11 @@ async def chat_endpoint(request: ChatRequest, raw_request: Request, session: Ses
     
     # 3. Procesar con Gemini
     full_query = f"{customer_info}\n\nMensaje del usuario: {request.message}"
+    
+    # PEQUEÑO TRUCO: Si el mensaje empieza por "Confirmo mi cita", forzamos el contexto de reserva
+    if "Confirmo mi cita" in request.message:
+        full_query = f"EL USUARIO ESTÁ CONFIRMANDO LOS DATOS FINALES DE SU CITA. POR FAVOR, EXTRAE LAS ENTIDADES Y DEVUELVE INTENT 'book_appointment'.\n\n{full_query}"
+
     ai_output_raw = AIService.process_natural_language(full_query, tenant_context)
     
     # Limpiar posibles bloques de markdown si Gemini los incluye
@@ -157,6 +162,8 @@ async def chat_endpoint(request: ChatRequest, raw_request: Request, session: Ses
         entities = {}
     intent = ai_output.get('intent')
     
+    print(f">>> [CHAT] Intent detectado: {intent}, Entidades: {entities}")
+
     # 4. Guardar historial en la Base de Datos para que el dueño lo vea "interno"
     try:
         # Guardar mensaje del usuario
@@ -192,6 +199,7 @@ async def chat_endpoint(request: ChatRequest, raw_request: Request, session: Ses
                 admin_email = fallback_user.email
 
         tenant_phone = tenant.phone
+        print(f">>> [CHAT] Notificando a: Email={admin_email}, Tel={tenant_phone}")
         
         # Alerta general por cada mensaje (si está habilitado)
         if tenant.whatsapp_notifications_enabled:
@@ -203,6 +211,7 @@ async def chat_endpoint(request: ChatRequest, raw_request: Request, session: Ses
             
             # Solo notificar si tenemos algún medio de contacto definido
             if tenant_phone or admin_email:
+                print(f">>> [CHAT] Enviando notificación de mensaje...")
                 NotificationService.notify_chat_message(
                     tenant.name, tenant_phone or "No configurado", admin_email, customer_display_name, request.message
                 )

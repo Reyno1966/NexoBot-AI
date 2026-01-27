@@ -108,9 +108,14 @@ export default function PublicChat({ params }) {
                 metadata: data.metadata
             };
 
-            // Si el intent es de reserva o recolección de datos y faltan campos, podemos sugerir el formulario
-            if (data.intent === 'book_appointment' || data.intent === 'collect_data') {
-                assistantMsg.showForm = true;
+            // Mostrar el formulario solo si el intent es de recolección y NO es ya una confirmación final
+            const isConfirmation = messageText.includes("Confirmo mi cita");
+            if ((data.intent === 'book_appointment' || data.intent === 'collect_data') && !isConfirmation) {
+                // Verificar si faltan datos críticos antes de mostrar el formulario
+                const hasCriticalData = data.metadata?.cliente && data.metadata?.telefono && data.metadata?.fecha;
+                if (!hasCriticalData) {
+                    assistantMsg.showForm = true;
+                }
             }
 
             setMessages(prev => [...prev, assistantMsg]);
