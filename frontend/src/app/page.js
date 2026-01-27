@@ -34,7 +34,10 @@ import {
     Menu,
     X,
     Mic,
-    Send
+    Send,
+    Clock,
+    User,
+    Zap
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
