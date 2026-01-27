@@ -1,9 +1,9 @@
 from app.main import app
+from app.db import init_db
 import os
 
 if __name__ == "__main__":
     import uvicorn
-    from app.db import init_db
     # Aseguramos que las tablas existan antes de que el tráfico llegue
     print(">>> [LAUNCH] Verificando tablas de base de datos...")
     try:

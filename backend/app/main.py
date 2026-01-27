@@ -8,15 +8,24 @@ print(">>> [MAIN.PY] CARGANDO MÓDULO MAIN...", file=sys.stderr)
 from app.core.config import settings
 from app.schemas.chat import ChatRequest, ChatResponse
 from app.services.ai_service import AIService
+from app.services.notification_service import NotificationService
+from app.db import init_db, get_session
+from app.models.base import Tenant, Customer, Booking, ChatMessage, User
+from datetime import datetime, timedelta
 import json
+import os
+import traceback
 
-# Deferimos los imports de BD para debugging
-# from app.db import init_db, get_session
-from sqlmodel import Session
+# CONFIGURACIÓN DE ENTORNO
+IS_VERCEL = os.getenv("VERCEL") == "1"
+STATIC_DIR = "/tmp" if IS_VERCEL else "static"
+
+from sqlmodel import Session, select
 
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-import os
+from fastapi import Request
+from fastapi.responses import JSONResponse
 
 from app.api.v1.endpoints import auth, payments, data
 
@@ -56,10 +65,8 @@ app.add_middleware(
 )
 
 # Manejador de excepciones global para diagnóstico rápido en producción
-from fastapi.responses import JSONResponse
 @app.exception_handler(Exception)
 async def global_exception_handler(request, exc):
-    import traceback
     error_detail = traceback.format_exc()
     print(f"CRITICAL ERROR: {error_detail}", file=sys.stderr)
     return JSONResponse(
@@ -67,15 +74,11 @@ async def global_exception_handler(request, exc):
         content={
             "detail": "Internal Server Error",
             "error": str(exc),
-            "diagnostics": error_detail if not IS_VERCEL else "Check logs"
+            "diagnostics": error_detail if not IS_VERCEL else "Ver logs en el panel de control."
         }
     )
 
 # Configuración de archivos estáticos (Compatibilidad con Vercel)
-# Vercel tiene un sistema de archivos de solo lectura, excepto /tmp
-IS_VERCEL = os.getenv("VERCEL") == "1"
-STATIC_DIR = "/tmp" if IS_VERCEL else "static"
-
 if not os.path.exists(STATIC_DIR):
     os.makedirs(STATIC_DIR, exist_ok=True)
 
@@ -83,31 +86,22 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 @app.on_event("startup")
 def on_startup():
-    import sys
-    import traceback
     print("STARTUP: Running NexoBot initialization...", file=sys.stderr)
     try:
-        from app.db import init_db
-        # Intentamos inicializar pero capturamos el error para no matar el proceso STATUS 3
+        # Intentamos inicializar pero capturamos el error para no matar el proceso 
         init_db()
         print("STARTUP: Database initialized successfully!", file=sys.stderr)
     except Exception as e:
         print("STARTUP ERROR: The database failed but we will keep the server LIVE for diagnosis.", file=sys.stderr)
         print(f"ERROR DETAIL: {str(e)}", file=sys.stderr)
-        # traceback.print_exc() 
-        # NOTA: No hacemos raise e para evitar el estado 3 inmediato por ahora
 
 @app.get("/")
 async def root():
     return {"message": f"Welcome to {settings.PROJECT_NAME} API"}
 
-from fastapi import Request
-
 @app.post("/api/v1/chat", response_model=ChatResponse)
 async def chat_endpoint(request: ChatRequest, raw_request: Request, session: Session = Depends(get_db)):
     # 1. Buscar el Negocio (Tenant)
-    from app.models.base import Tenant, Customer, Booking
-    from sqlmodel import select
     
     tenant = session.get(Tenant, request.tenant_id)
     
@@ -157,9 +151,6 @@ async def chat_endpoint(request: ChatRequest, raw_request: Request, session: Ses
         ai_output = {"intent": "chat", "response_text": clean_output, "entities": {}}
     
     # Lógica específica para Generación de Documentos y Notificaciones
-    from app.services.notification_service import NotificationService
-    from app.models.base import ChatMessage
-    
     download_url = None
     entities = ai_output.get('entities', {})
     if not isinstance(entities, dict):
@@ -196,7 +187,6 @@ async def chat_endpoint(request: ChatRequest, raw_request: Request, session: Ses
         
         # Fallback: Si no hay usuarios vinculados, intentar buscar por tenant_id en la tabla User
         if not admin_email:
-            from app.models.base import User
             fallback_user = session.exec(select(User).where(User.tenant_id == tenant.id)).first()
             if fallback_user:
                 admin_email = fallback_user.email
@@ -223,9 +213,6 @@ async def chat_endpoint(request: ChatRequest, raw_request: Request, session: Ses
             
             # Lógica para guardar la reserva en la base de datos (si aplica)
             try:
-                from app.models.base import Booking
-                from datetime import datetime
-                
                 # Extraer fechas de las entidades de la IA
                 start_date_str = entities.get('fecha_entrada') or entities.get('fecha')
                 # Si no hay fecha de salida, asumimos 1 hora después (para servicios como peluquería)
@@ -238,7 +225,6 @@ async def chat_endpoint(request: ChatRequest, raw_request: Request, session: Ses
                             end_dt = datetime.fromisoformat(end_date_str.replace('Z', ''))
                         else:
                             # Fallback para citas de servicio: asume 1 hora de duración
-                            from datetime import timedelta
                             end_dt = start_dt + timedelta(hours=1)
                             
                         new_booking = Booking(
