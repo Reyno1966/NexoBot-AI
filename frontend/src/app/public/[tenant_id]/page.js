@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
-import { Bot, User, Send, ChevronRight, Phone, MapPin, Globe, Scissors, Stethoscope, Gavel, Home, Hotel, Briefcase, Calendar, Clock, Star, Zap, Info, Mic, Trash2 } from 'lucide-react';
+import { Bot, User, Send, ChevronRight, Phone, MapPin, Globe, Scissors, Stethoscope, Gavel, Home, Hotel, Briefcase, Calendar, Clock, Star, Zap, Info, Mic, Trash2, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function PublicChat({ params }) {
@@ -167,8 +167,8 @@ export default function PublicChat({ params }) {
                         >
                             <div className="flex justify-between items-center mb-6">
                                 <h3 className="text-xl font-bold">Información del Negocio</h3>
-                                <button onClick={() => setIsInfoModalOpen(false)} className="p-2 text-slate-400">
-                                    <Plus className="rotate-45" size={24} />
+                                <button onClick={() => setIsInfoModalOpen(false)} className="p-2 text-slate-400 hover:text-white transition-all">
+                                    <X size={24} />
                                 </button>
                             </div>
 

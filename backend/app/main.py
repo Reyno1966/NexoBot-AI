@@ -220,11 +220,26 @@ async def chat_endpoint(request: ChatRequest, raw_request: Request, session: Ses
                 
                 if start_date_str:
                     try:
-                        start_dt = datetime.fromisoformat(start_date_str.replace('Z', ''))
+                        # Limpieza y fallback para fechas
+                        if isinstance(start_date_str, str):
+                            start_date_str = start_date_str.replace('Z', '').replace(' ', 'T')
+                        
+                        try:
+                            start_dt = datetime.fromisoformat(start_date_str)
+                        except ValueError:
+                            # Si falla, intentar parsear solo la fecha o asumir hoy si es 'mañana'
+                            if 'mañana' in start_date_str.lower():
+                                start_dt = datetime.now() + timedelta(days=1)
+                                start_dt = start_dt.replace(hour=10, minute=0, second=0, microsecond=0)
+                            else:
+                                start_dt = datetime.now() + timedelta(hours=2) # Fallback
+
                         if end_date_str:
-                            end_dt = datetime.fromisoformat(end_date_str.replace('Z', ''))
+                            try:
+                                end_dt = datetime.fromisoformat(end_date_str.replace('Z', '').replace(' ', 'T'))
+                            except ValueError:
+                                end_dt = start_dt + timedelta(hours=1)
                         else:
-                            # Fallback para citas de servicio: asume 1 hora de duración
                             end_dt = start_dt + timedelta(hours=1)
                             
                         new_booking = Booking(
@@ -235,13 +250,18 @@ async def chat_endpoint(request: ChatRequest, raw_request: Request, session: Ses
                             end_date=end_dt,
                             status="confirmed",
                             total_price=float(entities.get('monto', 0)),
-                            notes=f"Cita/Reserva creada por NexoBot. Datos: {entities.get('telefono', '')} {entities.get('direccion', '')}"
+                            notes=f"Cita/Reserva creada por NexoBot. Datos: {entities.get('telefono', 'N/A')} {entities.get('direccion', 'N/A')}"
                         )
                         session.add(new_booking)
                         session.commit()
                         print(f">>> [CHAT] Cita guardada con éxito")
                     except Exception as e:
                         print(f"Error parsing date or saving booking: {e}")
+                        # Fallback: intentar notificar aunque falle el guardado en BD para no perder el cliente
+                        if tenant.whatsapp_notifications_enabled:
+                             NotificationService.notify_appointment(
+                                tenant.name, tenant_phone, admin_email, customer_display_name, entities
+                            )
             except Exception as e:
                 print(f"Error guardando reserva: {e}")
 
