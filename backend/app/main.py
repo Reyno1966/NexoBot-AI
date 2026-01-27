@@ -158,6 +158,7 @@ async def chat_endpoint(request: ChatRequest, raw_request: Request, session: Ses
     
     # Lógica específica para Generación de Documentos y Notificaciones
     from app.services.notification_service import NotificationService
+    from app.models.base import ChatMessage
     
     download_url = None
     entities = ai_output.get('entities', {})
@@ -165,24 +166,56 @@ async def chat_endpoint(request: ChatRequest, raw_request: Request, session: Ses
         entities = {}
     intent = ai_output.get('intent')
     
-    # Notificaciones al Celular/WhatsApp y Email del dueño
+    # 4. Guardar historial en la Base de Datos para que el dueño lo vea "interno"
+    try:
+        # Guardar mensaje del usuario
+        user_chat = ChatMessage(
+            tenant_id=request.tenant_id,
+            role="user",
+            content=request.message,
+            customer_name=entities.get('cliente') or "Público"
+        )
+        # Guardar respuesta del bot
+        bot_chat = ChatMessage(
+            tenant_id=request.tenant_id,
+            role="assistant",
+            content=ai_output.get('response_text', ""),
+            intent=intent
+        )
+        session.add(user_chat)
+        session.add(bot_chat)
+        session.commit()
+    except Exception as e:
+        print(f"Error guardando historial de chat: {e}")
+
+    # 5. Notificaciones al Celular/WhatsApp y Email del dueño
     if tenant:
+        # Buscar el email del dueño (primer usuario del tenant)
         admin_user = tenant.users[0] if tenant.users else None
         admin_email = admin_user.email if admin_user else None
+        
+        # Fallback: Si no hay usuarios vinculados, intentar buscar por tenant_id en la tabla User
+        if not admin_email:
+            from app.models.base import User
+            fallback_user = session.exec(select(User).where(User.tenant_id == tenant.id)).first()
+            if fallback_user:
+                admin_email = fallback_user.email
+
         tenant_phone = tenant.phone
         
         # Alerta general por cada mensaje (si está habilitado)
         if tenant.whatsapp_notifications_enabled:
-            # Determinamos el nombre del cliente para la notificación
             customer_display_name = entities.get('cliente') or "Usuario"
             if request.customer_id:
                 cust = session.get(Customer, request.customer_id)
                 if cust:
                     customer_display_name = cust.full_name
             
-            NotificationService.notify_chat_message(
-                tenant.name, tenant_phone, admin_email, customer_display_name, request.message
-            )
+            # Solo notificar si tenemos algún medio de contacto definido
+            if tenant_phone or admin_email:
+                NotificationService.notify_chat_message(
+                    tenant.name, tenant_phone or "No configurado", admin_email, customer_display_name, request.message
+                )
 
         if intent == "book_appointment":
             # Determinamos el nombre del cliente para la notificación

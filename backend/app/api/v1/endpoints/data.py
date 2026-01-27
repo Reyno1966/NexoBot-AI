@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlmodel import Session, select
 from app.db import get_session
-from app.models.base import Tenant, Customer, Booking, Transaction
+from app.models.base import Tenant, Customer, Booking, Transaction, ChatMessage
 from typing import List
 from uuid import UUID
 # No external verify_token needed, we use jwt.decode locally
@@ -34,3 +34,8 @@ def get_customers(session: Session = Depends(get_db), token: str = Header(...)):
 def get_transactions(session: Session = Depends(get_db), token: str = Header(...)):
     tenant_id = get_tenant_id_from_token(token)
     return session.exec(select(Transaction).where(Transaction.tenant_id == tenant_id)).all()
+
+@router.get("/messages", response_model=List[ChatMessage])
+def get_messages(session: Session = Depends(get_db), token: str = Header(...)):
+    tenant_id = get_tenant_id_from_token(token)
+    return session.exec(select(ChatMessage).where(ChatMessage.tenant_id == tenant_id).order_by(ChatMessage.created_at.desc())).all()

@@ -28,7 +28,7 @@ class Tenant(TenantBase, table=True):
     stripe_customer_id: Optional[str] = None # Para gestión de suscripciones (nos pagan a nosotros)
     stripe_public_key: Optional[str] = None # Para que ellos cobren (su cuenta)
     stripe_secret_key: Optional[str] = None # Para que ellos cobren (su cuenta)
-    whatsapp_notifications_enabled: bool = False # Alertas por WhatsApp
+    whatsapp_notifications_enabled: bool = True # Alertas por WhatsApp
     
     users: List["User"] = Relationship(back_populates="tenant")
     customers: List["Customer"] = Relationship(back_populates="tenant")
@@ -69,3 +69,10 @@ class Booking(MultiTenantModel, table=True):
     status: str = "confirmed" # confirmed, pending, cancelled
     total_price: float = 0.0
     notes: str = ""
+
+class ChatMessage(MultiTenantModel, table=True):
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    role: str # user, assistant
+    content: str
+    intent: Optional[str] = None
+    customer_name: Optional[str] = "Público"
