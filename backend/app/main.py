@@ -188,21 +188,18 @@ async def chat_endpoint(request: ChatRequest, raw_request: Request, session: Ses
 
     # 5. Notificaciones al Celular/WhatsApp y Email del dueño
     if tenant:
-        # Buscar el email del dueño (primer usuario del tenant)
-        admin_user = tenant.users[0] if tenant.users else None
-        admin_email = admin_user.email if admin_user else None
-        
-        # Fallback: Si no hay usuarios vinculados, intentar buscar por tenant_id en la tabla User
-        if not admin_email:
-            fallback_user = session.exec(select(User).where(User.tenant_id == tenant.id)).first()
-            if fallback_user:
-                admin_email = fallback_user.email
+        # CAMBIO: Usar query explícita para asegurar que cargamos al dueño
+        try:
+            admin_user = session.exec(select(User).where(User.tenant_id == tenant.id)).first()
+            admin_email = admin_user.email if admin_user else None
+        except Exception:
+            admin_email = None
 
         tenant_phone = tenant.phone
         print(f">>> [CHAT] Notificando a: Email={admin_email}, Tel={tenant_phone}")
         
-        # Alerta general por cada mensaje (si está habilitado)
-        if tenant.whatsapp_notifications_enabled:
+        should_notify = tenant.whatsapp_notifications_enabled or True
+        if should_notify:
             customer_display_name = entities.get('cliente') or "Usuario"
             if request.customer_id:
                 cust = session.get(Customer, request.customer_id)
@@ -251,40 +248,78 @@ async def chat_endpoint(request: ChatRequest, raw_request: Request, session: Ses
                         else:
                             end_dt = start_dt + timedelta(hours=1)
                             
+                        # AGREGAR: Buscar o crear cliente automáticamente
+                        customer_id = request.customer_id
+                        customer_name = entities.get('cliente') or "Usuario Nuevo"
+                        customer_phone = entities.get('telefono', "0000000000")
+                        
+                        if not customer_id:
+                            # Intentar buscar por teléfono
+                            try:
+                                existing_cust = session.exec(select(Customer).where(Customer.tenant_id == tenant.id, Customer.phone == customer_phone)).first()
+                                if existing_cust:
+                                    customer_id = existing_cust.id
+                                else:
+                                    # Crear nuevo cliente
+                                    new_cust = Customer(
+                                        tenant_id=tenant.id,
+                                        full_name=customer_name,
+                                        phone=customer_phone,
+                                        preferences=f"Interesado en {entities.get('propiedad', 'servicios')}"
+                                    )
+                                    session.add(new_cust)
+                                    session.commit()
+                                    session.refresh(new_cust)
+                                    customer_id = new_cust.id
+                            except Exception as ce:
+                                print(f"Error gestionando cliente: {ce}")
+
                         new_booking = Booking(
                             tenant_id=tenant.id,
                             property_name=entities.get('propiedad', 'Servicio General'),
-                            customer_id=request.customer_id,
+                            customer_id=customer_id,
                             start_date=start_dt,
                             end_date=end_dt,
                             status="confirmed",
-                            total_price=float(entities.get('monto', 0)),
-                            notes=f"Cita/Reserva creada por NexoBot. Datos: {entities.get('telefono', 'N/A')} {entities.get('direccion', 'N/A')}"
+                            total_price=float(entities.get('total', entities.get('monto', 0))),
+                            notes=f"Cita/Reserva creada por NexoBot. Datos: {customer_phone} {entities.get('direccion', 'N/A')}"
                         )
                         session.add(new_booking)
+                        # También registrar como ingreso en transacciones si tiene monto
+                        if new_booking.total_price > 0:
+                            from app.models.base import Transaction
+                            new_tx = Transaction(
+                                tenant_id=tenant.id,
+                                customer_id=customer_id,
+                                amount=new_booking.total_price,
+                                description=f"Reserva: {new_booking.property_name}",
+                                is_income=True
+                            )
+                            session.add(new_tx)
+
                         session.commit()
-                        print(f">>> [CHAT] Cita guardada con éxito")
+                        print(f">>> [CHAT] Cita y Transacción guardadas con éxito")
                     except Exception as e:
                         print(f"Error parsing date or saving booking: {e}")
                         # Fallback: intentar notificar aunque falle el guardado en BD para no perder el cliente
-                        if tenant.whatsapp_notifications_enabled:
+                        if should_notify:
                              NotificationService.notify_appointment(
                                 tenant.name, tenant_phone, admin_email, customer_display_name, entities
                             )
             except Exception as e:
                 print(f"Error guardando reserva: {e}")
 
-            if tenant.whatsapp_notifications_enabled:
+            if should_notify:
                 NotificationService.notify_appointment(
                     tenant.name, tenant_phone, admin_email, customer_display_name, entities
                 )
         elif intent in ["generate_invoice", "generate_contract", "generate_summary"]:
-            if tenant.whatsapp_notifications_enabled:
+            if should_notify:
                 NotificationService.notify_request(
                     tenant.name, tenant_phone, admin_email, customer_display_name, intent.replace("generate_", "").capitalize()
                 )
         elif intent == "support_escalation":
-            if tenant.whatsapp_notifications_enabled:
+            if should_notify:
                 NotificationService.notify_support_issue(
                     tenant.name, tenant_phone, admin_email, customer_display_name, entities.get('problema', 'Problema no especificado')
                 )
@@ -295,6 +330,24 @@ async def chat_endpoint(request: ChatRequest, raw_request: Request, session: Ses
     if intent == "generate_invoice":
         filename = AIService.generate_invoice_pdf(entities, tenant_context['name'])
         download_url = f"{raw_request.base_url}static/{filename}"
+        
+        # AGREGAR: Registro en la base de datos para que aparezca en "interno"
+        try:
+            from app.models.base import Transaction
+            new_tx = Transaction(
+                tenant_id=tenant.id,
+                customer_id=request.customer_id or UUID("32c016c1-996a-4473-8ba9-dc8b954202b1"), # Fallback a demo cust if none
+                amount=float(entities.get('total', entities.get('monto', 0))),
+                description=f"Factura generada: {entities.get('servicios', 'Servicios profesionales')}",
+                is_income=True,
+                invoice_url=download_url
+            )
+            session.add(new_tx)
+            session.commit()
+            print(">>> [CHAT] Transacción guardada con éxito")
+        except Exception as e:
+            print(f"Error guardando transacción: {e}")
+
         # Lógica de Inventario: Descontar stock
         if tenant:
             try:

@@ -421,8 +421,7 @@ export default function NexoBotDashboard() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     message: input,
-                    tenant_id: user?.tenant_id || 'f0f33af6-ac87-4c2b-8ec9-0baa4820303c',
-                    customer_id: '32c016c1-996a-4473-8ba9-dc8b954202b1',
+                    tenant_id: user?.tenant_id || '',
                     industry_override: businessConfig.industry,
                     language: lang
                 })

@@ -97,7 +97,8 @@ def register_user(user_in: UserCreate, session: Session = Depends(get_db)):
             address=user_in.address,
             country=user_in.country,
             main_interest=user_in.main_interest,
-            is_locked=True 
+            is_locked=True,
+            whatsapp_notifications_enabled=True
         )
         session.add(new_tenant)
         session.commit()
