@@ -18,7 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
 
-from app.api.v1.endpoints import auth, payments
+from app.api.v1.endpoints import auth, payments, data
 
 def get_db():
     from app.db import get_session
@@ -31,6 +31,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(title=settings.PROJECT_NAME)
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
 app.include_router(payments.router, prefix="/api/v1/payments", tags=["payments"])
+app.include_router(data.router, prefix="/api/v1/data", tags=["data"])
 
 # Configuración de CORS
 origins = [
@@ -169,45 +170,76 @@ async def chat_endpoint(request: ChatRequest, raw_request: Request, session: Ses
         admin_user = tenant.users[0] if tenant.users else None
         admin_email = admin_user.email if admin_user else None
         tenant_phone = tenant.phone
+        
+        # Alerta general por cada mensaje (si está habilitado)
+        if tenant.whatsapp_notifications_enabled:
+            # Determinamos el nombre del cliente para la notificación
+            customer_display_name = entities.get('cliente') or "Usuario"
+            if request.customer_id:
+                cust = session.get(Customer, request.customer_id)
+                if cust:
+                    customer_display_name = cust.full_name
+            
+            NotificationService.notify_chat_message(
+                tenant.name, tenant_phone, admin_email, customer_display_name, request.message
+            )
 
-    if intent == "book_appointment":
-        # Lógica para guardar la reserva en la base de datos
-        try:
-            from app.models.base import Booking
-            from datetime import datetime
+        if intent == "book_appointment":
+            # Determinamos el nombre del cliente para la notificación
+            customer_display_name = entities.get('cliente') or "Usuario"
             
-            # Extraer fechas de las entidades de la IA
-            start_date_str = entities.get('fecha_entrada') or entities.get('fecha')
-            end_date_str = entities.get('fecha_salida')
-            
-            if start_date_str and end_date_str:
-                new_booking = Booking(
-                    tenant_id=tenant.id,
-                    property_name=entities.get('propiedad', 'General'),
-                    customer_id=request.customer_id,
-                    start_date=datetime.fromisoformat(start_date_str.replace('Z', '')),
-                    end_date=datetime.fromisoformat(end_date_str.replace('Z', '')),
-                    status="confirmed",
-                    total_price=float(entities.get('monto', 0)),
-                    notes=f"Reserva creada por NexoBot. Noches: {entities.get('noches', 'N/A')}"
+            # Lógica para guardar la reserva en la base de datos (si aplica)
+            try:
+                from app.models.base import Booking
+                from datetime import datetime
+                
+                # Extraer fechas de las entidades de la IA
+                start_date_str = entities.get('fecha_entrada') or entities.get('fecha')
+                # Si no hay fecha de salida, asumimos 1 hora después (para servicios como peluquería)
+                end_date_str = entities.get('fecha_salida')
+                
+                if start_date_str:
+                    try:
+                        start_dt = datetime.fromisoformat(start_date_str.replace('Z', ''))
+                        if end_date_str:
+                            end_dt = datetime.fromisoformat(end_date_str.replace('Z', ''))
+                        else:
+                            # Fallback para citas de servicio: asume 1 hora de duración
+                            from datetime import timedelta
+                            end_dt = start_dt + timedelta(hours=1)
+                            
+                        new_booking = Booking(
+                            tenant_id=tenant.id,
+                            property_name=entities.get('propiedad', 'Servicio General'),
+                            customer_id=request.customer_id,
+                            start_date=start_dt,
+                            end_date=end_dt,
+                            status="confirmed",
+                            total_price=float(entities.get('monto', 0)),
+                            notes=f"Cita/Reserva creada por NexoBot. Datos: {entities.get('telefono', '')} {entities.get('direccion', '')}"
+                        )
+                        session.add(new_booking)
+                        session.commit()
+                        print(f">>> [CHAT] Cita guardada con éxito")
+                    except Exception as e:
+                        print(f"Error parsing date or saving booking: {e}")
+            except Exception as e:
+                print(f"Error guardando reserva: {e}")
+
+            if tenant.whatsapp_notifications_enabled:
+                NotificationService.notify_appointment(
+                    tenant.name, tenant_phone, admin_email, customer_display_name, entities
                 )
-                session.add(new_booking)
-                session.commit()
-                print(f">>> [CHAT] Reserva guardada para {new_booking.property_name}")
-        except Exception as e:
-            print(f"Error guardando reserva: {e}")
-
-        NotificationService.notify_appointment(
-            tenant.name, tenant_phone, admin_email, entities.get('cliente', 'Usuario'), entities
-        )
-    elif intent in ["generate_invoice", "generate_contract", "generate_summary"]:
-        NotificationService.notify_request(
-            tenant.name, tenant_phone, admin_email, entities.get('cliente', 'Usuario'), intent.replace("generate_", "").capitalize()
-        )
-    elif intent == "support_escalation":
-        NotificationService.notify_support_issue(
-            tenant.name, tenant_phone, admin_email, entities.get('cliente', 'Usuario'), entities.get('problema', 'Problema no especificado')
-        )
+        elif intent in ["generate_invoice", "generate_contract", "generate_summary"]:
+            if tenant.whatsapp_notifications_enabled:
+                NotificationService.notify_request(
+                    tenant.name, tenant_phone, admin_email, customer_display_name, intent.replace("generate_", "").capitalize()
+                )
+        elif intent == "support_escalation":
+            if tenant.whatsapp_notifications_enabled:
+                NotificationService.notify_support_issue(
+                    tenant.name, tenant_phone, admin_email, customer_display_name, entities.get('problema', 'Problema no especificado')
+                )
 
     if intent == "generate_contract":
         filename = AIService.generate_contract_pdf(entities, tenant_context['name'])
@@ -231,9 +263,10 @@ async def chat_endpoint(request: ChatRequest, raw_request: Request, session: Ses
                             if new_stock <= 3:
                                 admin_user = tenant.users[0] if tenant.users else None
                                 admin_email = admin_user.email if admin_user else None
-                                NotificationService.notify_low_stock(
-                                    tenant.name, tenant.phone, admin_email, svc['name'], new_stock
-                                )
+                                if tenant.whatsapp_notifications_enabled:
+                                    NotificationService.notify_low_stock(
+                                        tenant.name, tenant.phone, admin_email, svc['name'], new_stock
+                                    )
                             break
                 tenant.services = json.dumps(services)
                 session.add(tenant)
@@ -250,7 +283,7 @@ async def chat_endpoint(request: ChatRequest, raw_request: Request, session: Ses
     return ChatResponse(
         response=ai_output.get('response_text', "Lo siento, no pude procesar eso."),
         intent=intent or 'chat',
-        action_required=intent in ["create_invoice", "book_appointment", "generate_contract", "generate_invoice", "generate_summary"],
+        action_required=intent in ["create_invoice", "book_appointment", "generate_contract", "generate_invoice", "generate_summary", "collect_data"],
         metadata={**entities, "download_url": download_url} if download_url else entities
     )
 

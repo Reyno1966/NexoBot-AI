@@ -79,10 +79,11 @@ export default function PublicChat({ params }) {
         }
     }, [messages]);
 
-    const handleSend = async () => {
-        if (!input.trim() || isLoading) return;
+    const handleSend = async (overrideInput = null) => {
+        const messageText = overrideInput || input;
+        if (!messageText.trim() || isLoading) return;
 
-        const userMsg = { role: 'user', text: input };
+        const userMsg = { role: 'user', text: messageText };
         setMessages(prev => [...prev, userMsg]);
         setInput('');
         setIsLoading(true);
@@ -93,13 +94,26 @@ export default function PublicChat({ params }) {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    message: input,
+                    message: messageText,
                     tenant_id: tenant_id,
                     industry_override: businessInfo.industry
                 })
             });
             const data = await response.json();
-            setMessages(prev => [...prev, { role: 'assistant', text: data.response }]);
+
+            const assistantMsg = {
+                role: 'assistant',
+                text: data.response,
+                intent: data.intent,
+                metadata: data.metadata
+            };
+
+            // Si el intent es de reserva o recolección de datos y faltan campos, podemos sugerir el formulario
+            if (data.intent === 'book_appointment' || data.intent === 'collect_data') {
+                assistantMsg.showForm = true;
+            }
+
+            setMessages(prev => [...prev, assistantMsg]);
         } catch (error) {
             setMessages(prev => [...prev, { role: 'assistant', text: "Lo siento, tuve un problema al conectar. ¿Podrías reintentar?" }]);
         } finally {
@@ -250,6 +264,33 @@ export default function PublicChat({ params }) {
                                     ) : part
                                 )}
                             </p>
+                            {msg.showForm && (
+                                <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    className="mt-4 p-4 bg-white/5 rounded-xl border border-white/10 space-y-3"
+                                >
+                                    <div className="flex items-center gap-2 mb-2 text-indigo-400">
+                                        <Calendar size={16} />
+                                        <span className="text-xs font-bold uppercase tracking-wider">Confirmar Datos de la Cita</span>
+                                    </div>
+                                    <div className="grid grid-cols-1 gap-3">
+                                        <input type="text" placeholder="Nombre completo" defaultValue={msg.metadata?.cliente || ''} className="w-full bg-black/20 border border-white/10 rounded-lg p-2 text-xs text-white" id={`name-${i}`} />
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <input type="text" placeholder="Teléfono" defaultValue={msg.metadata?.telefono || ''} className="w-full bg-black/20 border border-white/10 rounded-lg p-2 text-xs text-white" id={`phone-${i}`} />
+                                            <input type="text" placeholder="Fecha/Hora" defaultValue={msg.metadata?.fecha ? `${msg.metadata.fecha} ${msg.metadata.hora || ''}` : ''} className="w-full bg-black/20 border border-white/10 rounded-lg p-2 text-xs text-white" id={`date-${i}`} />
+                                        </div>
+                                        <input type="text" placeholder="Dirección completa" defaultValue={msg.metadata?.direccion || ''} className="w-full bg-black/20 border border-white/10 rounded-lg p-2 text-xs text-white" id={`address-${i}`} />
+                                        <button onClick={() => {
+                                            const n = document.getElementById(`name-${i}`).value;
+                                            const p = document.getElementById(`phone-${i}`).value;
+                                            const d = document.getElementById(`date-${i}`).value;
+                                            const a = document.getElementById(`address-${i}`).value;
+                                            handleSend(`Confirmo mi cita. Nombre: ${n}, Teléfono: ${p}, Fecha: ${d}, Dirección: ${a}`);
+                                        }} className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 rounded-lg text-xs">Confirmar y Registrar Cita</button>
+                                    </div>
+                                </motion.div>
+                            )}
                         </div>
                     </motion.div>
                 ))}

@@ -27,6 +27,7 @@ class TenantRead(BaseModel):
     stripe_customer_id: Optional[str] = None
     stripe_public_key: Optional[str] = None
     stripe_secret_key: Optional[str] = None
+    whatsapp_notifications_enabled: bool = False
 
 class TenantPublicRead(BaseModel):
     id: UUID
@@ -41,6 +42,7 @@ class TenantPublicRead(BaseModel):
     services: Optional[str] = "[]"
     business_hours: Optional[str] = "{}"
     stripe_public_key: Optional[str] = None
+    whatsapp_notifications_enabled: bool = False
 
 class TenantUpdate(BaseModel):
     name: Optional[str] = None
@@ -55,6 +57,7 @@ class TenantUpdate(BaseModel):
     business_hours: Optional[str] = None
     stripe_public_key: Optional[str] = None
     stripe_secret_key: Optional[str] = None
+    whatsapp_notifications_enabled: Optional[bool] = None
 
 class ForgotPasswordRequest(BaseModel):
     email: EmailStr

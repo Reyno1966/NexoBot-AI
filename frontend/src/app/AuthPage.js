@@ -45,7 +45,7 @@ export default function AuthPage({ onAuthSuccess }) {
         setError('');
 
         const endpoint = isLogin ? '/api/v1/auth/login' : '/api/v1/auth/register';
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://nexobot-ai.onrender.com';
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com');
 
         try {
             let response;
@@ -77,7 +77,8 @@ export default function AuthPage({ onAuthSuccess }) {
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.detail || 'Algo salió mal');
+                const errorMessage = typeof data.detail === 'object' ? JSON.stringify(data.detail) : (data.detail || 'Algo salió mal');
+                throw new Error(errorMessage);
             }
 
             if (isLogin) {
@@ -98,7 +99,7 @@ export default function AuthPage({ onAuthSuccess }) {
     const handleForgotPassword = async () => {
         setIsLoading(true);
         setError('');
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://nexobot-ai.onrender.com';
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com');
 
         try {
             const response = await fetch(`${apiUrl}/api/v1/auth/forgot-password`, {

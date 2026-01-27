@@ -84,6 +84,14 @@ export default function NexoBotDashboard() {
     const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
     const t = translations[lang] || translations['es'];
 
+    // Data for Dashboard
+    const [dashboardData, setDashboardData] = useState({
+        bookings: [],
+        customers: [],
+        transactions: [],
+        isLoaded: false
+    });
+
     // Simulation for Social Proof
     const [userCount, setUserCount] = useState(12430);
     const [onlineCount, setOnlineCount] = useState(842);
@@ -113,9 +121,18 @@ export default function NexoBotDashboard() {
         }
     }, []);
 
+    // Detectar éxito de Stripe y refrescar datos
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('session_id')) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+            if (token) loadUserData(token);
+        }
+    }, [token]);
+
     const loadUserData = async (authToken) => {
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://nexobot-ai.onrender.com';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com');
             const response = await fetch(`${apiUrl}/api/v1/auth/me`, {
                 headers: { 'token': authToken }
             });
@@ -146,7 +163,8 @@ export default function NexoBotDashboard() {
                             saturday: { open: '09:00', close: '14:00', enabled: false },
                             sunday: { open: '09:00', close: '14:00', enabled: false },
                             ...JSON.parse(data.tenant.business_hours || '{}')
-                        }
+                        },
+                        whatsappNotificationsEnabled: data.tenant.whatsapp_notifications_enabled || false
                     });
 
                     // Transformación automática de la UI basada en el Objetivo/Interés
@@ -166,6 +184,40 @@ export default function NexoBotDashboard() {
             console.error("Error cargando usuario:", error);
         }
     };
+
+    const loadDashboardData = async (authToken) => {
+        try {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com');
+            const headers = { 'token': authToken, 'Content-Type': 'application/json' };
+
+            const [bookingsRes, customersRes, transactionsRes] = await Promise.all([
+                fetch(`${apiUrl}/api/v1/data/bookings`, { headers }),
+                fetch(`${apiUrl}/api/v1/data/customers`, { headers }),
+                fetch(`${apiUrl}/api/v1/data/transactions`, { headers })
+            ]);
+
+            const [bookings, customers, transactions] = await Promise.all([
+                bookingsRes.json(),
+                customersRes.json(),
+                transactionsRes.json()
+            ]);
+
+            setDashboardData({
+                bookings: Array.isArray(bookings) ? bookings : [],
+                customers: Array.isArray(customers) ? customers : [],
+                transactions: Array.isArray(transactions) ? transactions : [],
+                isLoaded: true
+            });
+        } catch (error) {
+            console.error("Error cargando datos del dashboard:", error);
+        }
+    };
+
+    useEffect(() => {
+        if (isAuthenticated && token) {
+            loadDashboardData(token);
+        }
+    }, [isAuthenticated, token, activeTab]);
 
     const handleAuthSuccess = (newToken) => {
         setToken(newToken);
@@ -290,13 +342,15 @@ export default function NexoBotDashboard() {
             friday: { open: '09:00', close: '18:00', enabled: true },
             saturday: { open: '09:00', close: '14:00', enabled: false },
             sunday: { open: '09:00', close: '14:00', enabled: false },
-        }
+        },
+        whatsappNotificationsEnabled: false
     });
 
-    const handleSaveBusinessConfig = async () => {
+    const handleSaveBusinessConfig = async (configOverride = null) => {
         setIsLoading(true);
+        const configToSave = configOverride || businessConfig;
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://nexobot-ai.onrender.com';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com');
             const response = await fetch(`${apiUrl}/api/v1/auth/tenant`, {
                 method: 'PUT',
                 headers: {
@@ -304,23 +358,24 @@ export default function NexoBotDashboard() {
                     'token': token
                 },
                 body: JSON.stringify({
-                    name: businessConfig.name,
-                    industry: businessConfig.industry,
-                    phone: businessConfig.phone,
-                    address: businessConfig.address,
-                    country: businessConfig.country,
-                    logo_url: businessConfig.logoUrl,
-                    main_interest: businessConfig.mainInterest,
-                    stripe_public_key: businessConfig.stripe_public_key,
-                    stripe_secret_key: businessConfig.stripe_secret_key,
-                    services: JSON.stringify(businessConfig.services),
-                    business_hours: JSON.stringify(businessConfig.businessHours)
+                    name: configToSave.name,
+                    industry: configToSave.industry,
+                    phone: configToSave.phone,
+                    address: configToSave.address,
+                    country: configToSave.country,
+                    logo_url: configToSave.logoUrl,
+                    main_interest: configToSave.mainInterest,
+                    stripe_public_key: configToSave.stripe_public_key,
+                    stripe_secret_key: configToSave.stripe_secret_key,
+                    services: JSON.stringify(configToSave.services),
+                    business_hours: JSON.stringify(configToSave.businessHours),
+                    whatsapp_notifications_enabled: configToSave.whatsappNotificationsEnabled
                 })
             });
 
             if (response.ok) {
                 const data = await response.json();
-                alert(t.save_success);
+                if (!configOverride) alert(t.save_success);
                 setIsSettingsOpen(false);
             } else {
                 const errorData = await response.json();
@@ -345,7 +400,7 @@ export default function NexoBotDashboard() {
         setIsLoading(true);
 
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://nexobot-ai.onrender.com';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com');
             const response = await fetch(`${apiUrl}/api/v1/chat`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -376,7 +431,7 @@ export default function NexoBotDashboard() {
 
         setIsSubscribing(true);
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://nexobot-ai.onrender.com';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com');
             const price = currentIndustry.price || 19.99;
 
             console.log("Solicitando checkout para:", user.tenant_id, "precio:", price);
@@ -717,7 +772,7 @@ export default function NexoBotDashboard() {
 
                             return (
                                 <section className="dashboard-card p-6">
-                                    <div className="flex justify-between items-center mb-8">
+                                    <div className="flex justify-between items-center mb-8 border-b border-white/5 pb-6">
                                         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                                             <div className="flex gap-1">
                                                 <button className="p-2 bg-white/5 rounded-lg hover:bg-white/10"><ChevronLeft size={18} /></button>
@@ -739,23 +794,197 @@ export default function NexoBotDashboard() {
                                         )}
                                     </div>
 
-                                    <div className="border-t border-white/5 pt-6 text-center py-20 bg-white/[0.02] rounded-2xl">
-                                        {activeTab === 'main' && <Calendar size={48} className="mx-auto mb-4 text-slate-600" />}
-                                        {activeTab === 'billing_or_docs' && <FileText size={48} className="mx-auto mb-4 text-slate-600" />}
-                                        {activeTab === 'items' && <Users size={48} className="mx-auto mb-4 text-slate-600" />}
-                                        {activeTab === 'finances' && <PieChart size={48} className="mx-auto mb-4 text-slate-600" />}
+                                    <div className="relative">
+                                        {businessConfig.isLocked && activeTab !== 'marketing' && (
+                                            <div className="absolute inset-0 z-50 backdrop-blur-md bg-[#0f1115]/60 flex flex-col items-center justify-center rounded-3xl p-8 text-center border border-white/10 shadow-2xl">
+                                                <div className="w-20 h-20 bg-indigo-600 rounded-3xl flex items-center justify-center mb-6 shadow-2xl shadow-indigo-600/40 animate-bounce">
+                                                    <Zap size={40} className="text-white fill-white" />
+                                                </div>
+                                                <h4 className="text-2xl font-bold mb-3">{t.trial_active}</h4>
+                                                <p className="text-slate-400 max-w-sm mb-8">
+                                                    Activa tu acceso total a NexoBot hoy. Disfruta de **7 días de prueba gratuita** con todas las funciones de {tabLabel} activadas.
+                                                </p>
+                                                <button
+                                                    onClick={handleSubscription}
+                                                    disabled={isSubscribing}
+                                                    className="px-8 py-4 bg-white text-black font-bold rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-xl flex items-center gap-3 disabled:opacity-50"
+                                                >
+                                                    {isSubscribing ? '🚀 Conectando con Stripe...' : '🚀 Empezar prueba de 7 días gratis'}
+                                                </button>
+                                                <p className="mt-4 text-[10px] text-slate-500 uppercase font-bold tracking-widest">No se cobrará nada durante los primeros 7 días</p>
+                                            </div>
+                                        )}
 
-                                        <p className="text-slate-400">
-                                            {lang === 'es' ? `Aquí se mostrará la gestión de ` : `Here you will find `}
-                                            <span className="text-white font-bold">{tabLabel}</span>
-                                            {lang === 'es' ? ` para ` : ` management for `}
-                                            <span className="text-white font-bold">{businessConfig.name}</span>
-                                        </p>
-                                        <p className="text-xs text-slate-500 mt-2">
-                                            {lang === 'es' ? `Dile a ` : `Ask `}
-                                            <span className="text-cyan-400 font-bold">NexoBot</span>
-                                            {lang === 'es' ? ` en el chat que te ayude con esto.` : ` in the chat to help you with this.`}
-                                        </p>
+                                        <div className="pt-6">
+                                            {activeTab === 'main' && (
+                                                <div className="space-y-4">
+                                                    {dashboardData.bookings.length === 0 ? (
+                                                        <div className="text-center py-20 bg-white/[0.02] rounded-2xl">
+                                                            <Calendar size={48} className="mx-auto mb-4 text-slate-600" />
+                                                            <p className="text-slate-400">No hay citas agendadas aún.</p>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="grid grid-cols-1 gap-3">
+                                                            {dashboardData.bookings.map((booking) => (
+                                                                <div key={booking.id} className="flex items-center justify-between p-5 bg-white/5 rounded-2xl border border-white/5 hover:bg-white/[0.07] transition-all group">
+                                                                    <div className="flex items-center gap-4">
+                                                                        <div className="w-12 h-12 bg-indigo-600/20 rounded-xl flex items-center justify-center text-indigo-400">
+                                                                            <Calendar size={24} />
+                                                                        </div>
+                                                                        <div>
+                                                                            <h4 className="font-bold text-white group-hover:text-cyan-400 transition-colors">{booking.property_name}</h4>
+                                                                            <p className="text-xs text-slate-400 flex items-center gap-2">
+                                                                                <Clock size={12} /> {new Date(booking.start_date).toLocaleDateString()} {new Date(booking.start_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                            </p>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="text-right">
+                                                                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${booking.status === 'confirmed' ? 'bg-green-500/20 text-green-400' : 'bg-orange-500/20 text-orange-400'}`}>
+                                                                            {booking.status}
+                                                                        </span>
+                                                                        <p className="text-sm font-bold mt-1">${booking.total_price}</p>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            {activeTab === 'billing_or_docs' && (
+                                                <div className="space-y-4">
+                                                    {dashboardData.transactions.filter(t => t.invoice_url || !t.is_income).length === 0 ? (
+                                                        <div className="text-center py-20 bg-white/[0.02] rounded-2xl">
+                                                            <FileText size={48} className="mx-auto mb-4 text-slate-600" />
+                                                            <p className="text-slate-400">No hay facturas o documentos generados.</p>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="overflow-x-auto">
+                                                            <table className="w-full text-left border-separate border-spacing-y-2">
+                                                                <thead>
+                                                                    <tr className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                                                                        <th className="px-4 py-2">Documento / Concepto</th>
+                                                                        <th className="px-4 py-2">Fecha</th>
+                                                                        <th className="px-4 py-2 text-right">Monto</th>
+                                                                        <th className="px-4 py-2 text-right">Acción</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    {dashboardData.transactions.map((tx) => (
+                                                                        <tr key={tx.id} className="bg-white/5 hover:bg-white/[0.08] transition-all">
+                                                                            <td className="px-4 py-4 rounded-l-2xl border-l border-t border-b border-white/5">
+                                                                                <div className="flex items-center gap-3">
+                                                                                    <FileText size={18} className="text-indigo-400" />
+                                                                                    <span className="font-bold text-sm">{tx.description}</span>
+                                                                                </div>
+                                                                            </td>
+                                                                            <td className="px-4 py-4 border-t border-b border-white/5 text-xs text-slate-400">
+                                                                                {new Date(tx.created_at).toLocaleDateString()}
+                                                                            </td>
+                                                                            <td className="px-4 py-4 border-t border-b border-white/5 text-right font-bold text-sm">
+                                                                                <span className={tx.is_income ? 'text-green-400' : 'text-red-400'}>
+                                                                                    {tx.is_income ? '+' : '-'}${tx.amount}
+                                                                                </span>
+                                                                            </td>
+                                                                            <td className="px-4 py-4 rounded-r-2xl border-r border-t border-b border-white/5 text-right">
+                                                                                <button className="p-2 bg-indigo-500/10 text-indigo-400 rounded-lg hover:bg-indigo-500/20"><ExternalLink size={14} /></button>
+                                                                            </td>
+                                                                        </tr>
+                                                                    ))}
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            {activeTab === 'items' && (
+                                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                                    <div className="space-y-4">
+                                                        <h4 className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest pl-2">Mis Clientes Recientes</h4>
+                                                        {dashboardData.customers.length === 0 ? (
+                                                            <div className="p-10 border border-white/5 border-dashed rounded-2xl text-center text-slate-500 text-sm">
+                                                                Aquí aparecerán los clientes registrados por NexoBot.
+                                                            </div>
+                                                        ) : (
+                                                            <div className="space-y-3">
+                                                                {dashboardData.customers.map((cust) => (
+                                                                    <div key={cust.id} className="flex items-center gap-4 p-4 bg-white/5 rounded-2xl border border-white/5">
+                                                                        <div className="w-10 h-10 rounded-full bg-cyan-600/20 flex items-center justify-center text-cyan-400">
+                                                                            <User size={20} />
+                                                                        </div>
+                                                                        <div>
+                                                                            <p className="text-sm font-bold">{cust.full_name}</p>
+                                                                            <p className="text-[10px] text-slate-500">{cust.phone}</p>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="space-y-4">
+                                                        <h4 className="text-[10px] font-bold text-orange-400 uppercase tracking-widest pl-2">Catálogo de Servicios</h4>
+                                                        <div className="space-y-3">
+                                                            {businessConfig.services.length === 0 ? (
+                                                                <p className="text-xs text-slate-500 italic">No tienes servicios configurados.</p>
+                                                            ) : (
+                                                                businessConfig.services.map((svc, idx) => (
+                                                                    <div key={idx} className="flex justify-between items-center p-4 bg-white/5 rounded-2xl border border-white/5">
+                                                                        <span className="text-sm font-bold">{svc.name}</span>
+                                                                        <span className="text-sm text-orange-400 font-bold">${svc.price}</span>
+                                                                    </div>
+                                                                ))
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {activeTab === 'finances' && (
+                                                <div className="space-y-8">
+                                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                                        <div className="p-6 bg-green-500/10 border border-green-500/20 rounded-3xl">
+                                                            <p className="text-[10px] font-bold text-green-400 uppercase tracking-widest mb-1">Ingresos Totales</p>
+                                                            <h4 className="text-2xl font-bold">${dashboardData.transactions.filter(t => t.is_income).reduce((acc, t) => acc + t.amount, 0).toFixed(2)}</h4>
+                                                        </div>
+                                                        <div className="p-6 bg-red-500/10 border border-red-500/20 rounded-3xl">
+                                                            <p className="text-[10px] font-bold text-red-400 uppercase tracking-widest mb-1">Gastos / Comisiones</p>
+                                                            <h4 className="text-2xl font-bold">${dashboardData.transactions.filter(t => !t.is_income).reduce((acc, t) => acc + t.amount, 0).toFixed(2)}</h4>
+                                                        </div>
+                                                        <div className="p-6 bg-cyan-500/10 border border-cyan-500/20 rounded-3xl">
+                                                            <p className="text-[10px] font-bold text-cyan-400 uppercase tracking-widest mb-1">Balance Neto</p>
+                                                            <h4 className="text-2xl font-bold">
+                                                                ${(dashboardData.transactions.filter(t => t.is_income).reduce((acc, t) => acc + t.amount, 0) -
+                                                                    dashboardData.transactions.filter(t => !t.is_income).reduce((acc, t) => acc + t.amount, 0)).toFixed(2)}
+                                                            </h4>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="bg-white/5 p-6 rounded-3xl border border-white/5">
+                                                        <h4 className="text-sm font-bold mb-4">Flujo de Caja Reciente</h4>
+                                                        {dashboardData.transactions.length === 0 ? (
+                                                            <p className="text-xs text-slate-500 italic text-center py-10">No hay transacciones registradas.</p>
+                                                        ) : (
+                                                            <div className="space-y-4">
+                                                                {dashboardData.transactions.slice(0, 5).map((tx) => (
+                                                                    <div key={tx.id} className="flex justify-between items-center text-sm border-b border-white/5 pb-2">
+                                                                        <span className="text-slate-300">{tx.description}</span>
+                                                                        <span className={tx.is_income ? 'text-green-400 font-bold' : 'text-red-400 font-bold'}>
+                                                                            {tx.is_income ? '+' : '-'}${tx.amount}
+                                                                        </span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            <div className="mt-8 text-xs text-slate-500 flex items-center justify-center gap-2">
+                                                <Bot size={14} className="text-cyan-400" />
+                                                Dile a <span className="text-white font-bold">NexoBot</span> en el chat que gestione nuevos elementos para este panel.
+                                            </div>
+                                        </div>
                                     </div>
                                 </section>
                             );
@@ -864,12 +1093,21 @@ export default function NexoBotDashboard() {
                                                 <h4 className="text-xl font-bold">Alertas Inteligentes en tu Celular</h4>
                                                 <p className="text-slate-400 text-sm">Cada vez que un cliente hable con tu NexoBot, te avisaremos al instante por WhatsApp.</p>
                                             </div>
-                                            <div className="ml-auto flex items-center gap-3 bg-[#0f1115] p-2 rounded-2xl border border-white/5">
-                                                <span className="pl-4 text-sm font-bold text-indigo-400 uppercase tracking-widest">Activo</span>
-                                                <div className="w-12 h-6 bg-indigo-600 rounded-full relative">
-                                                    <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full shadow-lg" />
+                                            <button
+                                                onClick={() => {
+                                                    const newConfig = { ...businessConfig, whatsappNotificationsEnabled: !businessConfig.whatsappNotificationsEnabled };
+                                                    setBusinessConfig(newConfig);
+                                                    handleSaveBusinessConfig(newConfig);
+                                                }}
+                                                className="ml-auto flex items-center gap-3 bg-[#0f1115] p-2 rounded-2xl border border-white/5 hover:border-indigo-500/50 transition-all group"
+                                            >
+                                                <span className={`pl-4 text-sm font-bold uppercase tracking-widest transition-colors ${businessConfig.whatsappNotificationsEnabled ? 'text-indigo-400' : 'text-slate-500'}`}>
+                                                    {businessConfig.whatsappNotificationsEnabled ? 'Activo' : 'Inactivo'}
+                                                </span>
+                                                <div className={`w-12 h-6 rounded-full relative transition-colors ${businessConfig.whatsappNotificationsEnabled ? 'bg-indigo-600' : 'bg-slate-700'}`}>
+                                                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-lg transition-all ${businessConfig.whatsappNotificationsEnabled ? 'right-1' : 'left-1'}`} />
                                                 </div>
-                                            </div>
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -877,10 +1115,10 @@ export default function NexoBotDashboard() {
                         )}
                     </div>
                 </div>
-            </main >
+            </main>
 
             {/* SETTINGS MODAL - Business Personalization */}
-            < AnimatePresence >
+            <AnimatePresence>
                 {isSettingsOpen && (
                     <>
                         <motion.div
@@ -959,9 +1197,9 @@ export default function NexoBotDashboard() {
 
                                 <div>
                                     <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 block">
-                                        ¿A qué te dedicas? {businessConfig.isLocked && <span className="text-red-400 opacity-60">(Función bloqueada por suscripción)</span>}
+                                        ¿A qué te dedicas?
                                     </label>
-                                    <div className={`grid grid-cols-2 md:grid-cols-3 gap-3 ${businessConfig.isLocked ? 'pointer-events-none opacity-50' : ''}`}>
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                                         {industries.map((ind) => (
                                             <button
                                                 key={ind.id}
@@ -1154,7 +1392,7 @@ export default function NexoBotDashboard() {
                                         <button
                                             onClick={async () => {
                                                 try {
-                                                    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://nexobot-ai.onrender.com';
+                                                    const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com');
                                                     const response = await fetch(`${apiUrl}/api/v1/payments/create-portal-session?tenant_id=${user.tenant_id}`, {
                                                         method: 'POST'
                                                     });
@@ -1185,18 +1423,18 @@ export default function NexoBotDashboard() {
                     </>
                 )
                 }
-            </AnimatePresence >
+            </AnimatePresence>
 
             {/* Floating Chat Button */}
-            < button
+            <button
                 onClick={() => setIsChatOpen(true)}
                 className="fixed bottom-8 right-8 w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-2xl shadow-indigo-600/40 hover:scale-105 active:scale-95 transition-all z-50"
             >
                 <MessageSquare className="text-white" size={28} />
-            </button >
+            </button>
 
             {/* Chat Overlay */}
-            < AnimatePresence >
+            <AnimatePresence>
                 {isChatOpen && (
                     <>
                         <motion.div
@@ -1330,7 +1568,7 @@ export default function NexoBotDashboard() {
                         </motion.div>
                     </>
                 )}
-            </AnimatePresence >
-        </div >
+            </AnimatePresence>
+        </div>
     );
 }

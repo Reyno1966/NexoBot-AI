@@ -28,6 +28,7 @@ class Tenant(TenantBase, table=True):
     stripe_customer_id: Optional[str] = None # Para gestión de suscripciones (nos pagan a nosotros)
     stripe_public_key: Optional[str] = None # Para que ellos cobren (su cuenta)
     stripe_secret_key: Optional[str] = None # Para que ellos cobren (su cuenta)
+    whatsapp_notifications_enabled: bool = False # Alertas por WhatsApp
     
     users: List["User"] = Relationship(back_populates="tenant")
     customers: List["Customer"] = Relationship(back_populates="tenant")

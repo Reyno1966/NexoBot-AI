@@ -86,6 +86,7 @@ def init_db():
             conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS main_interest VARCHAR;"))
             conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS business_hours VARCHAR;"))
             conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS is_locked BOOLEAN DEFAULT FALSE;"))
+            conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS whatsapp_notifications_enabled BOOLEAN DEFAULT FALSE;"))
             
             # Asegurar tabla de bookings si no se creó con create_all
             conn.execute(text("""

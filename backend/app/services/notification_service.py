@@ -46,7 +46,10 @@ class NotificationService:
         """
         Envía un aviso de nueva cita (WhatsApp + Email).
         """
-        text_msg = f"🌟 *NEXOBOT* | Nueva Cita Agendada\n\n🏢 *Negocio*: {tenant_name}\n👤 *Cliente*: {customer_name}\n🛠️ *Servicio*: {details.get('servicios', 'Gestión de cita')}\n💰 *Monto*: ${details.get('total', 'A confirmar')}"
+        phone = details.get('telefono', 'No proporcionado')
+        address = details.get('direccion', 'No proporcionada')
+        
+        text_msg = f"🌟 *NEXOBOT* | Nueva Cita Agendada\n\n🏢 *Negocio*: {tenant_name}\n👤 *Cliente*: {customer_name}\n📞 *Teléfono*: {phone}\n📍 *Dirección*: {address}\n🛠️ *Servicio*: {details.get('servicios', details.get('propiedad', 'Gestión de cita'))}\n💰 *Monto*: ${details.get('total', details.get('monto', 'A confirmar'))}"
         
         # WhatsApp
         NotificationService.send_whatsapp_alert(tenant_phone, text_msg)
@@ -59,8 +62,10 @@ class NotificationService:
             <hr style="border: 0; border-top: 1px solid #1a1f24; margin: 20px 0;">
             <p><b>Negocio:</b> {tenant_name}</p>
             <p><b>Cliente:</b> {customer_name}</p>
-            <p><b>Servicio:</b> {details.get('servicios', 'Gestión de cita')}</p>
-            <p><b>Monto Estimado:</b> ${details.get('total', 'A confirmar')}</p>
+            <p><b>Teléfono:</b> {phone}</p>
+            <p><b>Dirección:</b> {address}</p>
+            <p><b>Servicio:</b> {details.get('servicios', details.get('propiedad', 'Gestión de cita'))}</p>
+            <p><b>Monto Estimado:</b> ${details.get('total', details.get('monto', 'A confirmar'))}</p>
             <br>
             <p style="font-size: 12px; color: #64748b;">Este es un mensaje automático del cerebro operativo de NexoBot AI.</p>
         </div>
@@ -139,3 +144,27 @@ class NotificationService:
         """
         if tenant_email:
             NotificationService.send_email_alert(tenant_email, f"🚨 EMERGENCIA: Problema de Cliente en {tenant_name}", html_msg)
+
+    @staticmethod
+    def notify_chat_message(tenant_name: str, tenant_phone: str, tenant_email: str, customer_name: str, message: str):
+        """
+        Alerta general cuando un cliente habla con el bot.
+        """
+        text_msg = f"💬 *NEXOBOT* | Nuevo mensaje de cliente\n\n👤 *Cliente*: {customer_name}\n📝 *Mensaje*: {message}\n\n🏢 *Negocio*: {tenant_name}"
+        
+        NotificationService.send_whatsapp_alert(tenant_phone, text_msg)
+        
+        html_msg = f"""
+        <div style="font-family: sans-serif; background: #0f1115; color: white; padding: 40px; border-radius: 20px;">
+            <h2 style="color: #38bdf8;">💬 Nuevo Mensaje de Cliente</h2>
+            <p>Un cliente está interactuando con tu asistente <b>NexoBot</b>:</p>
+            <hr style="border: 0; border-top: 1px solid #1a1f24; margin: 20px 0;">
+            <p><b>Cliente:</b> {customer_name}</p>
+            <p><b>Mensaje:</b> {message}</p>
+            <p><b>Negocio:</b> {tenant_name}</p>
+            <br>
+            <p style="font-size: 12px; color: #64748b;">NexoBot está respondiendo automáticamente, pero puedes intervenir si lo deseas.</p>
+        </div>
+        """
+        if tenant_email:
+            NotificationService.send_email_alert(tenant_email, f"💬 NexoBot: Nuevo mensaje de {customer_name}", html_msg)
