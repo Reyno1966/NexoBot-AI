@@ -14,35 +14,40 @@ class NotificationService:
         return True
 
     @staticmethod
-    def send_email_alert(to_email: str, subject: str, message_html: str):
+    def send_email_alert(to_email: str, subject: str, message_html: str, smtp_config: Dict = None):
         """
-        Envío de correo real usando Gmail/SMTP.
+        Envío de correo real usando Gmail/SMTP o configuración del cliente.
         """
-        if not settings.SMTP_USER or not settings.SMTP_PASSWORD:
-            print(f"📧 [AVISO EMAIL] No configurado. Simulación para {to_email}: {subject}")
+        host = (smtp_config or {}).get('host') or settings.SMTP_HOST
+        port = (smtp_config or {}).get('port') or settings.SMTP_PORT
+        user = (smtp_config or {}).get('user') or settings.SMTP_USER
+        password = (smtp_config or {}).get('password') or settings.SMTP_PASSWORD
+
+        if not user or not password:
+            print(f"📧 [AVISO EMAIL] Credenciales incompletas para {to_email}. Usando simulador.")
             return False
 
         try:
             msg = MIMEMultipart()
-            msg['From'] = f"{settings.EMAILS_FROM_NAME} <{settings.SMTP_USER}>"
+            msg['From'] = f"{settings.EMAILS_FROM_NAME} <{user}>"
             msg['To'] = to_email
             msg['Subject'] = subject
 
             msg.attach(MIMEText(message_html, 'html'))
 
-            server = smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT)
+            server = smtplib.SMTP(host, port)
             server.starttls()
-            server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
+            server.login(user, password)
             server.send_message(msg)
             server.quit()
-            print(f"📧 [EMAIL] Enviado con éxito a {to_email}")
+            print(f"📧 [EMAIL] Enviado con éxito a {to_email} vía {host}")
             return True
         except Exception as e:
             print(f"❌ [EMAIL ERROR] {str(e)}")
             return False
 
     @staticmethod
-    def notify_appointment(tenant_name: str, tenant_phone: str, tenant_email: str, customer_name: str, details: Dict):
+    def notify_appointment(tenant_name: str, tenant_phone: str, tenant_email: str, customer_name: str, details: Dict, smtp_config: Dict = None):
         """
         Envía un aviso de nueva cita (WhatsApp + Email).
         """
@@ -71,10 +76,10 @@ class NotificationService:
         </div>
         """
         if tenant_email:
-            NotificationService.send_email_alert(tenant_email, f"🌟 NexoBot: Nueva Cita de {customer_name}", html_msg)
+            NotificationService.send_email_alert(tenant_email, f"🌟 NexoBot: Nueva Cita de {customer_name}", html_msg, smtp_config)
 
     @staticmethod
-    def notify_request(tenant_name: str, tenant_phone: str, tenant_email: str, customer_name: str, request_type: str):
+    def notify_request(tenant_name: str, tenant_phone: str, tenant_email: str, customer_name: str, request_type: str, smtp_config: Dict = None):
         """
         Envía un aviso de solicitud de documento (WhatsApp + Email).
         """
@@ -95,10 +100,10 @@ class NotificationService:
         </div>
         """
         if tenant_email:
-            NotificationService.send_email_alert(tenant_email, f"📥 NexoBot: Nuevo {request_type} generado", html_msg)
+            NotificationService.send_email_alert(tenant_email, f"📥 NexoBot: Nuevo {request_type} generado", html_msg, smtp_config)
 
     @staticmethod
-    def notify_low_stock(tenant_name: str, tenant_phone: str, tenant_email: str, item_name: str, remaining_stock: int):
+    def notify_low_stock(tenant_name: str, tenant_phone: str, tenant_email: str, item_name: str, remaining_stock: int, smtp_config: Dict = None):
         """
         Envía alerta de stock bajo (WhatsApp + Email).
         """
@@ -118,10 +123,10 @@ class NotificationService:
         </div>
         """
         if tenant_email:
-            NotificationService.send_email_alert(tenant_email, f"⚠️ ALERTA: Stock Bajo en {item_name}", html_msg)
+            NotificationService.send_email_alert(tenant_email, f"⚠️ ALERTA: Stock Bajo en {item_name}", html_msg, smtp_config)
 
     @staticmethod
-    def notify_support_issue(tenant_name: str, tenant_phone: str, tenant_email: str, customer_name: str, issue_description: str):
+    def notify_support_issue(tenant_name: str, tenant_phone: str, tenant_email: str, customer_name: str, issue_description: str, smtp_config: Dict = None):
         """
         Envía una alerta de EMERGENCIA cuando un cliente tiene un problema.
         """
@@ -143,10 +148,10 @@ class NotificationService:
         </div>
         """
         if tenant_email:
-            NotificationService.send_email_alert(tenant_email, f"🚨 EMERGENCIA: Problema de Cliente en {tenant_name}", html_msg)
+            NotificationService.send_email_alert(tenant_email, f"🚨 EMERGENCIA: Problema de Cliente en {tenant_name}", html_msg, smtp_config)
 
     @staticmethod
-    def notify_chat_message(tenant_name: str, tenant_phone: str, tenant_email: str, customer_name: str, message: str):
+    def notify_chat_message(tenant_name: str, tenant_phone: str, tenant_email: str, customer_name: str, message: str, smtp_config: Dict = None):
         """
         Alerta general cuando un cliente habla con el bot.
         """
@@ -167,4 +172,4 @@ class NotificationService:
         </div>
         """
         if tenant_email:
-            NotificationService.send_email_alert(tenant_email, f"💬 NexoBot: Nuevo mensaje de {customer_name}", html_msg)
+            NotificationService.send_email_alert(tenant_email, f"💬 NexoBot: Nuevo mensaje de {customer_name}", html_msg, smtp_config)

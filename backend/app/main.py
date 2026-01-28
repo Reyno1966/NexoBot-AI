@@ -198,6 +198,13 @@ async def chat_endpoint(request: ChatRequest, raw_request: Request, session: Ses
         tenant_phone = tenant.phone
         print(f">>> [CHAT] Notificando a: Email={admin_email}, Tel={tenant_phone}")
         
+        # Preparar configuración SMTP del negocio si existe
+        smtp_config = {
+            "host": tenant.smtp_host,
+            "port": tenant.smtp_port,
+            "user": tenant.smtp_user,
+            "password": tenant.smtp_password
+        } if tenant.smtp_user and tenant.smtp_password else None
         should_notify = tenant.whatsapp_notifications_enabled or True
         if should_notify:
             customer_display_name = entities.get('cliente') or "Usuario"
@@ -210,7 +217,7 @@ async def chat_endpoint(request: ChatRequest, raw_request: Request, session: Ses
             if tenant_phone or admin_email:
                 print(f">>> [CHAT] Enviando notificación de mensaje...")
                 NotificationService.notify_chat_message(
-                    tenant.name, tenant_phone or "No configurado", admin_email, customer_display_name, request.message
+                    tenant.name, tenant_phone or "No configurado", admin_email, customer_display_name, request.message, smtp_config
                 )
 
         if intent == "book_appointment":
@@ -304,24 +311,24 @@ async def chat_endpoint(request: ChatRequest, raw_request: Request, session: Ses
                         # Fallback: intentar notificar aunque falle el guardado en BD para no perder el cliente
                         if should_notify:
                              NotificationService.notify_appointment(
-                                tenant.name, tenant_phone, admin_email, customer_display_name, entities
+                                tenant.name, tenant_phone, admin_email, customer_display_name, entities, smtp_config
                             )
             except Exception as e:
                 print(f"Error guardando reserva: {e}")
 
             if should_notify:
                 NotificationService.notify_appointment(
-                    tenant.name, tenant_phone, admin_email, customer_display_name, entities
+                    tenant.name, tenant_phone, admin_email, customer_display_name, entities, smtp_config
                 )
         elif intent in ["generate_invoice", "generate_contract", "generate_summary"]:
             if should_notify:
                 NotificationService.notify_request(
-                    tenant.name, tenant_phone, admin_email, customer_display_name, intent.replace("generate_", "").capitalize()
+                    tenant.name, tenant_phone, admin_email, customer_display_name, intent.replace("generate_", "").capitalize(), smtp_config
                 )
         elif intent == "support_escalation":
             if should_notify:
                 NotificationService.notify_support_issue(
-                    tenant.name, tenant_phone, admin_email, customer_display_name, entities.get('problema', 'Problema no especificado')
+                    tenant.name, tenant_phone, admin_email, customer_display_name, entities.get('problema', 'Problema no especificado'), smtp_config
                 )
 
     if intent == "generate_contract":

@@ -179,7 +179,13 @@ export default function NexoBotDashboard() {
                             sunday: { open: '09:00', close: '14:00', enabled: false },
                             ...safeParse(data.tenant.business_hours, {})
                         },
-                        whatsappNotificationsEnabled: data.tenant.whatsapp_notifications_enabled || false
+                        whatsappNotificationsEnabled: data.tenant.whatsapp_notifications_enabled || false,
+                        smtp_host: data.tenant.smtp_host || '',
+                        smtp_port: data.tenant.smtp_port || 587,
+                        smtp_user: data.tenant.smtp_user || '',
+                        smtp_password: data.tenant.smtp_password || '',
+                        whatsapp_api_key: data.tenant.whatsapp_api_key || '',
+                        whatsapp_phone: data.tenant.whatsapp_phone || ''
                     });
 
                     // Transformación automática de la UI basada en el Objetivo/Interés
@@ -358,7 +364,13 @@ export default function NexoBotDashboard() {
             saturday: { open: '09:00', close: '14:00', enabled: false },
             sunday: { open: '09:00', close: '14:00', enabled: false },
         },
-        whatsappNotificationsEnabled: false
+        whatsappNotificationsEnabled: false,
+        smtp_host: '',
+        smtp_port: 587,
+        smtp_user: '',
+        smtp_password: '',
+        whatsapp_api_key: '',
+        whatsapp_phone: ''
     });
 
     const handleSaveBusinessConfig = async (configOverride = null) => {
@@ -384,7 +396,13 @@ export default function NexoBotDashboard() {
                     stripe_secret_key: configToSave.stripe_secret_key,
                     services: JSON.stringify(configToSave.services),
                     business_hours: JSON.stringify(configToSave.businessHours),
-                    whatsapp_notifications_enabled: configToSave.whatsappNotificationsEnabled
+                    whatsapp_notifications_enabled: configToSave.whatsappNotificationsEnabled,
+                    smtp_host: configToSave.smtp_host,
+                    smtp_port: configToSave.smtp_port,
+                    smtp_user: configToSave.smtp_user,
+                    smtp_password: configToSave.smtp_password,
+                    whatsapp_api_key: configToSave.whatsapp_api_key,
+                    whatsapp_phone: configToSave.whatsapp_phone
                 })
             });
 
@@ -1397,6 +1415,75 @@ export default function NexoBotDashboard() {
                                                 placeholder="sk_live_..."
                                                 className="w-full bg-[#0f1115] border border-white/5 p-3 rounded-xl outline-none focus:border-orange-500 text-xs font-mono"
                                             />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Nueva Sección: Canales de Comunicación Propios */}
+                                <div className="space-y-4 pt-4 border-t border-white/5 font-bold">
+                                    <label className="text-[10px] font-bold text-cyan-400 uppercase tracking-widest ml-2 block">📡 Connectividad (Email & WhatsApp Propios)</label>
+                                    <p className="text-[10px] text-slate-500 ml-2">Configura tus propios canales para que NexoBot envíe las alertas directamente desde tus cuentas.</p>
+
+                                    <div className="bg-white/[0.02] p-4 rounded-3xl border border-white/5 space-y-4">
+                                        <h4 className="text-[10px] text-slate-300 uppercase tracking-wider font-bold">Servidor de Correo (SMTP)</h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                            <input
+                                                type="text"
+                                                placeholder="SMTP Host (ej: smtp.gmail.com)"
+                                                value={businessConfig.smtp_host}
+                                                onChange={(e) => setBusinessConfig({ ...businessConfig, smtp_host: e.target.value })}
+                                                className="bg-[#0f1115] border border-white/5 p-3 rounded-xl text-xs outline-none focus:border-cyan-500"
+                                            />
+                                            <input
+                                                type="number"
+                                                placeholder="Puerto (ej: 587)"
+                                                value={businessConfig.smtp_port}
+                                                onChange={(e) => setBusinessConfig({ ...businessConfig, smtp_port: parseInt(e.target.value) })}
+                                                className="bg-[#0f1115] border border-white/5 p-3 rounded-xl text-xs outline-none focus:border-cyan-500"
+                                            />
+                                            <input
+                                                type="text"
+                                                placeholder="Email / Usuario"
+                                                value={businessConfig.smtp_user}
+                                                onChange={(e) => setBusinessConfig({ ...businessConfig, smtp_user: e.target.value })}
+                                                className="bg-[#0f1115] border border-white/5 p-3 rounded-xl text-xs outline-none focus:border-cyan-500"
+                                            />
+                                            <input
+                                                type="password"
+                                                placeholder="Contraseña de Aplicación"
+                                                value={businessConfig.smtp_password}
+                                                onChange={(e) => setBusinessConfig({ ...businessConfig, smtp_password: e.target.value })}
+                                                className="bg-[#0f1115] border border-white/5 p-3 rounded-xl text-xs outline-none focus:border-cyan-500"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-white/[0.02] p-4 rounded-3xl border border-white/5 space-y-4">
+                                        <h4 className="text-[10px] text-slate-300 uppercase tracking-wider font-bold">WhatsApp Business API / Gateway</h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                            <input
+                                                type="text"
+                                                placeholder="Número de WhatsApp (con código de país)"
+                                                value={businessConfig.whatsapp_phone}
+                                                onChange={(e) => setBusinessConfig({ ...businessConfig, whatsapp_phone: e.target.value })}
+                                                className="bg-[#0f1115] border border-white/5 p-3 rounded-xl text-xs outline-none focus:border-green-500"
+                                            />
+                                            <input
+                                                type="text"
+                                                placeholder="API Key / Token de Acceso"
+                                                value={businessConfig.whatsapp_api_key}
+                                                onChange={(e) => setBusinessConfig({ ...businessConfig, whatsapp_api_key: e.target.value })}
+                                                className="bg-[#0f1115] border border-white/5 p-3 rounded-xl text-xs outline-none focus:border-green-500"
+                                            />
+                                        </div>
+                                        <div className="flex items-center gap-3 bg-white/[0.03] p-3 rounded-2xl">
+                                            <input
+                                                type="checkbox"
+                                                checked={businessConfig.whatsappNotificationsEnabled}
+                                                onChange={(e) => setBusinessConfig({ ...businessConfig, whatsappNotificationsEnabled: e.target.checked })}
+                                                className="w-4 h-4 rounded border-white/10 bg-white/5 text-green-500 focus:ring-green-500"
+                                            />
+                                            <span className="text-[10px] text-slate-300 uppercase font-bold">Activar Alertas por WhatsApp</span>
                                         </div>
                                     </div>
                                 </div>

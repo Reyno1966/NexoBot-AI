@@ -28,6 +28,12 @@ class TenantRead(BaseModel):
     stripe_public_key: Optional[str] = None
     stripe_secret_key: Optional[str] = None
     whatsapp_notifications_enabled: bool = False
+    smtp_host: Optional[str] = None
+    smtp_port: Optional[int] = 587
+    smtp_user: Optional[str] = None
+    smtp_password: Optional[str] = None
+    whatsapp_api_key: Optional[str] = None
+    whatsapp_phone: Optional[str] = None
 
 class TenantPublicRead(BaseModel):
     id: UUID
@@ -58,6 +64,12 @@ class TenantUpdate(BaseModel):
     stripe_public_key: Optional[str] = None
     stripe_secret_key: Optional[str] = None
     whatsapp_notifications_enabled: Optional[bool] = None
+    smtp_host: Optional[str] = None
+    smtp_port: Optional[int] = None
+    smtp_user: Optional[str] = None
+    smtp_password: Optional[str] = None
+    whatsapp_api_key: Optional[str] = None
+    whatsapp_phone: Optional[str] = None
 
 class ForgotPasswordRequest(BaseModel):
     email: EmailStr
