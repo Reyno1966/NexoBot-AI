@@ -32,8 +32,13 @@ class TenantRead(BaseModel):
     smtp_port: Optional[int] = 587
     smtp_user: Optional[str] = None
     smtp_password: Optional[str] = None
+    resend_api_key: Optional[str] = None
     whatsapp_api_key: Optional[str] = None
     whatsapp_phone: Optional[str] = None
+    whatsapp_instance_id: Optional[str] = None
+    google_calendar_token: Optional[str] = None
+    primary_color: Optional[str] = "#6366f1"
+    secondary_color: Optional[str] = "#22d3ee"
 
 class TenantPublicRead(BaseModel):
     id: UUID
@@ -68,8 +73,13 @@ class TenantUpdate(BaseModel):
     smtp_port: Optional[int] = None
     smtp_user: Optional[str] = None
     smtp_password: Optional[str] = None
+    resend_api_key: Optional[str] = None
     whatsapp_api_key: Optional[str] = None
     whatsapp_phone: Optional[str] = None
+    whatsapp_instance_id: Optional[str] = None
+    google_calendar_token: Optional[str] = None
+    primary_color: Optional[str] = None
+    secondary_color: Optional[str] = None
 
 class ForgotPasswordRequest(BaseModel):
     email: EmailStr

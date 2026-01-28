@@ -93,6 +93,11 @@ def init_db():
             conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS smtp_password VARCHAR;"))
             conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS whatsapp_api_key VARCHAR;"))
             conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS whatsapp_phone VARCHAR;"))
+            conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS whatsapp_instance_id VARCHAR;"))
+            conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS resend_api_key VARCHAR;"))
+            conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS google_calendar_token VARCHAR;"))
+            conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS primary_color VARCHAR DEFAULT '#6366f1';"))
+            conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS secondary_color VARCHAR DEFAULT '#22d3ee';"))
             
             # Asegurar tabla de bookings si no se creó con create_all
             conn.execute(text("""

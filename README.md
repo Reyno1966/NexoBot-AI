@@ -13,6 +13,7 @@
 ## 🛠️ Estructura del Proyecto
 - `/backend`: Servidor FastAPI con lógica de IA y Base de Datos (SQLModel).
 - `/frontend`: Aplicación web moderna (Next.js) con diseño optimizado para móviles.
+- `.agent/workflows/core-logic.md`: **Memoria del Sistema** y lógica técnica actualizada.
 - `/docs`: Documentación detallada y PRD.
 
 ## 🚀 Cómo empezar

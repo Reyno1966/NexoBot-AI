@@ -35,8 +35,13 @@ class Tenant(TenantBase, table=True):
     smtp_port: Optional[int] = 587
     smtp_user: Optional[str] = None
     smtp_password: Optional[str] = None
+    resend_api_key: Optional[str] = None
     whatsapp_api_key: Optional[str] = None
     whatsapp_phone: Optional[str] = None
+    whatsapp_instance_id: Optional[str] = None
+    google_calendar_token: Optional[str] = None
+    primary_color: str = "#6366f1" # Indigo-500 default
+    secondary_color: str = "#22d3ee" # Cyan-400 default
 
     users: List["User"] = Relationship(back_populates="tenant")
     customers: List["Customer"] = Relationship(back_populates="tenant")

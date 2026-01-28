@@ -37,7 +37,9 @@ import {
     Send,
     Clock,
     User,
-    Zap
+    Zap,
+    QrCode,
+    CheckCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -90,6 +92,9 @@ export default function NexoBotDashboard() {
     const [activeTab, setActiveTab] = useState('main');
     const [isChatOpen, setIsChatOpen] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [whatsappQr, setWhatsappQr] = useState(null);
+    const [isGeneratingQr, setIsGeneratingQr] = useState(false);
+    const [whatsappStatus, setWhatsappStatus] = useState('DISCONNECTED');
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isSubscribing, setIsSubscribing] = useState(false);
@@ -184,8 +189,13 @@ export default function NexoBotDashboard() {
                         smtp_port: data.tenant.smtp_port || 587,
                         smtp_user: data.tenant.smtp_user || '',
                         smtp_password: data.tenant.smtp_password || '',
+                        resend_api_key: data.tenant.resend_api_key || '',
                         whatsapp_api_key: data.tenant.whatsapp_api_key || '',
-                        whatsapp_phone: data.tenant.whatsapp_phone || ''
+                        whatsapp_phone: data.tenant.whatsapp_phone || '',
+                        whatsapp_instance_id: data.tenant.whatsapp_instance_id || '',
+                        google_calendar_token: data.tenant.google_calendar_token || '',
+                        primary_color: data.tenant.primary_color || '#6366f1',
+                        secondary_color: data.tenant.secondary_color || '#22d3ee'
                     });
 
                     // Transformación automática de la UI basada en el Objetivo/Interés
@@ -370,7 +380,12 @@ export default function NexoBotDashboard() {
         smtp_user: '',
         smtp_password: '',
         whatsapp_api_key: '',
-        whatsapp_phone: ''
+        whatsapp_phone: '',
+        whatsapp_instance_id: '',
+        resend_api_key: '',
+        google_calendar_token: '',
+        primary_color: '#6366f1',
+        secondary_color: '#22d3ee'
     });
 
     const handleSaveBusinessConfig = async (configOverride = null) => {
@@ -402,7 +417,12 @@ export default function NexoBotDashboard() {
                     smtp_user: configToSave.smtp_user,
                     smtp_password: configToSave.smtp_password,
                     whatsapp_api_key: configToSave.whatsapp_api_key,
-                    whatsapp_phone: configToSave.whatsapp_phone
+                    whatsapp_phone: configToSave.whatsapp_phone,
+                    whatsapp_instance_id: configToSave.whatsapp_instance_id,
+                    resend_api_key: configToSave.resend_api_key,
+                    google_calendar_token: configToSave.google_calendar_token,
+                    primary_color: configToSave.primary_color,
+                    secondary_color: configToSave.secondary_color
                 })
             });
 
@@ -421,6 +441,71 @@ export default function NexoBotDashboard() {
             setIsLoading(false);
         }
     };
+
+    const handleGenerateQr = async () => {
+        setIsGeneratingQr(true);
+        setWhatsappQr(null);
+        try {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com');
+            const response = await fetch(`${apiUrl}/api/v1/whatsapp/qr`, {
+                headers: { 'token': token }
+            });
+            const data = await response.json();
+            if (response.ok && data.qrcode) {
+                setWhatsappQr(data.qrcode);
+            } else if (data.status === 'CONNECTED') {
+                setWhatsappStatus('CONNECTED');
+                alert(lang === 'es' ? "¡WhatsApp ya está conectado!" : "WhatsApp is already connected!");
+            } else {
+                alert("Error: " + (data.detail || "No se pudo generar el QR"));
+            }
+        } catch (error) {
+            console.error("Error QR:", error);
+            alert("Error de conexión al generar QR");
+        } finally {
+            setIsGeneratingQr(false);
+        }
+    };
+
+    const checkWhatsappStatus = async () => {
+        try {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com');
+            const response = await fetch(`${apiUrl}/api/v1/whatsapp/status`, {
+                headers: { 'token': token }
+            });
+            const data = await response.json();
+            if (response.ok) {
+                setWhatsappStatus(data.status);
+                if (data.status === 'CONNECTED') setWhatsappQr(null);
+            }
+        } catch (error) {
+            console.error("Error status:", error);
+        }
+    };
+
+    const handleWhatsappLogout = async () => {
+        if (!confirm(lang === 'es' ? "¿Cerrar sesión de WhatsApp?" : "Logout from WhatsApp?")) return;
+        try {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com');
+            await fetch(`${apiUrl}/api/v1/whatsapp/logout`, {
+                method: 'POST',
+                headers: { 'token': token }
+            });
+            setWhatsappStatus('DISCONNECTED');
+            setBusinessConfig({ ...businessConfig, whatsapp_instance_id: '' });
+        } catch (error) {
+            console.error("Error logout:", error);
+        }
+    };
+
+    useEffect(() => {
+        let interval;
+        if (isSettingsOpen && token) {
+            checkWhatsappStatus();
+            interval = setInterval(checkWhatsappStatus, 5000);
+        }
+        return () => clearInterval(interval);
+    }, [isSettingsOpen, token]);
 
     const currentIndustry = industries.find(i => i.id === businessConfig.industry) || industries[0];
 
@@ -711,8 +796,8 @@ export default function NexoBotDashboard() {
                         >
                             <ExternalLink size={18} />
                         </button>
-                        <div className="w-8 h-8 rounded-full overflow-hidden border border-white/10">
-                            <img src="https://i.pravatar.cc/150?u=admin" alt="Admin" />
+                        <div className="w-8 h-8 rounded-full overflow-hidden border border-indigo-500/30">
+                            <img src="/ai-avatar.png" alt="Admin" className="w-full h-full object-cover" />
                         </div>
                     </div>
                 </div>
@@ -771,8 +856,8 @@ export default function NexoBotDashboard() {
                                     3
                                 </span>
                             </div>
-                            <div className="w-11 h-11 rounded-xl overflow-hidden border-2 border-white/5 shadow-xl">
-                                <img src="https://i.pravatar.cc/150?u=admin" alt="Admin" />
+                            <div className="w-11 h-11 rounded-xl overflow-hidden border-2 border-indigo-500/20 shadow-xl shadow-indigo-500/10 hover:scale-110 transition-all cursor-pointer">
+                                <img src="/ai-avatar.png" alt="Admin" className="w-full h-full object-cover" />
                             </div>
                         </div>
                     </header>
@@ -989,6 +1074,58 @@ export default function NexoBotDashboard() {
                                                                 ${(dashboardData.transactions.filter(t => t.is_income).reduce((acc, t) => acc + t.amount, 0) -
                                                                     dashboardData.transactions.filter(t => !t.is_income).reduce((acc, t) => acc + t.amount, 0)).toFixed(2)}
                                                             </h4>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Analytical Chart */}
+                                                    <div className="bg-white/5 p-6 rounded-3xl border border-white/5 h-[300px]">
+                                                        <h4 className="text-sm font-bold mb-6 flex items-center gap-2">
+                                                            <PieChart size={16} className="text-cyan-400" />
+                                                            Crecimiento de Ingresos
+                                                        </h4>
+                                                        <div className="w-full h-[200px]">
+                                                            <ResponsiveContainer width="100%" height="100%">
+                                                                <AreaChart data={
+                                                                    dashboardData.transactions.reduce((acc, tx) => {
+                                                                        const date = new Date(tx.created_at);
+                                                                        const month = date.toLocaleDateString(lang, { month: 'short' });
+                                                                        const existing = acc.find(d => d.name === month);
+                                                                        if (existing) {
+                                                                            existing.amount += tx.is_income ? tx.amount : -tx.amount;
+                                                                        } else {
+                                                                            acc.push({ name: month, amount: tx.is_income ? tx.amount : -tx.amount });
+                                                                        }
+                                                                        return acc;
+                                                                    }, []).slice(-6)
+                                                                }>
+                                                                    <defs>
+                                                                        <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
+                                                                            <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
+                                                                            <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                                                                        </linearGradient>
+                                                                    </defs>
+                                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffffff05" />
+                                                                    <XAxis
+                                                                        dataKey="name"
+                                                                        axisLine={false}
+                                                                        tickLine={false}
+                                                                        tick={{ fill: '#64748b', fontSize: 10 }}
+                                                                    />
+                                                                    <YAxis hide />
+                                                                    <Tooltip
+                                                                        contentStyle={{ backgroundColor: '#181a1f', border: '1px solid #ffffff10', borderRadius: '12px' }}
+                                                                        itemStyle={{ color: '#fff', fontSize: '10px' }}
+                                                                    />
+                                                                    <Area
+                                                                        type="monotone"
+                                                                        dataKey="amount"
+                                                                        stroke="#6366f1"
+                                                                        strokeWidth={3}
+                                                                        fillOpacity={1}
+                                                                        fill="url(#colorAmount)"
+                                                                    />
+                                                                </AreaChart>
+                                                            </ResponsiveContainer>
                                                         </div>
                                                     </div>
 
@@ -1425,7 +1562,7 @@ export default function NexoBotDashboard() {
                                     <p className="text-[10px] text-slate-500 ml-2">Configura tus propios canales para que NexoBot envíe las alertas directamente desde tus cuentas.</p>
 
                                     <div className="bg-white/[0.02] p-4 rounded-3xl border border-white/5 space-y-4">
-                                        <h4 className="text-[10px] text-slate-300 uppercase tracking-wider font-bold">Servidor de Correo (SMTP)</h4>
+                                        <h4 className="text-[10px] text-slate-300 uppercase tracking-wider font-bold">Servidor de Correo (SMTP o Resend)</h4>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                             <input
                                                 type="text"
@@ -1443,38 +1580,74 @@ export default function NexoBotDashboard() {
                                             />
                                             <input
                                                 type="text"
-                                                placeholder="Email / Usuario"
+                                                placeholder="Email / Usuario SMTP"
                                                 value={businessConfig.smtp_user}
                                                 onChange={(e) => setBusinessConfig({ ...businessConfig, smtp_user: e.target.value })}
                                                 className="bg-[#0f1115] border border-white/5 p-3 rounded-xl text-xs outline-none focus:border-cyan-500"
                                             />
                                             <input
                                                 type="password"
-                                                placeholder="Contraseña de Aplicación"
+                                                placeholder="Contraseña SMTP"
                                                 value={businessConfig.smtp_password}
                                                 onChange={(e) => setBusinessConfig({ ...businessConfig, smtp_password: e.target.value })}
                                                 className="bg-[#0f1115] border border-white/5 p-3 rounded-xl text-xs outline-none focus:border-cyan-500"
                                             />
                                         </div>
+                                        <div className="pt-2">
+                                            <p className="text-[9px] text-slate-500 mb-2 uppercase font-bold tracking-widest">O usa Resend (Recomendado Premium)</p>
+                                            <input
+                                                type="text"
+                                                placeholder="Resend API Key (re_...)"
+                                                value={businessConfig.resend_api_key}
+                                                onChange={(e) => setBusinessConfig({ ...businessConfig, resend_api_key: e.target.value })}
+                                                className="w-full bg-[#0f1115] border border-white/5 p-3 rounded-xl text-xs outline-none focus:border-cyan-500 font-mono"
+                                            />
+                                        </div>
                                     </div>
 
                                     <div className="bg-white/[0.02] p-4 rounded-3xl border border-white/5 space-y-4">
-                                        <h4 className="text-[10px] text-slate-300 uppercase tracking-wider font-bold">WhatsApp Business API / Gateway</h4>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                            <input
-                                                type="text"
-                                                placeholder="Número de WhatsApp (con código de país)"
-                                                value={businessConfig.whatsapp_phone}
-                                                onChange={(e) => setBusinessConfig({ ...businessConfig, whatsapp_phone: e.target.value })}
-                                                className="bg-[#0f1115] border border-white/5 p-3 rounded-xl text-xs outline-none focus:border-green-500"
-                                            />
-                                            <input
-                                                type="text"
-                                                placeholder="API Key / Token de Acceso"
-                                                value={businessConfig.whatsapp_api_key}
-                                                onChange={(e) => setBusinessConfig({ ...businessConfig, whatsapp_api_key: e.target.value })}
-                                                className="bg-[#0f1115] border border-white/5 p-3 rounded-xl text-xs outline-none focus:border-green-500"
-                                            />
+                                        <h4 className="text-[10px] text-slate-300 uppercase tracking-wider font-bold">WhatsApp Evolution API (QR Sync)</h4>
+                                        <div className="flex flex-col items-center gap-4 py-4 bg-black/20 rounded-2xl border border-white/5">
+                                            <div className="w-48 h-48 bg-white rounded-xl flex items-center justify-center overflow-hidden relative">
+                                                {whatsappStatus === 'CONNECTED' ? (
+                                                    <div className="text-center p-4">
+                                                        <CheckCircle className="text-green-500 mx-auto mb-2" size={48} />
+                                                        <span className="text-sm text-black font-bold uppercase">WhatsApp Conectado</span>
+                                                        <p className="text-[10px] text-slate-500 mt-1 uppercase">Listo para enviar alertas</p>
+                                                    </div>
+                                                ) : whatsappQr ? (
+                                                    <img src={whatsappQr} alt="QR Code" className="w-full h-full object-contain" />
+                                                ) : isGeneratingQr ? (
+                                                    <div className="flex flex-col items-center">
+                                                        <div className="w-8 h-8 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mb-2" />
+                                                        <span className="text-[10px] text-slate-500 font-bold uppercase">Generando QR...</span>
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-center p-4">
+                                                        <QrCode className="text-slate-300 mx-auto mb-2" size={48} />
+                                                        <span className="text-[10px] text-slate-500 font-bold uppercase">Vincular con WhatsApp</span>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="flex gap-2 w-full px-4">
+                                                {whatsappStatus === 'CONNECTED' ? (
+                                                    <button
+                                                        onClick={handleWhatsappLogout}
+                                                        className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white rounded-xl text-[10px] font-bold uppercase transition-all shadow-lg shadow-red-600/20"
+                                                    >
+                                                        🚪 Cerrar Sesión
+                                                    </button>
+                                                ) : (
+                                                    <button
+                                                        onClick={handleGenerateQr}
+                                                        disabled={isGeneratingQr}
+                                                        className="flex-1 py-3 bg-green-600 hover:bg-green-500 text-white rounded-xl text-[10px] font-bold uppercase transition-all shadow-lg shadow-green-600/20 disabled:opacity-50"
+                                                    >
+                                                        {isGeneratingQr ? 'Generando...' : '🔗 Vincular con QR'}
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
                                         <div className="flex items-center gap-3 bg-white/[0.03] p-3 rounded-2xl">
                                             <input
@@ -1483,7 +1656,59 @@ export default function NexoBotDashboard() {
                                                 onChange={(e) => setBusinessConfig({ ...businessConfig, whatsappNotificationsEnabled: e.target.checked })}
                                                 className="w-4 h-4 rounded border-white/10 bg-white/5 text-green-500 focus:ring-green-500"
                                             />
-                                            <span className="text-[10px] text-slate-300 uppercase font-bold">Activar Alertas por WhatsApp</span>
+                                            <span className="text-[10px] text-slate-300 uppercase font-bold">Activar Notificaciones Automáticas</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Sección: Google Calendar */}
+                                    <div className="bg-white/[0.02] p-4 rounded-3xl border border-white/5 space-y-4">
+                                        <h4 className="text-[10px] text-slate-300 uppercase tracking-wider font-bold">Google Calendar Sync</h4>
+                                        <div className="flex items-center justify-between bg-black/20 p-4 rounded-2xl border border-white/5">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+                                                    <img src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Google_Calendar_icon_%282020%29.svg" className="w-5 h-5" alt="GCal" />
+                                                </div>
+                                                <span className="text-xs font-bold text-slate-300">
+                                                    {businessConfig.google_calendar_token ? 'Calendario Sincronizado' : 'Sincroniza tus citas'}
+                                                </span>
+                                            </div>
+                                            <button
+                                                onClick={() => alert("Iniciando OAuth con Google... (Próximamente)")}
+                                                className="px-4 py-2 bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 rounded-xl text-[10px] font-bold uppercase transition-all"
+                                            >
+                                                {businessConfig.google_calendar_token ? 'Gestionar' : 'Conectar'}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Sección: White Label / Colores */}
+                                    <div className="bg-white/[0.02] p-4 rounded-3xl border border-white/5 space-y-4">
+                                        <h4 className="text-[10px] text-slate-300 uppercase tracking-wider font-bold">Diseño y Colores de Marca</h4>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <label className="text-[9px] text-slate-500 uppercase font-bold tracking-widest block">Color Primario</label>
+                                                <div className="flex gap-3 items-center">
+                                                    <input
+                                                        type="color"
+                                                        value={businessConfig.primary_color}
+                                                        onChange={(e) => setBusinessConfig({ ...businessConfig, primary_color: e.target.value })}
+                                                        className="w-10 h-10 rounded-lg bg-transparent border-none cursor-pointer"
+                                                    />
+                                                    <span className="text-xs font-mono text-slate-400">{businessConfig.primary_color}</span>
+                                                </div>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[9px] text-slate-500 uppercase font-bold tracking-widest block">Color Secundario</label>
+                                                <div className="flex gap-3 items-center">
+                                                    <input
+                                                        type="color"
+                                                        value={businessConfig.secondary_color}
+                                                        onChange={(e) => setBusinessConfig({ ...businessConfig, secondary_color: e.target.value })}
+                                                        className="w-10 h-10 rounded-lg bg-transparent border-none cursor-pointer"
+                                                    />
+                                                    <span className="text-xs font-mono text-slate-400">{businessConfig.secondary_color}</span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

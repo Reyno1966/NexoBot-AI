@@ -6,18 +6,53 @@ from app.core.config import settings
 
 class NotificationService:
     @staticmethod
-    def send_whatsapp_alert(phone: str, message: str):
+    def send_whatsapp_alert(phone: str, message: str, whatsapp_config: Dict = None):
         """
-        Simulación de envío de alerta por WhatsApp/SMS.
+        Envía alerta por WhatsApp usando Gateway (Evolution API / WppConnect) o simulación.
         """
-        print(f"🚀 [NOTIFICACIÓN WHATSAPP] Enviando a {phone}: {message}")
+        instance_id = (whatsapp_config or {}).get('instance_id')
+        api_key = (whatsapp_config or {}).get('api_key')
+        
+        if instance_id and api_key:
+            # Aquí iría la integración real con Evolution API
+            # Por ahora simulamos la llamada exitosa al Gateway
+            print(f"📡 [GATEWAY WHATSAPP] Enviando via Instancia {instance_id} a {phone}: {message}")
+            return True
+            
+        print(f"🚀 [NOTIFICACIÓN WHATSAPP SIMULADA] Enviando a {phone}: {message}")
         return True
 
     @staticmethod
     def send_email_alert(to_email: str, subject: str, message_html: str, smtp_config: Dict = None):
         """
-        Envío de correo real usando Gmail/SMTP o configuración del cliente.
+        Envío de correo real usando Resend (Prioridad), SMTP o simulador.
         """
+        resend_key = (smtp_config or {}).get('resend_api_key')
+        
+        if resend_key:
+            try:
+                import requests
+                response = requests.post(
+                    "https://api.resend.com/emails",
+                    headers={
+                        "Authorization": f"Bearer {resend_key}",
+                        "Content-Type": "application/json"
+                    },
+                    json={
+                        "from": f"{settings.EMAILS_FROM_NAME} <onboarding@resend.dev>", # O dominio validado
+                        "to": [to_email],
+                        "subject": subject,
+                        "html": message_html
+                    }
+                )
+                if response.status_code == 200 or response.status_code == 201:
+                    print(f"📧 [RESEND] Enviado con éxito a {to_email}")
+                    return True
+                else:
+                    print(f"❌ [RESEND ERROR] Status {response.status_code}: {response.text}")
+            except Exception as e:
+                print(f"❌ [RESEND EXCEPTION] {str(e)}")
+
         host = (smtp_config or {}).get('host') or settings.SMTP_HOST
         port = (smtp_config or {}).get('port') or settings.SMTP_PORT
         user = (smtp_config or {}).get('user') or settings.SMTP_USER
@@ -47,7 +82,7 @@ class NotificationService:
             return False
 
     @staticmethod
-    def notify_appointment(tenant_name: str, tenant_phone: str, tenant_email: str, customer_name: str, details: Dict, smtp_config: Dict = None):
+    def notify_appointment(tenant_name: str, tenant_phone: str, tenant_email: str, customer_name: str, details: Dict, smtp_config: Dict = None, whatsapp_config: Dict = None):
         """
         Envía un aviso de nueva cita (WhatsApp + Email).
         """
@@ -57,7 +92,7 @@ class NotificationService:
         text_msg = f"🌟 *NEXOBOT* | Nueva Cita Agendada\n\n🏢 *Negocio*: {tenant_name}\n👤 *Cliente*: {customer_name}\n📞 *Teléfono*: {phone}\n📍 *Dirección*: {address}\n🛠️ *Servicio*: {details.get('servicios', details.get('propiedad', 'Gestión de cita'))}\n💰 *Monto*: ${details.get('total', details.get('monto', 'A confirmar'))}"
         
         # WhatsApp
-        NotificationService.send_whatsapp_alert(tenant_phone, text_msg)
+        NotificationService.send_whatsapp_alert(tenant_phone, text_msg, whatsapp_config)
         
         # Email HTML Premium
         html_msg = f"""
@@ -79,13 +114,13 @@ class NotificationService:
             NotificationService.send_email_alert(tenant_email, f"🌟 NexoBot: Nueva Cita de {customer_name}", html_msg, smtp_config)
 
     @staticmethod
-    def notify_request(tenant_name: str, tenant_phone: str, tenant_email: str, customer_name: str, request_type: str, smtp_config: Dict = None):
+    def notify_request(tenant_name: str, tenant_phone: str, tenant_email: str, customer_name: str, request_type: str, smtp_config: Dict = None, whatsapp_config: Dict = None):
         """
         Envía un aviso de solicitud de documento (WhatsApp + Email).
         """
         text_msg = f"📥 *NEXOBOT* | Solicitud de {request_type}\n\n👤 *Solicitante*: {customer_name}\n🏢 *Negocio*: {tenant_name}"
         
-        NotificationService.send_whatsapp_alert(tenant_phone, text_msg)
+        NotificationService.send_whatsapp_alert(tenant_phone, text_msg, whatsapp_config)
         
         html_msg = f"""
         <div style="font-family: sans-serif; background: #0f1115; color: white; padding: 40px; border-radius: 20px;">
@@ -103,13 +138,13 @@ class NotificationService:
             NotificationService.send_email_alert(tenant_email, f"📥 NexoBot: Nuevo {request_type} generado", html_msg, smtp_config)
 
     @staticmethod
-    def notify_low_stock(tenant_name: str, tenant_phone: str, tenant_email: str, item_name: str, remaining_stock: int, smtp_config: Dict = None):
+    def notify_low_stock(tenant_name: str, tenant_phone: str, tenant_email: str, item_name: str, remaining_stock: int, smtp_config: Dict = None, whatsapp_config: Dict = None):
         """
         Envía alerta de stock bajo (WhatsApp + Email).
         """
         text_msg = f"⚠️ *NEXOBOT* | Inventario Bajo\n\n📦 *Producto*: {item_name}\n📉 *Stock*: {remaining_stock} unidades"
         
-        NotificationService.send_whatsapp_alert(tenant_phone, text_msg)
+        NotificationService.send_whatsapp_alert(tenant_phone, text_msg, whatsapp_config)
         
         html_msg = f"""
         <div style="font-family: sans-serif; background: #0f1115; color: white; padding: 40px; border-radius: 20px; border: 1px solid #ef4444;">
@@ -126,13 +161,13 @@ class NotificationService:
             NotificationService.send_email_alert(tenant_email, f"⚠️ ALERTA: Stock Bajo en {item_name}", html_msg, smtp_config)
 
     @staticmethod
-    def notify_support_issue(tenant_name: str, tenant_phone: str, tenant_email: str, customer_name: str, issue_description: str, smtp_config: Dict = None):
+    def notify_support_issue(tenant_name: str, tenant_phone: str, tenant_email: str, customer_name: str, issue_description: str, smtp_config: Dict = None, whatsapp_config: Dict = None):
         """
         Envía una alerta de EMERGENCIA cuando un cliente tiene un problema.
         """
         text_msg = f"🆘 *NEXOBOT EMERGENCIA* | Problema de Cliente\n\n👤 *Cliente*: {customer_name}\n🚨 *Problema*: {issue_description}\n\n👉 _Atiende esto personalmente para evitar una mala reseña._"
         
-        NotificationService.send_whatsapp_alert(tenant_phone, text_msg)
+        NotificationService.send_whatsapp_alert(tenant_phone, text_msg, whatsapp_config)
         
         html_msg = f"""
         <div style="font-family: sans-serif; background: #450a0a; color: white; padding: 40px; border-radius: 20px; border: 2px solid #ef4444;">
@@ -151,13 +186,13 @@ class NotificationService:
             NotificationService.send_email_alert(tenant_email, f"🚨 EMERGENCIA: Problema de Cliente en {tenant_name}", html_msg, smtp_config)
 
     @staticmethod
-    def notify_chat_message(tenant_name: str, tenant_phone: str, tenant_email: str, customer_name: str, message: str, smtp_config: Dict = None):
+    def notify_chat_message(tenant_name: str, tenant_phone: str, tenant_email: str, customer_name: str, message: str, smtp_config: Dict = None, whatsapp_config: Dict = None):
         """
         Alerta general cuando un cliente habla con el bot.
         """
         text_msg = f"💬 *NEXOBOT* | Nuevo mensaje de cliente\n\n👤 *Cliente*: {customer_name}\n📝 *Mensaje*: {message}\n\n🏢 *Negocio*: {tenant_name}"
         
-        NotificationService.send_whatsapp_alert(tenant_phone, text_msg)
+        NotificationService.send_whatsapp_alert(tenant_phone, text_msg, whatsapp_config)
         
         html_msg = f"""
         <div style="font-family: sans-serif; background: #0f1115; color: white; padding: 40px; border-radius: 20px;">

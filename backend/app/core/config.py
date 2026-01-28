@@ -32,6 +32,10 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: Optional[str] = None
     EMAILS_FROM_NAME: str = "NexoBot AI"
 
+    # WhatsApp Evolution API (Gateway)
+    WHATSAPP_EVOLUTION_URL: Optional[str] = "https://api-whatsapp.nexobot.ai" # Reemplazar por tu servidor real
+    WHATSAPP_EVOLUTION_API_KEY: Optional[str] = None
+
     class Config:
         case_sensitive = True
         env_file = ".env"
