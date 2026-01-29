@@ -88,6 +88,7 @@ export default function NexoBotDashboard() {
         bookings: [],
         customers: [],
         transactions: [],
+        messages: [],
         isLoaded: false
     });
 
@@ -210,22 +211,25 @@ export default function NexoBotDashboard() {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com');
             const headers = { 'token': authToken, 'Content-Type': 'application/json' };
 
-            const [bookingsRes, customersRes, transactionsRes] = await Promise.all([
+            const [bookingsRes, customersRes, transactionsRes, messagesRes] = await Promise.all([
                 fetch(`${apiUrl}/api/v1/data/bookings`, { headers }),
                 fetch(`${apiUrl}/api/v1/data/customers`, { headers }),
-                fetch(`${apiUrl}/api/v1/data/transactions`, { headers })
+                fetch(`${apiUrl}/api/v1/data/transactions`, { headers }),
+                fetch(`${apiUrl}/api/v1/data/messages`, { headers })
             ]);
 
-            const [bookings, customers, transactions] = await Promise.all([
+            const [bookings, customers, transactions, messages] = await Promise.all([
                 bookingsRes.json(),
                 customersRes.json(),
-                transactionsRes.json()
+                transactionsRes.json(),
+                messagesRes.json()
             ]);
 
             setDashboardData({
                 bookings: Array.isArray(bookings) ? bookings : [],
                 customers: Array.isArray(customers) ? customers : [],
                 transactions: Array.isArray(transactions) ? transactions : [],
+                messages: Array.isArray(messages) ? messages : [],
                 isLoaded: true
             });
         } catch (error) {

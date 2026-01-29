@@ -260,24 +260,23 @@ const DashboardContent = ({
                         {activeTab === 'inbox' && (
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[500px]">
                                 <div className="lg:col-span-1 bg-white/5 rounded-3xl border border-white/5 overflow-y-auto">
-                                    <h4 className="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest border-b border-white/5">Conversaciones Recientes</h4>
-                                    {[
-                                        { name: "Juan Pérez", last: "Agenda cita para mañana", time: "10 min", status: "IA Atendiendo" },
-                                        { name: "Sra. García", last: "¿Tienen disponibilidad hoy?", time: "1h", status: "Intervención Sugerida" },
-                                        { name: "Carlos Ruiz", last: "Factura recibida, gracias.", time: "4h", status: "Cerrado" }
-                                    ].map((chat, idx) => (
-                                        <div key={idx} className="p-4 border-b border-white/5 hover:bg-white/5 cursor-pointer transition-all">
-                                            <div className="flex justify-between items-start mb-1">
-                                                <span className="font-bold text-sm">{chat.name}</span>
-                                                <span className="text-[9px] text-slate-500">{chat.time}</span>
+                                    <h4 className="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest border-b border-white/5">Conversaciones Reales (NexoBot)</h4>
+                                    {dashboardData.messages.length === 0 ? (
+                                        <div className="p-8 text-center text-slate-500 text-xs italic">Aún no hay interacciones de clientes.</div>
+                                    ) : (
+                                        dashboardData.messages.slice(0, 10).map((chat, idx) => (
+                                            <div key={idx} className="p-4 border-b border-white/5 hover:bg-white/5 cursor-pointer transition-all">
+                                                <div className="flex justify-between items-start mb-1">
+                                                    <span className="font-bold text-sm">{chat.customer_name || 'Anónimo'}</span>
+                                                    <span className="text-[9px] text-slate-500">{new Date(chat.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                </div>
+                                                <p className="text-xs text-slate-400 truncate mb-2">{chat.content}</p>
+                                                <span className={`text-[8px] font-bold px-2 py-0.5 rounded-full uppercase ${chat.role === 'user' ? 'bg-indigo-500/20 text-indigo-400' : 'bg-cyan-500/20 text-cyan-400'}`}>
+                                                    {chat.role === 'user' ? 'Cliente' : 'NexoBot Assistant'}
+                                                </span>
                                             </div>
-                                            <p className="text-xs text-slate-400 truncate mb-2">{chat.last}</p>
-                                            <span className={`text-[8px] font-bold px-2 py-0.5 rounded-full uppercase ${chat.status.includes('Sugerida') ? 'bg-orange-500/20 text-orange-400' : 'bg-green-500/20 text-green-400'
-                                                }`}>
-                                                {chat.status}
-                                            </span>
-                                        </div>
-                                    ))}
+                                        ))
+                                    )}
                                 </div>
                                 <div className="lg:col-span-2 bg-[#0f1115]/40 rounded-3xl border border-white/5 flex flex-col items-center justify-center p-8 text-center">
                                     <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4">

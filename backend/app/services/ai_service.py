@@ -40,8 +40,12 @@ class AIService:
         """
         
         try:
+            # Seleccionamos el modelo más estable para producción (1.5 Flash)
+            # El modelo 2.0 experimental puede fallar en ciertos entornos de red o regiones
+            model_name = 'gemini-1.5-flash'
+            
             response = client.models.generate_content(
-                model='gemini-2.0-flash-exp',
+                model=model_name,
                 contents=text,
                 config=types.GenerateContentConfig(
                     system_instruction=system_prompt,
@@ -49,13 +53,23 @@ class AIService:
                     temperature=0.2 
                 )
             )
+            
+            if not response or not response.text:
+                raise Exception("Respuesta vacía de Gemini")
+                
             return response.text.strip()
         except Exception as e:
-            print(f"Error con Gemini 2.0: {e}")
+            error_msg = str(e)
+            print(f"ERROR CRÍTICO AI (Gemini): {error_msg}")
+            
+            # Si el error es de autenticación, lo aclaramos en los logs
+            if "API_KEY_INVALID" in error_msg or "403" in error_msg:
+                print(">>> ALERTA: La GEMINI_API_KEY parece ser inválida o no tiene permisos.")
+            
             return json.dumps({
                 "intent": "chat",
                 "entities": {},
-                "response_text": "Estimado cliente, detecto una interrupción técnica momentánea. Por favor, reintente su consulta."
+                "response_text": "Estimado cliente, detecto una interrupción técnica momentánea en mi conexión. Por favor, asegúrese de que su configuración de IA es correcta e intente de nuevo en unos segundos."
             })
 
     @staticmethod

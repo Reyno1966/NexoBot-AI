@@ -22,13 +22,18 @@ def create_checkout(tenant_id: UUID, amount: float = 19.99, session: Session = D
         raise HTTPException(status_code=404, detail="Negocio no encontrado")
     
     # URL de éxito y cancelación
-    # Si FRONTEND_URL es '*', intentamos usar el referrer o un fallback seguro
+    # Intentamos detectar la URL base dinámicamente si es posible
     base_frontend = settings.FRONTEND_URL
-    if base_frontend == "*":
-        base_frontend = "https://nexobot-ai.vercel.app" # Fallback producción
+    if base_frontend == "*" or not base_frontend:
+        # Usamos el Host de la petición actual o el fallback correcto con guión
+        referer = request.headers.get("referer")
+        if referer:
+            base_frontend = "/".join(referer.split("/")[:3])
+        else:
+            base_frontend = "https://nexo-bot-ai.vercel.app" 
     
-    success_url = f"{base_frontend}?session_id={{CHECKOUT_SESSION_ID}}"
-    cancel_url = f"{base_frontend}?payment=failed"
+    success_url = f"{base_frontend}/?session_id={{CHECKOUT_SESSION_ID}}"
+    cancel_url = f"{base_frontend}/?payment=failed"
     
     checkout_url = StripeService.create_checkout_session(
         tenant_id=str(tenant.id),
@@ -51,8 +56,8 @@ def create_portal(tenant_id: UUID, session: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="No se encontró suscripción activa para este negocio.")
     
     return_url = settings.FRONTEND_URL
-    if return_url == "*":
-        return_url = "https://nexobot-ai.vercel.app"
+    if return_url == "*" or not return_url:
+        return_url = "https://nexo-bot-ai.vercel.app"
         
     portal_url = StripeService.create_customer_portal_session(
         customer_id=tenant.stripe_customer_id,
