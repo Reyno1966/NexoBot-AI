@@ -1,7 +1,7 @@
 import React from 'react';
 import {
     Calendar, FileText, Users, PieChart, Bell, ChevronDown,
-    Share2, LogIn, ExternalLink, Copy, Bot, X, Menu, Settings
+    Share2, LogIn, ExternalLink, Copy, Bot, X, Menu, Settings, MessageSquare
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 

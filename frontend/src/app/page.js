@@ -58,9 +58,10 @@ const mockFinancialData = [
 
 const safeParse = (str, fallback) => {
     try {
-        if (!str) return fallback;
+        if (!str || str === 'null') return fallback;
         if (typeof str !== 'string') return str;
-        return JSON.parse(str);
+        const parsed = JSON.parse(str);
+        return parsed || fallback;
     } catch (e) {
         return fallback;
     }
@@ -92,6 +93,7 @@ export default function NexoBotDashboard() {
 
     const [userCount, setUserCount] = useState(12430);
     const [onlineCount, setOnlineCount] = useState(842);
+    const [isMounted, setIsMounted] = useState(false);
 
     const [businessConfig, setBusinessConfig] = useState({
         name: 'Tu Negocio Inteligente',
@@ -137,6 +139,7 @@ export default function NexoBotDashboard() {
     }));
 
     useEffect(() => {
+        setIsMounted(true);
         const interval = setInterval(() => {
             setUserCount(prev => prev + Math.floor(Math.random() * 2));
             setOnlineCount(prev => prev + (Math.floor(Math.random() * 5) - 2));
@@ -412,6 +415,8 @@ export default function NexoBotDashboard() {
     };
 
     const currentIndustry = industries.find(i => i.id === businessConfig.industry) || industries[0];
+
+    if (!isMounted) return <div className="min-h-screen bg-[#0f1115]" />;
 
     if (!isAuthenticated) return <AuthPage onAuthSuccess={handleAuthSuccess} />;
 

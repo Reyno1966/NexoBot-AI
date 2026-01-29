@@ -17,7 +17,14 @@ export default function AuthPage({ onAuthSuccess }) {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [lang, setLang] = useState('es');
+    const [isMounted, setIsMounted] = useState(false);
     const t = translations[lang];
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
+    if (!isMounted) return null;
 
     const industries = [
         { id: 'barber', name: 'Barbería / Estética', icon: Scissors },

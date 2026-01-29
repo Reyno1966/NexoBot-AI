@@ -97,7 +97,7 @@ const AIChatAssistant = ({
                                             : 'bg-white/5 border-white/5 rounded-tl-none text-slate-100'
                                             }`}>
                                             <p className="text-sm leading-relaxed">
-                                                {msg.text.split(/(https?:\/\/[^\s]+)/g).map((part, j) =>
+                                                {(msg.text || "").split(/(https?:\/\/[^\s]+)/g).map((part, j) =>
                                                     part.match(/^https?:\/\//) ? (
                                                         <a
                                                             key={j}

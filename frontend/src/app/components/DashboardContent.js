@@ -24,6 +24,12 @@ const DashboardContent = ({
     setBusinessConfig,
     handleSaveBusinessConfig
 }) => {
+    const [isMounted, setIsMounted] = React.useState(false);
+
+    React.useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
     let tabLabel = "";
     let actionLabel = "";
     let actionType = "";
@@ -108,7 +114,7 @@ const DashboardContent = ({
                                             </div>
                                             <div>
                                                 <h4 className="text-lg font-bold mb-1">NexoBot Insights IA</h4>
-                                                <p className="text-xs text-indigo-300 font-medium uppercase tracking-widest mb-3">Análisis en tiempo real • {new Date().toLocaleDateString()}</p>
+                                                <p className="text-xs text-indigo-300 font-medium uppercase tracking-widest mb-3">Análisis en tiempo real • {isMounted ? new Date().toLocaleDateString() : '...'}</p>
                                                 <div className="space-y-2">
                                                     <div className="flex items-center gap-2 text-sm">
                                                         <Zap size={14} className="text-yellow-400" />
@@ -144,7 +150,7 @@ const DashboardContent = ({
                                                         <div>
                                                             <h4 className="font-bold text-white group-hover:text-cyan-400 transition-colors">{booking.property_name}</h4>
                                                             <p className="text-xs text-slate-400 flex items-center gap-2">
-                                                                <Clock size={12} /> {new Date(booking.start_date).toLocaleDateString()} {new Date(booking.start_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                <Clock size={12} /> {isMounted ? `${new Date(booking.start_date).toLocaleDateString()} ${new Date(booking.start_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : '...'}
                                                             </p>
                                                         </div>
                                                     </div>
@@ -314,48 +320,50 @@ const DashboardContent = ({
                                         Crecimiento de Ingresos
                                     </h4>
                                     <div className="w-full h-[200px]">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <AreaChart data={
-                                                dashboardData.transactions.reduce((acc, tx) => {
-                                                    const date = new Date(tx.created_at);
-                                                    const month = date.toLocaleDateString(lang, { month: 'short' });
-                                                    const existing = acc.find(d => d.name === month);
-                                                    if (existing) {
-                                                        existing.amount += tx.is_income ? tx.amount : -tx.amount;
-                                                    } else {
-                                                        acc.push({ name: month, amount: tx.is_income ? tx.amount : -tx.amount });
-                                                    }
-                                                    return acc;
-                                                }, []).slice(-6)
-                                            }>
-                                                <defs>
-                                                    <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
-                                                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
-                                                        <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
-                                                    </linearGradient>
-                                                </defs>
-                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffffff05" />
-                                                <XAxis
-                                                    dataKey="name"
-                                                    axisLine={false}
-                                                    tickLine={false}
-                                                    tick={{ fill: '#64748b', fontSize: 10 }}
-                                                />
-                                                <YAxis hide />
-                                                <Tooltip
-                                                    contentStyle={{ backgroundColor: '#181a1f', border: '1px solid #ffffff10', borderRadius: '12px' }}
-                                                    itemStyle={{ color: '#fff', fontSize: '10px' }}
-                                                />
-                                                <Area
-                                                    type="monotone"
-                                                    dataKey="amount"
-                                                    stroke="#6366f1"
-                                                    strokeWidth={3}
-                                                    fillOpacity={1}
-                                                    fill="url(#colorAmount)"
-                                                />
-                                            </AreaChart>
-                                        </ResponsiveContainer>
+                                        {isMounted && (
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <AreaChart data={
+                                                    dashboardData.transactions.reduce((acc, tx) => {
+                                                        const date = new Date(tx.created_at);
+                                                        const month = date.toLocaleDateString(lang, { month: 'short' });
+                                                        const existing = acc.find(d => d.name === month);
+                                                        if (existing) {
+                                                            existing.amount += tx.is_income ? tx.amount : -tx.amount;
+                                                        } else {
+                                                            acc.push({ name: month, amount: tx.is_income ? tx.amount : -tx.amount });
+                                                        }
+                                                        return acc;
+                                                    }, []).slice(-6)
+                                                }>
+                                                    <defs>
+                                                        <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
+                                                            <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
+                                                            <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                                                        </linearGradient>
+                                                    </defs>
+                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffffff05" />
+                                                    <XAxis
+                                                        dataKey="name"
+                                                        axisLine={false}
+                                                        tickLine={false}
+                                                        tick={{ fill: '#64748b', fontSize: 10 }}
+                                                    />
+                                                    <YAxis hide />
+                                                    <Tooltip
+                                                        contentStyle={{ backgroundColor: '#181a1f', border: '1px solid #ffffff10', borderRadius: '12px' }}
+                                                        itemStyle={{ color: '#fff', fontSize: '10px' }}
+                                                    />
+                                                    <Area
+                                                        type="monotone"
+                                                        dataKey="amount"
+                                                        stroke="#6366f1"
+                                                        strokeWidth={3}
+                                                        fillOpacity={1}
+                                                        fill="url(#colorAmount)"
+                                                    />
+                                                </AreaChart>
+                                            </ResponsiveContainer>
+                                        )}
                                     </div>
                                 </div>
                             </div>

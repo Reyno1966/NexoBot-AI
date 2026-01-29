@@ -9,9 +9,10 @@ export default function PublicChat({ params }) {
     // Helper para parseo seguro
     const safeParse = (str, fallback) => {
         try {
-            if (!str) return fallback;
+            if (!str || str === 'null') return fallback;
             if (typeof str !== 'string') return str;
-            return JSON.parse(str);
+            const parsed = JSON.parse(str);
+            return parsed || fallback;
         } catch (e) {
             return fallback;
         }
@@ -20,6 +21,7 @@ export default function PublicChat({ params }) {
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [isListening, setIsListening] = useState(false);
+    const [isMounted, setIsMounted] = useState(false);
 
     const handleClearMessages = () => {
         if (messages.length > 0 && window.confirm('¿Quieres limpiar la conversación?')) {
@@ -53,6 +55,7 @@ export default function PublicChat({ params }) {
     const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
 
     useEffect(() => {
+        setIsMounted(true);
         // Cargar datos públicos del negocio
         const fetchBusiness = async () => {
             try {
@@ -136,6 +139,8 @@ export default function PublicChat({ params }) {
             setIsLoading(false);
         }
     };
+
+    if (!isMounted) return <div className="min-h-screen bg-[#0f1115]" />;
 
     return (
         <div className="min-h-screen bg-[#0f1115] text-white flex flex-col relative overflow-hidden">
