@@ -20,6 +20,7 @@ export default function AuthPage({ onAuthSuccess }) {
     const [isMounted, setIsMounted] = useState(false);
     const [userCount, setUserCount] = useState(12430);
     const [onlineCount, setOnlineCount] = useState(842);
+    const t = translations[lang] || translations['es'];
 
     useEffect(() => {
         setIsMounted(true);
