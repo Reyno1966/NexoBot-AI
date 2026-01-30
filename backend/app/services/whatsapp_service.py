@@ -15,7 +15,7 @@ class WhatsAppService:
         Crea una nueva instancia en Evolution API para un tenant.
         """
         if not cls.BASE_URL or not cls.API_KEY:
-            logger.error("WhatsApp Evolution URL o API Key no configurada")
+            print(">>> [WHATSAPP] ERROR: URL o API Key no configurada")
             return None
 
         url = f"{cls.BASE_URL}/instance/create"
@@ -27,13 +27,14 @@ class WhatsAppService:
         }
 
         try:
-            response = requests.post(url, json=payload, headers=headers)
+            print(f">>> [WHATSAPP] Intentando crear instancia: {instance_name} en {url}")
+            response = requests.post(url, json=payload, headers=headers, timeout=15)
             if response.status_code in [200, 201]:
                 return response.json()
-            logger.error(f"Error creando instancia: {response.status_code} - {response.text}")
+            print(f">>> [WHATSAPP] Error en create: {response.status_code} - {response.text}")
             return None
         except Exception as e:
-            logger.error(f"Excepción en create_instance: {str(e)}")
+            print(f">>> [WHATSAPP] Excepción en create_instance: {str(e)}")
             return None
 
     @classmethod
@@ -45,14 +46,15 @@ class WhatsAppService:
         headers = {"apikey": cls.API_KEY}
 
         try:
-            response = requests.get(url, headers=headers)
+            print(f">>> [WHATSAPP] Solicitando QR para: {instance_name} en {url}")
+            response = requests.get(url, headers=headers, timeout=15)
             if response.status_code == 200:
                 data = response.json()
-                return data.get("base64") # Evolution API devuelve el QR en base64
-            logger.error(f"Error obteniendo QR: {response.status_code} - {response.text}")
+                return data.get("base64")
+            print(f">>> [WHATSAPP] Error en get_qr: {response.status_code} - {response.text}")
             return None
         except Exception as e:
-            logger.error(f"Excepción en get_qr_code: {str(e)}")
+            print(f">>> [WHATSAPP] Excepción en get_qr_code: {str(e)}")
             return None
 
     @classmethod
@@ -64,12 +66,16 @@ class WhatsAppService:
         headers = {"apikey": cls.API_KEY}
 
         try:
-            response = requests.get(url, headers=headers)
+            print(f">>> [WHATSAPP] Verificando status de: {instance_name}")
+            response = requests.get(url, headers=headers, timeout=10)
             if response.status_code == 200:
                 data = response.json()
-                return data.get("instance", {}).get("state", "DISCONNECTED")
+                state = data.get("instance", {}).get("state", "DISCONNECTED")
+                print(f">>> [WHATSAPP] Estado actual: {state}")
+                return state
             return "DISCONNECTED"
-        except Exception:
+        except Exception as e:
+            print(f">>> [WHATSAPP] Error verificando status: {str(e)}")
             return "ERROR"
 
     @classmethod
@@ -96,13 +102,14 @@ class WhatsAppService:
         }
 
         try:
-            response = requests.post(url, json=payload, headers=headers)
+            print(f">>> [WHATSAPP] Enviando mensaje a {clean_number} via {instance_name}")
+            response = requests.post(url, json=payload, headers=headers, timeout=15)
             if response.status_code in [200, 201]:
                 return True
-            logger.error(f"Error enviando mensaje: {response.status_code} - {response.text}")
+            print(f">>> [WHATSAPP] Error enviando mensaje: {response.status_code} - {response.text}")
             return False
         except Exception as e:
-            logger.error(f"Excepción en send_text: {str(e)}")
+            print(f">>> [WHATSAPP] Excepción enviando mensaje: {str(e)}")
             return False
 
     @classmethod
@@ -114,7 +121,7 @@ class WhatsAppService:
         headers = {"apikey": cls.API_KEY}
 
         try:
-            response = requests.delete(url, headers=headers)
+            response = requests.delete(url, headers=headers, timeout=15)
             return response.status_code == 200
         except Exception:
             return False
@@ -128,7 +135,7 @@ class WhatsAppService:
         headers = {"apikey": cls.API_KEY}
 
         try:
-            response = requests.delete(url, headers=headers)
+            response = requests.delete(url, headers=headers, timeout=15)
             return response.status_code == 200
         except Exception:
             return False
