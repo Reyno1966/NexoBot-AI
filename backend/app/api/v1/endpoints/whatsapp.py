@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlmodel import Session
 from uuid import UUID

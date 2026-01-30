@@ -1,8 +1,9 @@
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlmodel import Session, select
 from app.db import get_session
 from app.models.base import Tenant, Customer, Booking, Transaction, ChatMessage
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 # No external verify_token needed, we use jwt.decode locally
 

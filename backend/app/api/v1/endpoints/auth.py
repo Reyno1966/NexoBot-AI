@@ -1,4 +1,5 @@
 import sys
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Header
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session, select
