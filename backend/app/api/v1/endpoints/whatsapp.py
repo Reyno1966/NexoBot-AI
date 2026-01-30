@@ -8,7 +8,9 @@ from app.core.security import jwt, settings
 
 router = APIRouter()
 
-def get_tenant_id_from_token(token: str) -> str:
+def get_tenant_id_from_token(token: Optional[str]) -> str:
+    if not token:
+        raise HTTPException(status_code=401, detail="Token requerido")
     try:
         payload = jwt.decode(token.replace("Bearer ", ""), settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         return payload.get("tenant_id")
@@ -16,7 +18,7 @@ def get_tenant_id_from_token(token: str) -> str:
         raise HTTPException(status_code=401, detail="Token inválido")
 
 @router.get("/qr")
-async def get_whatsapp_qr(token: str = Header(...), session: Session = Depends(get_session)):
+async def get_whatsapp_qr(token: Optional[str] = Header(None), session: Session = Depends(get_session)):
     tenant_id = get_tenant_id_from_token(token)
     tenant = session.get(Tenant, tenant_id)
     if not tenant:
@@ -53,7 +55,7 @@ async def get_whatsapp_qr(token: str = Header(...), session: Session = Depends(g
     return {"status": "QR_READY", "qrcode": qr_base64}
 
 @router.get("/status")
-async def check_whatsapp_status(token: str = Header(...), session: Session = Depends(get_session)):
+async def check_whatsapp_status(token: Optional[str] = Header(None), session: Session = Depends(get_session)):
     tenant_id = get_tenant_id_from_token(token)
     tenant = session.get(Tenant, tenant_id)
     if not tenant or not tenant.whatsapp_instance_id:
@@ -63,7 +65,7 @@ async def check_whatsapp_status(token: str = Header(...), session: Session = Dep
     return {"status": status}
 
 @router.post("/logout")
-async def logout_whatsapp(token: str = Header(...), session: Session = Depends(get_session)):
+async def logout_whatsapp(token: Optional[str] = Header(None), session: Session = Depends(get_session)):
     tenant_id = get_tenant_id_from_token(token)
     tenant = session.get(Tenant, tenant_id)
     if not tenant or not tenant.whatsapp_instance_id:

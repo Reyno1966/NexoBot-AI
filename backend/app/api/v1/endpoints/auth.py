@@ -32,7 +32,7 @@ def get_public_tenant_info(tenant_id: UUID, session: Session = Depends(get_db)):
 def update_tenant_info(
     tenant_in: TenantUpdate,
     session: Session = Depends(get_db),
-    token: str = Header(...)
+    token: Optional[str] = Header(None)
 ):
     try:
         from app.core.security import jwt, settings
@@ -60,8 +60,10 @@ def update_tenant_info(
 @router.get("/me", response_model=UserResponse)
 def get_current_user_info(
     session: Session = Depends(get_db),
-    token: str = Header(...)
+    token: Optional[str] = Header(None)
 ):
+    if not token:
+        raise HTTPException(status_code=401, detail="Token requerido")
     try:
         from app.core.security import jwt, settings
         payload = jwt.decode(token.replace("Bearer ", ""), settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
