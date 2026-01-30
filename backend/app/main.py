@@ -49,6 +49,7 @@ origins = [
     "http://127.0.0.1:3000",
     "http://localhost:8000",
     "http://localhost:5173", # Vite default
+    "https://nexo-bot-ai.vercel.app", # Producción actual
 ]
 
 if settings.FRONTEND_URL and settings.FRONTEND_URL != "*":
@@ -112,7 +113,7 @@ async def health_check():
             # Test a very simple call
             from app.services.ai_service import client
             test_response = client.models.generate_content(
-                model='gemini-1.5-flash',
+                model='gemini-2.0-flash',
                 contents="ping"
             )
             if test_response and test_response.text:

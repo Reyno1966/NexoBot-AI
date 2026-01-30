@@ -40,8 +40,8 @@ class AIService:
         """
         
         try:
-            # Seleccionamos el modelo más estable para producción (1.5 Flash)
-            model_name = 'gemini-1.5-flash'
+            # Seleccionamos el modelo más estable para producción (2.0 Flash)
+            model_name = 'gemini-2.0-flash'
             
             # Verificación de pre-vuelo de la API Key
             if not settings.GEMINI_API_KEY or settings.GEMINI_API_KEY == "TU_KEY_PERSONAL_AQUI":
