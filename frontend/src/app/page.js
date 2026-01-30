@@ -161,48 +161,54 @@ export default function NexoBotDashboard() {
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com');
             const response = await fetch(`${apiUrl}/api/v1/auth/me`, {
-                headers: { 'token': authToken }
+                headers: { 'token': authToken || '' }
             });
+
+            if (!response.ok) {
+                console.warn("Sesión inválida o error de servidor, redirigiendo al login...");
+                handleLogout();
+                return;
+            }
+
             const data = await response.json();
-            if (response.ok) {
-                setUser(data);
-                if (data.tenant) {
-                    setBusinessConfig({
-                        ...businessConfig,
-                        name: data.tenant.name,
-                        industry: data.tenant.industry,
-                        phone: data.tenant.phone || '',
-                        address: data.tenant.address || '',
-                        country: data.tenant.country || '',
-                        logoUrl: data.tenant.logo_url || '/logo.jpg',
-                        mainInterest: data.tenant.main_interest,
-                        isLocked: data.tenant.is_locked,
-                        currency: data.tenant.currency || 'USD',
-                        stripe_customer_id: data.tenant.stripe_customer_id,
-                        stripe_public_key: data.tenant.stripe_public_key || '',
-                        stripe_secret_key: data.tenant.stripe_secret_key || '',
-                        services: safeParse(data.tenant.services, []),
-                        businessHours: {
-                            ...businessConfig.businessHours,
-                            ...safeParse(data.tenant.business_hours, {})
-                        },
-                        whatsappNotificationsEnabled: data.tenant.whatsapp_notifications_enabled || false,
-                        smtp_host: data.tenant.smtp_host || '',
-                        smtp_port: data.tenant.smtp_port || 587,
-                        smtp_user: data.tenant.smtp_user || '',
-                        smtp_password: data.tenant.smtp_password || '',
-                        resend_api_key: data.tenant.resend_api_key || '',
-                        whatsapp_api_key: data.tenant.whatsapp_api_key || '',
-                        whatsapp_phone: data.tenant.whatsapp_phone || '',
-                        whatsapp_instance_id: data.tenant.whatsapp_instance_id || '',
-                        google_calendar_token: data.tenant.google_calendar_token || '',
-                        primary_color: data.tenant.primary_color || '#6366f1',
-                        secondary_color: data.tenant.secondary_color || '#22d3ee'
-                    });
-                }
+            setUser(data);
+            if (data.tenant) {
+                setBusinessConfig(prev => ({
+                    ...prev,
+                    name: data.tenant.name,
+                    industry: data.tenant.industry,
+                    phone: data.tenant.phone || '',
+                    address: data.tenant.address || '',
+                    country: data.tenant.country || '',
+                    logoUrl: data.tenant.logo_url || '/logo.jpg',
+                    mainInterest: data.tenant.main_interest,
+                    isLocked: data.tenant.is_locked,
+                    currency: data.tenant.currency || 'USD',
+                    stripe_customer_id: data.tenant.stripe_customer_id,
+                    stripe_public_key: data.tenant.stripe_public_key || '',
+                    stripe_secret_key: data.tenant.stripe_secret_key || '',
+                    services: safeParse(data.tenant.services, []),
+                    businessHours: {
+                        ...prev.businessHours,
+                        ...safeParse(data.tenant.business_hours, {})
+                    },
+                    whatsappNotificationsEnabled: data.tenant.whatsapp_notifications_enabled || false,
+                    smtp_host: data.tenant.smtp_host || '',
+                    smtp_port: data.tenant.smtp_port || 587,
+                    smtp_user: data.tenant.smtp_user || '',
+                    smtp_password: data.tenant.smtp_password || '',
+                    resend_api_key: data.tenant.resend_api_key || '',
+                    whatsapp_api_key: data.tenant.whatsapp_api_key || '',
+                    whatsapp_phone: data.tenant.whatsapp_phone || '',
+                    whatsapp_instance_id: data.tenant.whatsapp_instance_id || '',
+                    google_calendar_token: data.tenant.google_calendar_token || '',
+                    primary_color: data.tenant.primary_color || '#6366f1',
+                    secondary_color: data.tenant.secondary_color || '#22d3ee'
+                }));
             }
         } catch (error) {
             console.error("Error cargando usuario:", error);
+            handleLogout();
         }
     };
 
