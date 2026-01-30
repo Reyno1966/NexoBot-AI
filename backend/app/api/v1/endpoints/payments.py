@@ -16,7 +16,7 @@ router = APIRouter()
 from uuid import UUID
 
 @router.post("/create-checkout-session")
-def create_checkout(tenant_id: UUID, amount: float = 19.99, session: Session = Depends(get_db)):
+def create_checkout(tenant_id: UUID, request: Request, amount: float = 19.99, session: Session = Depends(get_db)):
     tenant = session.get(Tenant, tenant_id)
     if not tenant:
         raise HTTPException(status_code=404, detail="Negocio no encontrado")

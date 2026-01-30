@@ -100,6 +100,38 @@ def on_startup():
 async def root():
     return {"message": f"Welcome to {settings.PROJECT_NAME} API"}
 
+@app.get("/api/v1/health")
+async def health_check():
+    ai_status = "UNKNOWN"
+    key_set = settings.GEMINI_API_KEY and settings.GEMINI_API_KEY != "TU_KEY_PERSONAL_AQUI"
+    
+    try:
+        if not key_set:
+            ai_status = "MISSING_API_KEY"
+        else:
+            # Test a very simple call
+            from app.services.ai_service import client
+            test_response = client.models.generate_content(
+                model='gemini-1.5-flash',
+                contents="ping"
+            )
+            if test_response and test_response.text:
+                ai_status = "OK"
+            else:
+                ai_status = "EMPTY_RESPONSE"
+    except Exception as e:
+        ai_status = f"ERROR: {str(e)}"
+
+    return {
+        "status": "healthy",
+        "environment": "production" if IS_VERCEL or os.getenv("RENDER") else "development",
+        "database": settings.DATABASE_URL.split("@")[-1] if "@" in settings.DATABASE_URL else "sqlite",
+        "ai_service": {
+            "configured": key_set,
+            "status": ai_status
+        }
+    }
+
 @app.post("/api/v1/chat", response_model=ChatResponse)
 async def chat_endpoint(request: ChatRequest, raw_request: Request, session: Session = Depends(get_db)):
     # 1. Buscar el Negocio (Tenant)

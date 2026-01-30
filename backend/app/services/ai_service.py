@@ -41,9 +41,13 @@ class AIService:
         
         try:
             # Seleccionamos el modelo más estable para producción (1.5 Flash)
-            # El modelo 2.0 experimental puede fallar en ciertos entornos de red o regiones
             model_name = 'gemini-1.5-flash'
             
+            # Verificación de pre-vuelo de la API Key
+            if not settings.GEMINI_API_KEY or settings.GEMINI_API_KEY == "TU_KEY_PERSONAL_AQUI":
+                print(">>> [AI_SERVICE] ERROR: GEMINI_API_KEY no configurada correctamente.", file=sys.stderr)
+                raise Exception("API_KEY_MISSING")
+
             response = client.models.generate_content(
                 model=model_name,
                 contents=text,
@@ -60,16 +64,17 @@ class AIService:
             return response.text.strip()
         except Exception as e:
             error_msg = str(e)
-            print(f"ERROR CRÍTICO AI (Gemini): {error_msg}")
+            print(f">>> [AI_SERVICE] ERROR CRÍTICO GEMINI: {error_msg}", file=sys.stderr)
             
-            # Si el error es de autenticación, lo aclaramos en los logs
-            if "API_KEY_INVALID" in error_msg or "403" in error_msg:
-                print(">>> ALERTA: La GEMINI_API_KEY parece ser inválida o no tiene permisos.")
+            if "API_KEY_INVALID" in error_msg or "403" in error_msg or "401" in error_msg:
+                print(">>> [AI_SERVICE] ALERTA: La GEMINI_API_KEY es INCORRECTA o no tiene permisos.", file=sys.stderr)
+            elif "ConnectError" in error_msg or "nodename nor servname" in error_msg:
+                print(">>> [AI_SERVICE] ERROR DE DNS/CONEXIÓN: No se puede alcanzar el servidor de Google Gemini.", file=sys.stderr)
             
             return json.dumps({
                 "intent": "chat",
                 "entities": {},
-                "response_text": "Estimado cliente, detecto una interrupción técnica momentánea en mi conexión. Por favor, asegúrese de que su configuración de IA es correcta e intente de nuevo en unos segundos."
+                "response_text": "Sinceramente disculpas, pero NexoBot está experimentando un problema de comunicación con su cerebro de IA. Por favor, verifica que la GEMINI_API_KEY esté correctamente configurada en el panel de control (Render/Vercel)."
             })
 
     @staticmethod
