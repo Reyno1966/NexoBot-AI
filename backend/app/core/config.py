@@ -33,8 +33,8 @@ class Settings(BaseSettings):
     EMAILS_FROM_NAME: str = "NexoBot AI"
 
     # WhatsApp Evolution API (Gateway)
-    WHATSAPP_EVOLUTION_URL: Optional[str] = "https://api-whatsapp.nexobot.ai" # Reemplazar por tu servidor real
-    WHATSAPP_EVOLUTION_API_KEY: Optional[str] = None
+    WHATSAPP_EVOLUTION_URL: Optional[str] = "https://nexo-whatsapp.onrender.com"
+    WHATSAPP_EVOLUTION_API_KEY: Optional[str] = "ClaveNexo202Rey"
 
     class Config:
         case_sensitive = True
