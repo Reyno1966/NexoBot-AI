@@ -279,8 +279,10 @@ async def chat_endpoint(request: ChatRequest, raw_request: Request, session: Ses
                             start_date_str = start_date_str.replace('Z', '').replace(' ', 'T')
                         
                         try:
-                            start_dt = datetime.fromisoformat(start_date_str)
-                        except ValueError:
+                            # Limpiar fecha de posibles textos extras
+                            clean_start = str(start_date_str).split(' ')[0] if ' ' in str(start_date_str) else str(start_date_str)
+                            start_dt = datetime.fromisoformat(clean_start.replace('Z', '').replace(' ', 'T'))
+                        except Exception:
                             # Si falla, intentar parsear solo la fecha o asumir hoy si es 'mañana'
                             if 'mañana' in start_date_str.lower():
                                 start_dt = datetime.now() + timedelta(days=1)
@@ -322,15 +324,22 @@ async def chat_endpoint(request: ChatRequest, raw_request: Request, session: Ses
                             except Exception as ce:
                                 print(f"Error gestionando cliente: {ce}")
 
+                        # Limpiar monto
+                        raw_monto = entities.get('total', entities.get('monto', 0))
+                        try:
+                            monto_val = float(str(raw_monto).replace('$', '').replace('USD', '').strip())
+                        except:
+                            monto_val = 0.0
+
                         new_booking = Booking(
                             tenant_id=tenant.id,
-                            property_name=entities.get('propiedad', 'Servicio General'),
+                            property_name=entities.get('propiedad') or entities.get('servicios') or 'Servicio General',
                             customer_id=customer_id,
                             start_date=start_dt,
                             end_date=end_dt,
                             status="confirmed",
-                            total_price=float(entities.get('total', entities.get('monto', 0))),
-                            notes=f"Cita/Reserva creada por NexoBot. Datos: {customer_phone} {entities.get('direccion', 'N/A')}"
+                            total_price=monto_val,
+                            notes=f"Cita/Reserva creada por NexoBot. Tel: {customer_phone} Dir: {entities.get('direccion', 'N/A')}"
                         )
                         session.add(new_booking)
                         # También registrar como ingreso en transacciones si tiene monto

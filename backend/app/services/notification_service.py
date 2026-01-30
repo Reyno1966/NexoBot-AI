@@ -3,6 +3,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from app.core.config import settings
+from app.services.whatsapp_service import WhatsAppService
 
 class NotificationService:
     @staticmethod
@@ -14,10 +15,9 @@ class NotificationService:
         api_key = (whatsapp_config or {}).get('api_key')
         
         if instance_id and api_key:
-            # Aquí iría la integración real con Evolution API
-            # Por ahora simulamos la llamada exitosa al Gateway
-            print(f"📡 [GATEWAY WHATSAPP] Enviando via Instancia {instance_id} a {phone}: {message}")
-            return True
+            # Integración real con Evolution API a través de nuestro servicio
+            print(f"📡 [GATEWAY WHATSAPP] Enviando via Instancia {instance_id} a {phone}")
+            return WhatsAppService.send_text(instance_id, phone, message)
             
         print(f"🚀 [NOTIFICACIÓN WHATSAPP SIMULADA] Enviando a {phone}: {message}")
         return True

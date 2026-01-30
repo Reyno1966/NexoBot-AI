@@ -73,6 +73,39 @@ class WhatsAppService:
             return "ERROR"
 
     @classmethod
+    def send_text(cls, instance_name: str, number: str, text: str) -> bool:
+        """
+        Envía un mensaje de texto a través de una instancia específica.
+        """
+        url = f"{cls.BASE_URL}/message/sendText/{instance_name}"
+        headers = {"apikey": cls.API_KEY, "Content-Type": "application/json"}
+        
+        # Limpiar el número (quitar +, espacios, etc)
+        clean_number = "".join(filter(str.isdigit, number))
+        
+        payload = {
+            "number": clean_number,
+            "options": {
+                "delay": 1200,
+                "presence": "composing",
+                "linkPreview": True
+            },
+            "textMessage": {
+                "text": text
+            }
+        }
+
+        try:
+            response = requests.post(url, json=payload, headers=headers)
+            if response.status_code in [200, 201]:
+                return True
+            logger.error(f"Error enviando mensaje: {response.status_code} - {response.text}")
+            return False
+        except Exception as e:
+            logger.error(f"Excepción en send_text: {str(e)}")
+            return False
+
+    @classmethod
     def logout(cls, instance_name: str) -> bool:
         """
         Desvincula y cierra la sesión de WhatsApp.
