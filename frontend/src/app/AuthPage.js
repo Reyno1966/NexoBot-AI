@@ -18,10 +18,16 @@ export default function AuthPage({ onAuthSuccess }) {
     const [error, setError] = useState('');
     const [lang, setLang] = useState('es');
     const [isMounted, setIsMounted] = useState(false);
-    const t = translations[lang];
+    const [userCount, setUserCount] = useState(12430);
+    const [onlineCount, setOnlineCount] = useState(842);
 
     useEffect(() => {
         setIsMounted(true);
+        const interval = setInterval(() => {
+            setUserCount(prev => prev + Math.floor(Math.random() * 2));
+            setOnlineCount(prev => prev + (Math.floor(Math.random() * 5) - 2));
+        }, 5000);
+        return () => clearInterval(interval);
     }, []);
 
     if (!isMounted) return null;
@@ -132,16 +138,7 @@ export default function AuthPage({ onAuthSuccess }) {
         }
     };
 
-    const [userCount, setUserCount] = useState(12430);
-    const [onlineCount, setOnlineCount] = useState(842);
 
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setUserCount(prev => prev + Math.floor(Math.random() * 2));
-            setOnlineCount(prev => prev + (Math.floor(Math.random() * 5) - 2));
-        }, 5000);
-        return () => clearInterval(interval);
-    }, []);
 
     return (
         <div className="min-h-screen bg-[#0f1115] flex items-center justify-center p-4 relative overflow-hidden">
