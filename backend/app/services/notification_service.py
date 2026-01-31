@@ -9,18 +9,28 @@ class NotificationService:
     @staticmethod
     def send_whatsapp_alert(phone: str, message: str, whatsapp_config: Dict = None):
         """
-        Envía alerta por WhatsApp usando Gateway (Evolution API / WppConnect) o simulación.
+        Envía alerta por WhatsApp con fallback a la configuración global.
         """
         instance_id = (whatsapp_config or {}).get('instance_id')
-        api_key = (whatsapp_config or {}).get('api_key')
+        api_key = (whatsapp_config or {}).get('api_key') or getattr(settings, 'WHATSAPP_EVOLUTION_API_KEY', None)
         
         if instance_id and api_key:
-            # Integración real con Evolution API a través de nuestro servicio
-            print(f"📡 [GATEWAY WHATSAPP] Enviando via Instancia {instance_id} a {phone}")
+            print(f"📡 [WHATSAPP REAL] Enviando via {instance_id} a {phone}")
             return WhatsAppService.send_text(instance_id, phone, message)
             
-        print(f"🚀 [NOTIFICACIÓN WHATSAPP SIMULADA] Enviando a {phone}: {message}")
+        print(f"🚀 [WHATSAPP SIMULADO] Sin configuración real para {phone}: {message}")
         return True
+
+    @staticmethod
+    def notify_customer_booking(customer_phone: str, customer_name: str, business_name: str, date_str: str, service_name: str, whatsapp_config: Dict = None):
+        """
+        Envía una confirmación directa al cliente por WhatsApp.
+        """
+        if not customer_phone:
+            return False
+            
+        msg = f"✅ *¡Cita Confirmada!*\n\nHola {customer_name}, tu cita en *{business_name}* ha sido registrada con éxito.\n\n📅 *Fecha*: {date_str}\n🛠️ *Servicio*: {service_name}\n\n¡Te esperamos!"
+        return NotificationService.send_whatsapp_alert(customer_phone, msg, whatsapp_config)
 
     @staticmethod
     def send_email_alert(to_email: str, subject: str, message_html: str, smtp_config: Dict = None):

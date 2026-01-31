@@ -331,8 +331,14 @@ export default function NexoBotDashboard() {
             });
             const data = await response.json();
             setMessages(prev => [...prev, { role: 'assistant', text: data.response }]);
+
+            // Si la IA realizó una acción (ej: agendar), recargamos el dashboard
+            if (data.action_required && (data.intent === 'book_appointment' || data.intent === 'generate_invoice')) {
+                loadDashboardData(token);
+            }
         } catch (error) {
-            setMessages(prev => [...prev, { role: 'assistant', text: 'Error de conexión.' }]);
+            console.error("Chat Error:", error);
+            setMessages(prev => [...prev, { role: 'assistant', text: 'NexoBot está descansando o hay un problema de red. Por favor intenta de nuevo.' }]);
         } finally {
             setIsLoading(false);
         }
@@ -453,6 +459,24 @@ export default function NexoBotDashboard() {
         }
     };
 
+    const handleTestWhatsapp = async () => {
+        setIsLoading(true);
+        try {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com');
+            const response = await fetch(`${apiUrl}/api/v1/whatsapp/test-message`, {
+                method: 'POST',
+                headers: { 'token': token }
+            });
+            const data = await response.json();
+            if (response.ok) alert("✅ Mensaje enviado! Revisa tu celular.");
+            else alert("❌ Error: " + (data.detail || "No se pudo enviar"));
+        } catch (error) {
+            alert("Error de conexión");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const currentIndustry = industries.find(i => i.id === businessConfig.industry) || industries[0];
 
     if (!isMounted) return <div className="min-h-screen bg-[#0f1115]" />;
@@ -559,6 +583,7 @@ export default function NexoBotDashboard() {
                 whatsappPairingCode={whatsappPairingCode}
                 isGeneratingQr={isGeneratingQr}
                 whatsappStatus={whatsappStatus}
+                handleTestWhatsapp={handleTestWhatsapp}
                 isLoading={isLoading}
             />
 

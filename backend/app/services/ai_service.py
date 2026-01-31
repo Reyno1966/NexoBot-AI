@@ -1,11 +1,20 @@
-from google import genai
-from google.genai import types
-from app.core.config import settings
 from typing import List, Dict
 import json
+import sys
+import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Nueva configuración con el SDK más moderno de Google (Gemini 2.0)
-client = genai.Client(api_key=settings.GEMINI_API_KEY)
+from google import genai
+from google.genai import types
+
+try:
+    client = genai.Client(api_key=settings.GEMINI_API_KEY)
+except Exception as e:
+    print(f">>> [AI_SERVICE] Error inicializando cliente GenAI: {e}", file=sys.stderr)
+    client = None
 
 class AIService:
     @staticmethod
@@ -14,54 +23,57 @@ class AIService:
         Procesa el lenguaje natural con Gemini 2.0 Flash (el modelo más moderno)
         """
         system_prompt = f"""
-        Eres NexoBot, el cerebro operativo de élite y asistente virtual para el negocio "{tenant_context['name']}" ({tenant_context['industry']}). 
-        Tu personalidad es EXTREMADAMENTE PROFESIONAL, CORTÉS, EFICIENTE y ORIENTADA A RESULTADOS.
+        Eres NexoBot, el cerebro operativo para el negocio "{tenant_context['name']}" ({tenant_context['industry']}). 
+        Tu objetivo es ser ÚTIL y agendar servicios de forma rápida.
+        
+        REGLAS:
+        1. IDIOMA: Responde siempre en {tenant_context['language']}.
+        2. SIMPLICIDAD: No pidas datos innecesarios. Para citas solo necesitas el NOMBRE y el TELÉFONO. 
+        3. DIRECCIÓN: Solo pídela si es estrictamente necesario para el servicio.
+        4. ACCIÓN: Si el cliente proporciona fecha/hora, asume que quiere agendar y usa intent 'book_appointment'.
 
-        REGLAS DE ORO DE COMUNICACIÓN:
-        1. IDIOMA: Responde siempre en el idioma del usuario ({tenant_context['language']}).
-        2. VARIEDAD Y ELEGANCIA: Evita muletillas y frases repetitivas. No empieces todas las frases de la misma forma (ej. evita repetir siempre "Claro que sí", "Excelente", "Entendido"). Usa un vocabulario rico y profesional.
-        3. CONTEXTO: Solo hablas sobre el negocio y servicios de {tenant_context['industry']}. No respondas dudas fuera de este ámbito.
-        4. RECOLECCIÓN DE DATOS CRÍTICA: 
-           - Cuando un cliente quiera AGENDAR una cita o REGISTRARSE, es OBLIGATORIO obtener: Nombre completo, Teléfono y Dirección.
-           - Si el cliente no los ha proporcionado, solicítalos de manera elegante y profesional uno por uno o en conjunto.
-           - Una vez obtenidos, confirma que la información ha sido enviada al dueño del negocio.
+        MENÚ/CATÁLOGO: {tenant_context['catalog']}
+        HORARIOS: {tenant_context['schedule']}
+        Disponibilidad: {tenant_context.get('current_bookings', '[]')}
 
-        LÓGICA DE NEGOCIO:
-        - Negocio: {tenant_context['name']}
-        - Inventario/Servicios: {tenant_context['catalog']}
-        - Horarios: {tenant_context['schedule']}
-        - Ocupación actual: {tenant_context.get('current_bookings', '[]')}
-
-        TASK (JSON OUTPUT ONLY):
-        1. Devuelve ÚNICAMENTE un objeto JSON válido.
-        2. Determina el 'intent': (chat, book_appointment, generate_invoice, generate_contract, support_escalation, collect_data).
-        3. Extrae 'entities': (cliente, propiedad, fecha, hora, telefono, direccion, monto).
-        4. En 'response_text', proporciona una respuesta fluida, empática y profesional.
+        RESPUESTA (JSON):
+        {{
+          "intent": "chat | book_appointment | generate_invoice | support_escalation",
+          "entities": {{ "cliente": "...", "telefono": "...", "fecha": "...", "hora": "...", "servicios": "..." }},
+          "response_text": "Tu respuesta amable y breve."
+        }}
         """
         
         try:
-            # Seleccionamos el modelo más estable para producción (2.0 Flash)
-            model_name = 'gemini-2.0-flash'
+            # Intentamos con modelos en orden de preferencia
+            models_to_try = ['gemini-2.0-flash', 'gemini-1.5-flash']
             
-            # Verificación de pre-vuelo de la API Key
-            if not settings.GEMINI_API_KEY or settings.GEMINI_API_KEY == "TU_KEY_PERSONAL_AQUI":
-                print(">>> [AI_SERVICE] ERROR: GEMINI_API_KEY no configurada correctamente.", file=sys.stderr)
-                raise Exception("API_KEY_MISSING")
+            last_error = "Unknown"
+            for model_name in models_to_try:
+                try:
+                    if not client: raise Exception("Cliente no inicializado")
+                    
+                    response = client.models.generate_content(
+                        model=model_name,
+                        contents=text,
+                        config=types.GenerateContentConfig(
+                            system_instruction=system_prompt,
+                            response_mime_type='application/json',
+                            temperature=0.1
+                        )
+                    )
+                    if response and response.text:
+                        return response.text.strip()
+                except Exception as e:
+                    last_error = str(e)
+                    print(f">>> [AI_SERVICE] Fallo con {model_name}: {last_error}", file=sys.stderr)
+                    continue
 
-            response = client.models.generate_content(
-                model=model_name,
-                contents=text,
-                config=types.GenerateContentConfig(
-                    system_instruction=system_prompt,
-                    response_mime_type='application/json',
-                    temperature=0.2 
-                )
-            )
-            
-            if not response or not response.text:
-                raise Exception("Respuesta vacía de Gemini")
-                
-            return response.text.strip()
+            return json.dumps({
+                "intent": "chat",
+                "entities": {},
+                "response_text": f"Lo siento, tengo un problema técnico (Error: {last_error}). Por favor intenta de nuevo en unos momentos."
+            })
         except Exception as e:
             error_msg = str(e)
             print(f">>> [AI_SERVICE] ERROR CRÍTICO GEMINI: {error_msg}", file=sys.stderr)

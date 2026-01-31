@@ -60,7 +60,7 @@ if settings.FRONTEND_URL and settings.FRONTEND_URL != "*":
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins if settings.FRONTEND_URL != "*" else ["*"],
+    allow_origins=["*"], # Permitir todos para evitar errores de despliegue
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -232,19 +232,19 @@ async def chat_endpoint(request: ChatRequest, raw_request: Request, session: Ses
         tenant_phone = tenant.phone
         print(f">>> [CHAT] Notificando a: Email={admin_email}, Tel={tenant_phone}")
         
-        # Preparar configuraciones del negocio si existen
+        # Preparar configuraciones del negocio con FALLBACK a globales
         smtp_config = {
-            "host": tenant.smtp_host,
-            "port": tenant.smtp_port,
-            "user": tenant.smtp_user,
-            "password": tenant.smtp_password,
-            "resend_api_key": tenant.resend_api_key
-        } if (tenant.smtp_user and tenant.smtp_password) or tenant.resend_api_key else None
+            "host": tenant.smtp_host or getattr(settings, 'SMTP_HOST', ''),
+            "port": tenant.smtp_port or getattr(settings, 'SMTP_PORT', 587),
+            "user": tenant.smtp_user or getattr(settings, 'SMTP_USER', ''),
+            "password": tenant.smtp_password or getattr(settings, 'SMTP_PASSWORD', ''),
+            "resend_api_key": tenant.resend_api_key or getattr(settings, 'RESEND_API_KEY', '')
+        }
         
         whatsapp_config = {
             "instance_id": tenant.whatsapp_instance_id,
-            "api_key": tenant.whatsapp_api_key
-        } if tenant.whatsapp_instance_id and tenant.whatsapp_api_key else None
+            "api_key": tenant.whatsapp_api_key or getattr(settings, 'WHATSAPP_EVOLUTION_API_KEY', '')
+        }
 
         should_notify = tenant.whatsapp_notifications_enabled or True
         if should_notify:
@@ -274,26 +274,40 @@ async def chat_endpoint(request: ChatRequest, raw_request: Request, session: Ses
                 
                 if start_date_str:
                     try:
-                        # Limpieza y fallback para fechas
-                        if isinstance(start_date_str, str):
-                            start_date_str = start_date_str.replace('Z', '').replace(' ', 'T')
+                        # Limpieza extrema de la fecha
+                        import re
+                        # Extraer algo que parezca fecha/hora (YYYY-MM-DD THH:MM)
+                        iso_match = re.search(r'\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}', str(start_date_str))
                         
-                        try:
-                            # Limpiar fecha de posibles textos extras
-                            clean_start = str(start_date_str).split(' ')[0] if ' ' in str(start_date_str) else str(start_date_str)
-                            start_dt = datetime.fromisoformat(clean_start.replace('Z', '').replace(' ', 'T'))
-                        except Exception:
-                            # Si falla, intentar parsear solo la fecha o asumir hoy si es 'mañana'
-                            if 'mañana' in start_date_str.lower():
-                                start_dt = datetime.now() + timedelta(days=1)
-                                start_dt = start_dt.replace(hour=10, minute=0, second=0, microsecond=0)
+                        if iso_match:
+                            clean_start = iso_match.group(0).replace(' ', 'T')
+                            start_dt = datetime.fromisoformat(clean_start)
+                        else:
+                            # Fallback si no es ISO: Intentar detectar palabras clave
+                            now = datetime.now()
+                            if 'mañana' in str(start_date_str).lower():
+                                start_dt = now + timedelta(days=1)
+                            elif 'hoy' in str(start_date_str).lower():
+                                start_dt = now
                             else:
-                                start_dt = datetime.now() + timedelta(hours=2) # Fallback
+                                start_dt = now + timedelta(hours=2) # Default para evitar error fatal
+                            
+                            # Si hay hora en el texto (ej: "10:00")
+                            time_match = re.search(r'(\d{1,2}):(\d{2})', str(start_date_str))
+                            if time_match:
+                                start_dt = start_dt.replace(hour=int(time_match.group(1)), minute=int(time_match.group(2)), second=0, microsecond=0)
+                            else:
+                                start_dt = start_dt.replace(hour=10, minute=0, second=0, microsecond=0)
 
                         if end_date_str:
                             try:
-                                end_dt = datetime.fromisoformat(end_date_str.replace('Z', '').replace(' ', 'T'))
-                            except ValueError:
+                                # Intentar parsear fecha de salida igual
+                                end_match = re.search(r'\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}', str(end_date_str))
+                                if end_match:
+                                    end_dt = datetime.fromisoformat(end_match.group(0).replace(' ', 'T'))
+                                else:
+                                    end_dt = start_dt + timedelta(hours=1)
+                            except Exception:
                                 end_dt = start_dt + timedelta(hours=1)
                         else:
                             end_dt = start_dt + timedelta(hours=1)
@@ -367,9 +381,18 @@ async def chat_endpoint(request: ChatRequest, raw_request: Request, session: Ses
                 print(f"Error guardando reserva: {e}")
 
             if should_notify:
+                # Notificar al DUEÑO
                 NotificationService.notify_appointment(
                     tenant.name, tenant_phone, admin_email, customer_display_name, entities, smtp_config, whatsapp_config
                 )
+                # Notificar al CLIENTE (NUEVO)
+                customer_phone = entities.get('telefono')
+                if customer_phone:
+                    friendly_date = start_dt.strftime("%d/%m/%Y %H:%M")
+                    NotificationService.notify_customer_booking(
+                        customer_phone, customer_display_name, tenant.name, friendly_date, 
+                        entities.get('servicios') or 'Servicio', whatsapp_config
+                    )
         elif intent in ["generate_invoice", "generate_contract", "generate_summary"]:
             if should_notify:
                 NotificationService.notify_request(

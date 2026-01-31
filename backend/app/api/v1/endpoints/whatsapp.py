@@ -96,6 +96,28 @@ async def check_whatsapp_status(token: Optional[str] = Header(None), session: Se
     status = WhatsAppService.get_status(tenant.whatsapp_instance_id)
     return {"status": status}
 
+@router.post("/test-message")
+async def test_whatsapp_message(token: Optional[str] = Header(None), session: Session = Depends(get_session)):
+    tenant_id = get_tenant_id_from_token(token)
+    tenant = session.get(Tenant, tenant_id)
+    if not tenant or not tenant.whatsapp_instance_id:
+        raise HTTPException(status_code=400, detail="WhatsApp no vinculado")
+
+    # Fallback keys
+    from app.core.config import settings
+    api_key = tenant.whatsapp_api_key or getattr(settings, 'WHATSAPP_EVOLUTION_API_KEY', '')
+    
+    success = WhatsAppService.send_text(
+        tenant.whatsapp_instance_id, 
+        tenant.phone or "5215500000000", # Fallback to a dummy if none
+        "🌟 *NEXOBOT TEST*\n\n¡Felicidades! Tu conexión con WhatsApp está funcionando perfectamente. 🚀"
+    )
+    
+    if success:
+        return {"message": "Mensaje de prueba enviado con éxito"}
+    else:
+        raise HTTPException(status_code=500, detail="Error al enviar mensaje de prueba")
+
 @router.post("/logout")
 async def logout_whatsapp(token: Optional[str] = Header(None), session: Session = Depends(get_session)):
     tenant_id = get_tenant_id_from_token(token)
