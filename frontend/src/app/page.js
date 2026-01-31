@@ -72,6 +72,7 @@ export default function NexoBotDashboard() {
     const [isChatOpen, setIsChatOpen] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [whatsappQr, setWhatsappQr] = useState(null);
+    const [whatsappPairingCode, setWhatsappPairingCode] = useState(null);
     const [isGeneratingQr, setIsGeneratingQr] = useState(false);
     const [whatsappStatus, setWhatsappStatus] = useState('DISCONNECTED');
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -384,6 +385,7 @@ export default function NexoBotDashboard() {
 
     const handleGenerateQr = async () => {
         setIsGeneratingQr(true);
+        setWhatsappPairingCode(null);
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com');
             const response = await fetch(`${apiUrl}/api/v1/whatsapp/qr`, { headers: { 'token': token } });
@@ -392,6 +394,33 @@ export default function NexoBotDashboard() {
             else if (data.status === 'CONNECTED') setWhatsappStatus('CONNECTED');
         } catch (error) {
             alert("Error al generar QR");
+        } finally {
+            setIsGeneratingQr(false);
+        }
+    };
+
+    const handleGetPairingCode = async (phoneNumber) => {
+        if (!phoneNumber) {
+            alert(lang === 'es' ? "Por favor ingresa un número de teléfono" : "Please enter a phone number");
+            return;
+        }
+        setIsGeneratingQr(true);
+        setWhatsappQr(null);
+        try {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com');
+            const response = await fetch(`${apiUrl}/api/v1/whatsapp/pairing-code?number=${phoneNumber}`, {
+                headers: { 'token': token }
+            });
+            const data = await response.json();
+            if (response.ok && data.code) {
+                setWhatsappPairingCode(data.code);
+            } else if (data.status === 'CONNECTED') {
+                setWhatsappStatus('CONNECTED');
+            } else {
+                alert(data.detail || "Error al generar código");
+            }
+        } catch (error) {
+            alert("Error de conexión");
         } finally {
             setIsGeneratingQr(false);
         }
@@ -524,8 +553,10 @@ export default function NexoBotDashboard() {
                 industries={industries}
                 handleSaveBusinessConfig={handleSaveBusinessConfig}
                 handleGenerateQr={handleGenerateQr}
+                handleGetPairingCode={handleGetPairingCode}
                 handleWhatsappLogout={handleWhatsappLogout}
                 whatsappQr={whatsappQr}
+                whatsappPairingCode={whatsappPairingCode}
                 isGeneratingQr={isGeneratingQr}
                 whatsappStatus={whatsappStatus}
                 isLoading={isLoading}

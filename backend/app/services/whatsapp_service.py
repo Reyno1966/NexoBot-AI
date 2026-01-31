@@ -38,6 +38,31 @@ class WhatsAppService:
             return None
 
     @classmethod
+    def get_pairing_code(cls, instance_name: str, number: str) -> Optional[str]:
+        """
+        Obtiene un código de emparejamiento para vincular la instancia por número de teléfono.
+        """
+        url = f"{cls.BASE_URL}/instance/connect/pairing/{instance_name}"
+        headers = {"apikey": cls.API_KEY}
+        
+        # Limpiar el número
+        clean_number = "".join(filter(str.isdigit, number))
+        
+        params = {"number": clean_number}
+
+        try:
+            print(f">>> [WHATSAPP] Solicitando Pairing Code para: {clean_number} en {url}")
+            response = requests.get(url, headers=headers, params=params, timeout=15)
+            if response.status_code == 200:
+                data = response.json()
+                return data.get("code") or data.get("pairingCode")
+            print(f">>> [WHATSAPP] Error en get_pairing_code: {response.status_code} - {response.text}")
+            return None
+        except Exception as e:
+            print(f">>> [WHATSAPP] Excepción en get_pairing_code: {str(e)}")
+            return None
+
+    @classmethod
     def get_qr_code(cls, instance_name: str) -> Optional[str]:
         """
         Obtiene el código QR en base64 para vincular la instancia.

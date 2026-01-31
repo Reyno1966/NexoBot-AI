@@ -12,8 +12,10 @@ const SettingsModal = ({
     industries,
     handleSaveBusinessConfig,
     handleGenerateQr,
+    handleGetPairingCode,
     handleWhatsappLogout,
     whatsappQr,
+    whatsappPairingCode,
     isGeneratingQr,
     whatsappStatus,
     isLoading
@@ -338,7 +340,7 @@ const SettingsModal = ({
                                 </div>
 
                                 <div className="bg-white/[0.02] p-4 rounded-3xl border border-white/5 space-y-4 font-bold">
-                                    <h4 className="text-[10px] text-slate-300 uppercase tracking-wider">WhatsApp Evolution API (QR Sync)</h4>
+                                    <h4 className="text-[10px] text-slate-300 uppercase tracking-wider">WhatsApp Evolution API (Vincular Cuenta)</h4>
 
                                     {whatsappStatus === 'CONNECTED' ? (
                                         <div className="flex items-center justify-between bg-green-500/10 p-4 rounded-2xl border border-green-500/20">
@@ -354,24 +356,63 @@ const SettingsModal = ({
                                             </button>
                                         </div>
                                     ) : (
-                                        <div className="flex flex-col items-center gap-4 py-4">
-                                            {whatsappQr ? (
-                                                <div className="bg-white p-4 rounded-3xl shadow-2xl shadow-indigo-500/10">
-                                                    <img src={whatsappQr} alt="WhatsApp QR" className="w-48 h-48" />
-                                                    <p className="text-[9px] text-black font-bold text-center mt-2">Escanea con tu WhatsApp</p>
+                                        <div className="space-y-6">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                                                {/* Opción QR */}
+                                                <div className="flex flex-col items-center gap-4 p-4 bg-white/5 rounded-2xl border border-white/5">
+                                                    <p className="text-[10px] text-slate-400 uppercase tracking-widest">Opción 1: Escanear QR</p>
+                                                    {whatsappQr ? (
+                                                        <div className="bg-white p-3 rounded-2xl shadow-2xl">
+                                                            <img src={whatsappQr} alt="WhatsApp QR" className="w-40 h-40" />
+                                                        </div>
+                                                    ) : (
+                                                        <div className="w-40 h-40 bg-[#0f1115] rounded-2xl border border-white/5 flex items-center justify-center">
+                                                            <span className="text-[8px] text-slate-600 font-bold uppercase text-center px-4">Esperando QR...</span>
+                                                        </div>
+                                                    )}
+                                                    <button
+                                                        onClick={handleGenerateQr}
+                                                        disabled={isGeneratingQr}
+                                                        className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-[10px] font-bold uppercase transition-all disabled:opacity-50"
+                                                    >
+                                                        {isGeneratingQr ? 'Generando...' : 'Generar QR'}
+                                                    </button>
                                                 </div>
-                                            ) : (
-                                                <div className="w-48 h-48 bg-[#0f1115] rounded-3xl border border-white/5 flex items-center justify-center">
-                                                    <span className="text-[10px] text-slate-600 font-bold uppercase tracking-tighter">Esperando Generación...</span>
+
+                                                {/* Opción Pairing Code */}
+                                                <div className="flex flex-col items-center gap-4 p-4 bg-white/5 rounded-2xl border border-white/5">
+                                                    <p className="text-[10px] text-slate-400 uppercase tracking-widest">Opción 2: Código de Teléfono</p>
+
+                                                    {whatsappPairingCode ? (
+                                                        <div className="w-full h-40 bg-green-500/10 border border-green-500/20 rounded-2xl flex flex-col items-center justify-center p-4">
+                                                            <span className="text-2xl font-mono font-bold text-green-400 tracking-[0.5em]">{whatsappPairingCode}</span>
+                                                            <p className="text-[8px] text-green-500/60 uppercase mt-4 text-center">Escribe este código en tu celular (Link a Device)</p>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="w-full h-40 flex flex-col gap-3 justify-center">
+                                                            <input
+                                                                type="text"
+                                                                placeholder="Número (Ej: 521...)"
+                                                                value={businessConfig.whatsapp_phone_pair || ''}
+                                                                onChange={(e) => setBusinessConfig({ ...businessConfig, whatsapp_phone_pair: e.target.value })}
+                                                                className="bg-[#0f1115] border border-white/10 p-3 rounded-xl text-xs outline-none focus:border-green-500 font-mono"
+                                                            />
+                                                            <p className="text-[8px] text-slate-500 italic">Ingresa el número con código de país sin el +</p>
+                                                        </div>
+                                                    )}
+
+                                                    <button
+                                                        onClick={() => handleGetPairingCode(businessConfig.whatsapp_phone_pair)}
+                                                        disabled={isGeneratingQr}
+                                                        className="w-full py-3 bg-green-600 hover:bg-green-500 rounded-xl text-[10px] font-bold uppercase transition-all disabled:opacity-50"
+                                                    >
+                                                        {isGeneratingQr ? 'Obteniendo...' : 'Obtener Código'}
+                                                    </button>
                                                 </div>
-                                            )}
-                                            <button
-                                                onClick={handleGenerateQr}
-                                                disabled={isGeneratingQr}
-                                                className="w-full py-4 bg-green-600 hover:bg-green-500 rounded-2xl text-xs font-bold uppercase transition-all shadow-xl shadow-green-600/20 disabled:opacity-50"
-                                            >
-                                                {isGeneratingQr ? 'Generando...' : 'Vincular con QR'}
-                                            </button>
+                                            </div>
+                                            <p className="text-[9px] text-slate-500 text-center italic">
+                                                * Recomendado: Si el QR falla, usa el código de teléfono.
+                                            </p>
                                         </div>
                                     )}
                                 </div>

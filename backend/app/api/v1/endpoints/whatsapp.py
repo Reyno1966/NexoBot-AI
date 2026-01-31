@@ -55,6 +55,37 @@ async def get_whatsapp_qr(token: Optional[str] = Header(None), session: Session 
 
     return {"status": "QR_READY", "qrcode": qr_base64}
 
+@router.get("/pairing-code")
+async def get_whatsapp_pairing_code(number: str, token: Optional[str] = Header(None), session: Session = Depends(get_session)):
+    tenant_id = get_tenant_id_from_token(token)
+    tenant = session.get(Tenant, tenant_id)
+    if not tenant:
+        raise HTTPException(status_code=404, detail="Tenant no encontrado")
+
+    instance_name = f"tenant_{str(tenant.id).replace('-', '_')}"
+    
+    # Aseguramos que la instancia exista
+    status = WhatsAppService.get_status(instance_name)
+    if status == "CONNECTED":
+        return {"status": "CONNECTED", "message": "Ya estás vinculado"}
+    
+    if status == "DISCONNECTED" or status == "ERROR":
+         # Intentamos crearla si no existe
+         WhatsAppService.create_instance(instance_name)
+
+    pairing_code = WhatsAppService.get_pairing_code(instance_name, number)
+    
+    if not pairing_code:
+        raise HTTPException(status_code=500, detail="No se pudo generar el código de emparejamiento")
+
+    # Guardamos el instance_id y el teléfono en el tenant
+    tenant.whatsapp_instance_id = instance_name
+    tenant.whatsapp_phone = number
+    session.add(tenant)
+    session.commit()
+
+    return {"status": "PAIRING_CODE_READY", "code": pairing_code}
+
 @router.get("/status")
 async def check_whatsapp_status(token: Optional[str] = Header(None), session: Session = Depends(get_session)):
     tenant_id = get_tenant_id_from_token(token)
