@@ -127,6 +127,11 @@ const Sidebar = ({
                             icon: Users
                         },
                         {
+                            id: 'inventory',
+                            name: lang === 'es' ? 'Inventario' : 'Inventory',
+                            icon: PieChart
+                        },
+                        {
                             id: 'inbox',
                             name: lang === 'es' ? 'Inbox IA' : 'AI Inbox',
                             icon: MessageSquare

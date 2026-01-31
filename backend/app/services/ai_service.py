@@ -32,6 +32,7 @@ class AIService:
         2. SIMPLICIDAD: No pidas datos innecesarios. Para citas solo necesitas el NOMBRE y el TELÉFONO. 
         3. DIRECCIÓN: Solo pídela si es estrictamente necesario para el servicio.
         4. ACCIÓN: Si el cliente proporciona fecha/hora, asume que quiere agendar y usa intent 'book_appointment'.
+        5. INVENTARIO: Si el dueño pregunta por stock o productos, usa intent 'chat' pero responde basándote en el CATÁLOGO.
 
         MENÚ/CATÁLOGO: {tenant_context['catalog']}
         HORARIOS: {tenant_context['schedule']}
@@ -39,8 +40,8 @@ class AIService:
 
         RESPUESTA (JSON):
         {{
-          "intent": "chat | book_appointment | generate_invoice | support_escalation",
-          "entities": {{ "cliente": "...", "telefono": "...", "fecha": "...", "hora": "...", "servicios": "..." }},
+          "intent": "chat | book_appointment | generate_invoice | generate_summary | support_escalation | collect_data",
+          "entities": {{ "cliente": "...", "telefono": "...", "fecha": "...", "hora": "...", "servicios": "...", "total": "0" }},
           "response_text": "Tu respuesta amable y breve."
         }}
         """

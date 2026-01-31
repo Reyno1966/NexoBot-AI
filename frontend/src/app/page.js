@@ -309,6 +309,7 @@ export default function NexoBotDashboard() {
         if (action === 'Cita') prompt = lang === 'es' ? 'Hola, necesito agendar una nueva cita.' : 'Hi, I need to schedule a new appointment.';
         if (action === 'Memoria') prompt = lang === 'es' ? 'NexoBot, genera una memoria de actividad en PDF.' : 'NexoBot, generate an activity report in PDF.';
         if (action === 'Cliente') prompt = lang === 'es' ? 'Quiero registrar un nuevo cliente.' : 'I want to register a new client.';
+        if (action === 'Inventario') prompt = lang === 'es' ? 'Hola NexoBot, quiero ver o actualizar mi inventario.' : 'Hi NexoBot, I want to see or update my inventory.';
         setInput(prompt);
     };
 

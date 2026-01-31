@@ -44,29 +44,19 @@ app.include_router(data.router, prefix="/api/v1/data", tags=["data"])
 app.include_router(whatsapp.router, prefix="/api/v1/whatsapp", tags=["whatsapp"])
 
 # Configuración de CORS
-origins = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://localhost:8000",
-    "http://localhost:5173", # Vite default
-    "https://nexo-bot-ai.vercel.app", # Producción actual
-]
-
-if settings.FRONTEND_URL and settings.FRONTEND_URL != "*":
-    # Asegurarnos de limpiar espacios o barras finales
-    clean_frontend_url = settings.FRONTEND_URL.strip().rstrip("/")
-    if clean_frontend_url not in origins:
-        origins.append(clean_frontend_url)
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Permitir todos para evitar errores de despliegue
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Manejador de excepciones global para diagnóstico rápido en producción
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
+
+# Manejador de excepciones global
 @app.exception_handler(Exception)
 async def global_exception_handler(request, exc):
     error_detail = traceback.format_exc()
@@ -137,10 +127,36 @@ async def health_check():
 async def chat_endpoint(request: ChatRequest, raw_request: Request, session: Session = Depends(get_db)):
     # 1. Buscar el Negocio (Tenant)
     
-    tenant = session.get(Tenant, request.tenant_id)
+    # Manejo especial para el modo "demo"
+    target_tenant_id = request.tenant_id
+    if str(target_tenant_id).lower() == "demo":
+        # Buscamos el primer tenant disponible como fallback para el demo
+        tenant = session.exec(select(Tenant)).first()
+        if tenant:
+            target_tenant_id = tenant.id
+    else:
+        try:
+            # Validar que sea un UUID válido antes de consultar
+            from uuid import UUID
+            if isinstance(target_tenant_id, str):
+                UUID(target_tenant_id)
+            tenant = session.get(Tenant, target_tenant_id)
+        except (ValueError, AttributeError):
+            # Si no es un UUID válido, intentamos buscar el primer tenant
+            tenant = session.exec(select(Tenant)).first()
+            if tenant: target_tenant_id = tenant.id
+    
+    # Si aún no hay tenant, usamos uno por defecto o error
+    if not tenant:
+        # Intentar crear un tenant de emergencia si la BD está vacía
+        tenant = Tenant(name="NexoBot Demo", industry="general", main_interest="Citas")
+        session.add(tenant)
+        session.commit()
+        session.refresh(tenant)
+        target_tenant_id = tenant.id
     
     # Obtener Bookings (Reservas) actuales para saber disponibilidad
-    bookings = session.exec(select(Booking).where(Booking.tenant_id == request.tenant_id)).all()
+    bookings = session.exec(select(Booking).where(Booking.tenant_id == target_tenant_id)).all()
     bookings_str = json.dumps([{
         "property": b.property_name,
         "from": b.start_date.strftime("%Y-%m-%d"),
@@ -202,14 +218,14 @@ async def chat_endpoint(request: ChatRequest, raw_request: Request, session: Ses
     try:
         # Guardar mensaje del usuario
         user_chat = ChatMessage(
-            tenant_id=request.tenant_id,
+            tenant_id=target_tenant_id,
             role="user",
             content=request.message,
             customer_name=entities.get('cliente') or "Público"
         )
         # Guardar respuesta del bot
         bot_chat = ChatMessage(
-            tenant_id=request.tenant_id,
+            tenant_id=target_tenant_id,
             role="assistant",
             content=ai_output.get('response_text', ""),
             intent=intent
@@ -445,6 +461,7 @@ async def chat_endpoint(request: ChatRequest, raw_request: Request, session: Ses
                                 admin_user = tenant.users[0] if tenant.users else None
                                 admin_email = admin_user.email if admin_user else None
                                 if tenant.whatsapp_notifications_enabled:
+                                    # smtp_config and whatsapp_config are defined outside in chat_endpoint scope
                                     NotificationService.notify_low_stock(
                                         tenant.name, tenant.phone, admin_email, svc['name'], new_stock, smtp_config, whatsapp_config
                                     )
@@ -454,8 +471,14 @@ async def chat_endpoint(request: ChatRequest, raw_request: Request, session: Ses
                 session.commit()
             except Exception as e:
                 print(f"Error actualizando inventario: {e}")
-    elif intent == "generate_summary":
-        filename = AIService.generate_summary_pdf(entities, tenant_context['name'])
+
+    if intent == "generate_summary":
+        # Recopilar datos reales para la memoria
+        summary_data = {
+            "total_clientes": len(session.exec(select(Customer).where(Customer.tenant_id == tenant.id)).all()) if tenant else 0,
+            "total": sum([t.amount for t in session.exec(select(Transaction).where(Transaction.tenant_id == tenant.id, Transaction.is_income == True)).all()]) if tenant else 0
+        }
+        filename = AIService.generate_summary_pdf(summary_data, tenant_context['name'])
         download_url = f"{raw_request.base_url}static/{filename}"
 
     if download_url:
