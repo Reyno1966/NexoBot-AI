@@ -411,15 +411,15 @@ const SettingsModal = ({
                                                         <input
                                                             type="text"
                                                             placeholder="Ej: 52155..."
-                                                            value={businessConfig.whatsapp_phone_pair || ''}
-                                                            onChange={(e) => setBusinessConfig({ ...businessConfig, whatsapp_phone_pair: e.target.value })}
+                                                            value={businessConfig.whatsapp_phone || ''}
+                                                            onChange={(e) => setBusinessConfig({ ...businessConfig, whatsapp_phone: e.target.value })}
                                                             className="bg-[#0f1115] border border-white/10 p-4 rounded-xl text-sm outline-none focus:border-green-500 font-mono text-center"
                                                         />
                                                     </div>
                                                 )}
 
                                                 <button
-                                                    onClick={() => handleGetPairingCode(businessConfig.whatsapp_phone_pair)}
+                                                    onClick={() => handleGetPairingCode(businessConfig.whatsapp_phone)}
                                                     disabled={isGeneratingQr || whatsappStatus === 'CONNECTED'}
                                                     className="w-full py-4 bg-green-600 hover:bg-green-500 rounded-xl text-[10px] font-bold uppercase transition-all disabled:opacity-50 shadow-lg shadow-green-600/20"
                                                 >
