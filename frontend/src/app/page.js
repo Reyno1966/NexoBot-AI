@@ -38,11 +38,11 @@ import DashboardContent from './components/DashboardContent';
 // Industry Presets
 const industryPresets = [
     { id: 'barber', icon: Calendar, color: 'text-orange-400', price: 9.99 },
-    { id: 'health', icon: Calendar, color: 'text-teal-400', price: 19.99 },
-    { id: 'legal', icon: Calendar, color: 'text-blue-400', price: 29.99 },
-    { id: 'realestate', icon: Calendar, color: 'text-emerald-400', price: 24.99 },
-    { id: 'rental', icon: Calendar, color: 'text-rose-400', price: 19.99 },
-    { id: 'consulting', icon: Calendar, color: 'text-indigo-400', price: 29.99 },
+    { id: 'health', icon: Calendar, color: 'text-teal-400', price: 9.99 },
+    { id: 'legal', icon: Calendar, color: 'text-blue-400', price: 9.99 },
+    { id: 'realestate', icon: Calendar, color: 'text-emerald-400', price: 9.99 },
+    { id: 'rental', icon: Calendar, color: 'text-rose-400', price: 9.99 },
+    { id: 'consulting', icon: Calendar, color: 'text-indigo-400', price: 9.99 },
 ];
 
 const mockFinancialData = [
@@ -413,7 +413,7 @@ export default function NexoBotDashboard() {
         setIsSubscribing(true);
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com');
-            const price = 19.99;
+            const price = 9.99;
             const response = await fetch(`${apiUrl}/api/v1/payments/create-checkout-session?tenant_id=${user.tenant_id}&amount=${price}`, { method: 'POST' });
             const data = await response.json();
             if (data.url) window.location.href = data.url;

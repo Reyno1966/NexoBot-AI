@@ -72,6 +72,16 @@ def get_current_user_info(
         user = session.exec(select(User).where(User.email == email)).first()
         if not user:
             raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        
+        # Enforce trial expiration
+        if user.tenant and not user.tenant.stripe_customer_id:
+            from datetime import datetime
+            if user.tenant.trial_ends_at < datetime.utcnow() and not user.tenant.is_locked:
+                user.tenant.is_locked = True
+                session.add(user.tenant)
+                session.commit()
+                session.refresh(user)
+                
         return user
     except Exception:
         raise HTTPException(status_code=401, detail="Sesión inválida")
@@ -100,7 +110,7 @@ def register_user(user_in: UserCreate, session: Session = Depends(get_db)):
             address=user_in.address,
             country=user_in.country,
             main_interest=user_in.main_interest,
-            is_locked=True,
+            is_locked=False,
             whatsapp_notifications_enabled=True
         )
         session.add(new_tenant)

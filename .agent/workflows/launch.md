@@ -25,7 +25,7 @@ Si es la primera vez que despliegas, el sistema inicializará las tablas automá
 - `cd backend && python seed.py`
 
 #### 4. Verificación de Seguridad
-- El sistema tiene configurados los 7 días de prueba obligatorios.
+- El sistema tiene configurados los 3 días de prueba obligatorios.
 - El botón de "Cancelar suscripción" es visible para los usuarios activos.
 - Las alertas de emergencia están dirigidas a tu Gmail configurado.
 

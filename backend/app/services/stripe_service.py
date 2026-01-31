@@ -5,7 +5,7 @@ stripe.api_key = settings.STRIPE_SECRET_KEY # Cargado desde el archivo .env
 
 class StripeService:
     @staticmethod
-    def create_checkout_session(tenant_id: str, tenant_name: str, customer_email: str, success_url: str, cancel_url: str, amount: float = 19.99):
+    def create_checkout_session(tenant_id: str, tenant_name: str, customer_email: str, success_url: str, cancel_url: str, amount: float = 9.99):
         try:
             unit_amount = int(amount * 100) # De dólares a centavos
             checkout_session = stripe.checkout.Session.create(
@@ -18,7 +18,7 @@ class StripeService:
                             'currency': 'usd',
                             'product_data': {
                                 'name': f'NexoBot Premium: {tenant_name}',
-                                'description': 'Full access to all NexoBot business features (7 Days Free Trial)',
+                                'description': 'Acceso completo a todas las funciones (3 días de prueba gratis)',
                             },
                             'unit_amount': unit_amount,
                             'recurring': {'interval': 'month'},
@@ -28,7 +28,7 @@ class StripeService:
                 ],
                 mode='subscription',
                 subscription_data={
-                    'trial_period_days': 7,
+                    'trial_period_days': 3,
                 },
                 success_url=success_url,
                 cancel_url=cancel_url,

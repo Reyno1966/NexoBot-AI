@@ -88,16 +88,16 @@ const DashboardContent = ({
                             </div>
                             <h4 className="text-2xl font-bold mb-3">{t.trial_active}</h4>
                             <p className="text-slate-400 max-w-sm mb-8">
-                                Activa tu acceso total a NexoBot hoy. Disfruta de **7 días de prueba gratuita** con todas las funciones de {tabLabel} activadas.
+                                Activa tu acceso total a NexoBot hoy. Disfruta de **3 días de prueba gratuita** con todas las funciones de {tabLabel} activadas.
                             </p>
                             <button
                                 onClick={handleSubscription}
                                 disabled={isSubscribing}
                                 className="px-8 py-4 bg-white text-black font-bold rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-xl flex items-center gap-3 disabled:opacity-50"
                             >
-                                {isSubscribing ? '🚀 Conectando con Stripe...' : '🚀 Empezar prueba de 7 días gratis'}
+                                {isSubscribing ? '🚀 Conectando con Stripe...' : '🚀 Empezar prueba de 3 días gratis'}
                             </button>
-                            <p className="mt-4 text-[10px] text-slate-500 uppercase font-bold tracking-widest">No se cobrará nada durante los primeros 7 días</p>
+                            <p className="mt-4 text-[10px] text-slate-500 uppercase font-bold tracking-widest">No se cobrará nada durante los primeros 3 días</p>
                         </div>
                     )}
 

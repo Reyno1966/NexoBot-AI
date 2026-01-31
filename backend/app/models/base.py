@@ -11,7 +11,7 @@ class TenantBase(SQLModel):
     address: Optional[str] = None
     country: Optional[str] = None
     main_interest: Optional[str] = None # Interés principal (Citas, Facturas, Marketing, Asistente)
-    trial_ends_at: datetime = Field(default_factory=lambda: datetime.utcnow() + timedelta(days=7))
+    trial_ends_at: datetime = Field(default_factory=lambda: datetime.utcnow() + timedelta(days=3))
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class MultiTenantModel(SQLModel):

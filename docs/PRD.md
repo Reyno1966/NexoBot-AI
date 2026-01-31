@@ -64,4 +64,4 @@
 ## 6. Estrategia de Go-To-Market
 - **Gancho Viral**: "Tu Siri para los Negocios".
 - **Demo de Impacto**: Video de 15 segundos: nota de voz -> calendario bloqueado -> factura enviada.
-- **Pricing**: $9.99/mes (Acceso Total) con 7 días de prueba GRATIS.
+- **Pricing**: $9.99/mes (Acceso Total) con 3 días de prueba GRATIS.

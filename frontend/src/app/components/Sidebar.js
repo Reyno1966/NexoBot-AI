@@ -205,7 +205,7 @@ const Sidebar = ({
                         <p className="text-[10px] font-medium text-slate-300 mb-3 leading-relaxed">
                             {t.subscribe_desc}
                             <br />
-                            {lang === 'es' ? `El abono de $${currentIndustry.price}/mes iniciará automáticamente.` : `A monthly fee of $${currentIndustry.price} will start automatically.`}
+                            {lang === 'es' ? `El abono de $9.99/mes iniciará automáticamente.` : `A monthly fee of $9.99/month will start automatically.`}
                         </p>
                         <button
                             onClick={handleSubscription}

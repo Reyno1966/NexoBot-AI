@@ -80,7 +80,7 @@ const AIChatAssistant = ({
                                         <div className="bg-white/5 p-4 rounded-2xl rounded-tl-none border border-white/5 max-w-[85%]">
                                             <p className="text-sm">
                                                 ¡Hola! 👋 Soy NexoBot, tu asistente inteligente.
-                                                Te doy la bienvenida a tus <span className="text-cyan-400 font-bold">7 días de prueba gratuita</span>.
+                                                Te doy la bienvenida a tus <span className="text-cyan-400 font-bold">3 días de prueba gratuita</span>.
                                                 ¿Cómo puedo ayudarte a potenciar tu negocio de <span className="text-indigo-400">{currentIndustry.name}</span> hoy?
                                             </p>
                                         </div>
