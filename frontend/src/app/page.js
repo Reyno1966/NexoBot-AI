@@ -141,6 +141,29 @@ export default function NexoBotDashboard() {
     }));
 
     useEffect(() => {
+        let interval;
+        if (isSettingsOpen && token) {
+            // Verificación inicial de estatus
+            const checkStatus = async () => {
+                try {
+                    const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com');
+                    const response = await fetch(`${apiUrl}/api/v1/whatsapp/status`, { headers: { 'token': token } });
+                    const data = await response.json();
+                    if (data.status) setWhatsappStatus(data.status);
+
+                    // Si no está conectado, intentamos cargar el QR automáticamente una vez
+                    if (data.status !== 'CONNECTED' && !whatsappQr && !isGeneratingQr) {
+                        handleGenerateQr();
+                    }
+                } catch (e) { console.error("Error polling status", e); }
+            };
+            checkStatus();
+            interval = setInterval(checkStatus, 10000); // Cada 10 segs
+        }
+        return () => clearInterval(interval);
+    }, [isSettingsOpen, token]);
+
+    useEffect(() => {
         setIsMounted(true);
         const interval = setInterval(() => {
             setUserCount(prev => prev + Math.floor(Math.random() * 2));

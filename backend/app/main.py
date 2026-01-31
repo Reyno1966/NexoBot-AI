@@ -229,7 +229,7 @@ async def chat_endpoint(request: ChatRequest, raw_request: Request, session: Ses
         except Exception:
             admin_email = None
 
-        tenant_phone = tenant.phone
+        tenant_phone = tenant.whatsapp_phone or tenant.phone
         print(f">>> [CHAT] Notificando a: Email={admin_email}, Tel={tenant_phone}")
         
         # Preparar configuraciones del negocio con FALLBACK a globales

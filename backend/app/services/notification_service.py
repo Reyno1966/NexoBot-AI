@@ -9,17 +9,26 @@ class NotificationService:
     @staticmethod
     def send_whatsapp_alert(phone: str, message: str, whatsapp_config: Dict = None):
         """
-        Envía alerta por WhatsApp con fallback a la configuración global.
+        Envía alerta por WhatsApp con fallback a la configuración global y maestra.
         """
+        # Prioridad 1: Instancia propia del Tenant
         instance_id = (whatsapp_config or {}).get('instance_id')
         api_key = (whatsapp_config or {}).get('api_key') or getattr(settings, 'WHATSAPP_EVOLUTION_API_KEY', None)
         
         if instance_id and api_key:
-            print(f"📡 [WHATSAPP REAL] Enviando via {instance_id} a {phone}")
+            print(f"📡 [WHATSAPP REAL] Enviando via instancia propia {instance_id} a {phone}")
             return WhatsAppService.send_text(instance_id, phone, message)
             
-        print(f"🚀 [WHATSAPP SIMULADO] Sin configuración real para {phone}: {message}")
-        return True
+        # Prioridad 2: Instancia Maestra (NexoBot Central) si no hay instancia propia
+        master_instance = getattr(settings, 'WHATSAPP_MASTER_INSTANCE', None)
+        if master_instance and api_key:
+            print(f"🚀 [WHATSAPP MASTER] Enviando via NexoBot Central a {phone}")
+            # Añadimos un pequeño prefijo para que el dueño sepa que es vía NexoBot
+            master_msg = f"🔔 *Aviso NexoBot*\n\n{message}"
+            return WhatsAppService.send_text(master_instance, phone, master_msg)
+
+        print(f"⚠️ [WHATSAPP FALLIDO] Sin configuración para {phone}: {message}")
+        return False
 
     @staticmethod
     def notify_customer_booking(customer_phone: str, customer_name: str, business_name: str, date_str: str, service_name: str, whatsapp_config: Dict = None):

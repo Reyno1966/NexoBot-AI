@@ -35,6 +35,7 @@ class Settings(BaseSettings):
     # WhatsApp Evolution API (Gateway)
     WHATSAPP_EVOLUTION_URL: Optional[str] = "https://evolution-api.nexobot.com"
     WHATSAPP_EVOLUTION_API_KEY: Optional[str] = "ClaveNexo202Rey"
+    WHATSAPP_MASTER_INSTANCE: str = "NexoBot_Main_v2" # Instancia de respaldo central
 
     class Config:
         case_sensitive = True

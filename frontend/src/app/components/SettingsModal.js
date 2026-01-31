@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Trash2, Check } from 'lucide-react';
+import { X, Trash2, Check, Phone } from 'lucide-react';
 
 const SettingsModal = ({
     isSettingsOpen,
@@ -340,98 +340,97 @@ const SettingsModal = ({
                                     </div>
                                 </div>
 
-                                <div className="bg-white/[0.02] p-4 rounded-3xl border border-white/5 space-y-4 font-bold">
-                                    <h4 className="text-[10px] text-slate-300 uppercase tracking-wider">WhatsApp Evolution API (Vincular Cuenta)</h4>
+                                <div className="bg-white/[0.02] p-6 md:p-8 rounded-[2.5rem] border border-white/5 space-y-6">
+                                    <div className="flex items-center gap-4 mb-2">
+                                        <div className="w-12 h-12 bg-green-500/10 rounded-2xl flex items-center justify-center">
+                                            <Phone className="text-green-500" size={24} />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-lg font-bold">Activar Notificaciones de WhatsApp</h4>
+                                            <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Configuración automática para alertas</p>
+                                        </div>
+                                    </div>
 
                                     <div className="space-y-6">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                                            {/* Opción 1: QR */}
-                                            <div className="flex flex-col items-center gap-4 p-4 bg-white/5 rounded-2xl border border-white/5">
-                                                <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Opción 1: Escanear QR</p>
-
-                                                {whatsappStatus === 'CONNECTED' ? (
-                                                    <div className="w-full h-48 bg-green-500/10 border border-green-500/20 rounded-2xl flex flex-col items-center justify-center gap-3">
-                                                        <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center animate-pulse">
-                                                            <Check className="text-white w-6 h-6" />
-                                                        </div>
-                                                        <span className="text-green-400 text-[10px] font-bold uppercase tracking-widest">¡Conectado!</span>
-                                                        <div className="flex gap-2 w-full px-4">
-                                                            <button
-                                                                onClick={handleTestWhatsapp}
-                                                                className="flex-1 py-3 bg-white/10 hover:bg-white/20 rounded-xl text-[10px] font-bold uppercase transition-all"
-                                                            >
-                                                                Probar
-                                                            </button>
-                                                            <button
-                                                                onClick={handleWhatsappLogout}
-                                                                className="flex-1 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl text-[10px] font-bold uppercase transition-all border border-red-500/20"
-                                                            >
-                                                                Salir
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                ) : (
-                                                    <>
-                                                        {whatsappQr ? (
-                                                            <div className="bg-white p-3 rounded-2xl shadow-2xl">
-                                                                <img src={whatsappQr} alt="WhatsApp QR" className="w-40 h-40" />
-                                                            </div>
-                                                        ) : (
-                                                            <div className="w-40 h-40 bg-[#0f1115] rounded-2xl border border-white/5 flex items-center justify-center">
-                                                                <span className="text-[8px] text-slate-600 font-bold uppercase text-center px-4">Esperando QR...</span>
-                                                            </div>
-                                                        )}
-                                                        <button
-                                                            onClick={handleGenerateQr}
-                                                            disabled={isGeneratingQr}
-                                                            className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 rounded-2xl text-[10px] font-bold uppercase transition-all disabled:opacity-50 shadow-xl shadow-indigo-600/20"
-                                                        >
-                                                            {isGeneratingQr ? 'Generando...' : 'Obtener QR'}
-                                                        </button>
-                                                    </>
-                                                )}
+                                        {whatsappStatus === 'CONNECTED' ? (
+                                            <div className="bg-green-500/10 border border-green-500/20 p-8 rounded-[2rem] flex flex-col items-center gap-4 text-center">
+                                                <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center shadow-lg shadow-green-500/30">
+                                                    <Check className="text-white" size={40} />
+                                                </div>
+                                                <div>
+                                                    <h5 className="text-xl font-bold text-green-400">¡WhatsApp Vinculado!</h5>
+                                                    <p className="text-sm text-slate-400 max-w-sm mt-2">Tu asistente ya puede enviar mensajes directamente desde tu número a tus clientes.</p>
+                                                </div>
+                                                <div className="flex gap-3 w-full max-w-xs mt-4">
+                                                    <button onClick={handleTestWhatsapp} className="flex-1 py-4 bg-white/10 hover:bg-white/20 rounded-2xl text-xs font-bold uppercase transition-all">Probador</button>
+                                                    <button onClick={handleWhatsappLogout} className="flex-1 py-4 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-2xl text-xs font-bold uppercase transition-all border border-red-500/10">Desconectar</button>
+                                                </div>
                                             </div>
+                                        ) : (
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                {/* Método 1: QR */}
+                                                <div className="bg-white/5 p-6 rounded-[2rem] border border-white/10 flex flex-col items-center gap-5">
+                                                    <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-[0.2em]">Paso 1: Escanear QR</span>
 
-                                            {/* Opción 2: Pairing Code */}
-                                            <div className="flex flex-col items-center gap-4 p-4 bg-white/5 rounded-2xl border border-white/5">
-                                                <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Opción 2: Vinculación Rápida</p>
+                                                    {whatsappQr ? (
+                                                        <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-white p-4 rounded-3xl shadow-2xl">
+                                                            <img src={whatsappQr} alt="WhatsApp QR" className="w-44 h-44" />
+                                                        </motion.div>
+                                                    ) : (
+                                                        <div className="w-44 h-44 bg-black/40 rounded-3xl border border-white/5 flex flex-col items-center justify-center gap-2">
+                                                            <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                                                            <span className="text-[10px] text-slate-600 font-bold uppercase">Esperando...</span>
+                                                        </div>
+                                                    )}
 
-                                                {whatsappPairingCode ? (
-                                                    <div className="w-full h-48 bg-green-500/10 border border-green-500/20 rounded-2xl flex flex-col items-center justify-center p-4">
-                                                        <span className="text-3xl font-mono font-bold text-green-400 tracking-[0.3em]">{whatsappPairingCode}</span>
-                                                        <p className="text-[9px] text-slate-400 uppercase mt-4 text-center leading-relaxed">
-                                                            Abre WhatsApp <br /> ➔ Disp. Vinculados <br /> ➔ Vincular con tel.
-                                                        </p>
-                                                    </div>
-                                                ) : (
-                                                    <div className="w-full h-48 flex flex-col gap-3 justify-center">
-                                                        <p className="text-[9px] text-slate-500 text-center px-4 leading-relaxed mb-1">
-                                                            Ingresa tu número con código de país (sin el +)
-                                                        </p>
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Ej: 52155..."
-                                                            value={businessConfig.whatsapp_phone || ''}
-                                                            onChange={(e) => setBusinessConfig({ ...businessConfig, whatsapp_phone: e.target.value })}
-                                                            className="bg-[#0f1115] border border-white/10 p-4 rounded-xl text-sm outline-none focus:border-green-500 font-mono text-center"
-                                                        />
-                                                    </div>
-                                                )}
+                                                    <button
+                                                        onClick={handleGenerateQr}
+                                                        disabled={isGeneratingQr}
+                                                        className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 rounded-2xl text-xs font-bold shadow-xl shadow-indigo-600/20 transition-all disabled:opacity-50"
+                                                    >
+                                                        {isGeneratingQr ? 'Cargando código...' : 'Ver Código QR'}
+                                                    </button>
+                                                    <p className="text-[10px] text-slate-500 text-center leading-relaxed">Abre WhatsApp en tu móvil ➔ Configuración ➔ Dispositivos vinculados</p>
+                                                </div>
 
-                                                <button
-                                                    onClick={() => handleGetPairingCode(businessConfig.whatsapp_phone)}
-                                                    disabled={isGeneratingQr || whatsappStatus === 'CONNECTED'}
-                                                    className="w-full py-4 bg-green-600 hover:bg-green-500 rounded-xl text-[10px] font-bold uppercase transition-all disabled:opacity-50 shadow-lg shadow-green-600/20"
-                                                >
-                                                    {isGeneratingQr ? 'Conectando...' : 'Obtener Código'}
-                                                </button>
+                                                {/* Método 2: Código */}
+                                                <div className="bg-white/5 p-6 rounded-[2rem] border border-white/10 flex flex-col items-center gap-5">
+                                                    <span className="text-[10px] font-bold text-green-400 uppercase tracking-[0.2em]">Paso 2: Código directo</span>
+
+                                                    {whatsappPairingCode ? (
+                                                        <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="bg-green-500/10 border border-green-500/20 w-44 h-44 rounded-3xl flex flex-col items-center justify-center gap-2">
+                                                            <span className="text-4xl font-mono font-black text-green-400 tracking-[0.2em]">{whatsappPairingCode}</span>
+                                                            <span className="text-[8px] text-green-500/60 font-bold uppercase">Ingresa esto en tu cel</span>
+                                                        </motion.div>
+                                                    ) : (
+                                                        <div className="w-44 h-44 flex flex-col justify-center gap-3">
+                                                            <label className="text-[9px] text-slate-500 text-center font-bold">TU NÚMERO DE WHATSAPP</label>
+                                                            <input
+                                                                type="text"
+                                                                placeholder="Ej: 521..."
+                                                                value={businessConfig.whatsapp_phone || ''}
+                                                                onChange={(e) => setBusinessConfig({ ...businessConfig, whatsapp_phone: e.target.value })}
+                                                                className="w-full bg-black/40 border border-white/10 p-4 rounded-xl text-center text-sm font-bold font-mono outline-none focus:border-green-500"
+                                                            />
+                                                        </div>
+                                                    )}
+
+                                                    <button
+                                                        onClick={() => handleGetPairingCode(businessConfig.whatsapp_phone)}
+                                                        disabled={!businessConfig.whatsapp_phone || isGeneratingQr}
+                                                        className="w-full py-4 bg-green-600 hover:bg-green-500 rounded-2xl text-xs font-bold shadow-xl shadow-green-600/20 transition-all disabled:opacity-50"
+                                                    >
+                                                        {isGeneratingQr ? 'Generando...' : 'Obtener Código'}
+                                                    </button>
+                                                    <p className="text-[10px] text-slate-500 text-center leading-relaxed">Usa el número que quieres conectar (con código de país sin el +)</p>
+                                                </div>
                                             </div>
-                                        </div>
+                                        )}
 
-                                        <div className="flex items-start gap-3 bg-indigo-500/5 p-4 rounded-2xl border border-indigo-500/10">
-                                            <div className="mt-0.5">🚀</div>
-                                            <p className="text-[9px] text-slate-400 leading-relaxed italic">
-                                                <b className="text-indigo-400">Nota Profesional:</b> Para que las citas y alertas funcionen, asegúrate de que tu instancia esté <b>Conectada</b>. Una vez vinculada, el bot podrá enviar mensajes automáticamente a tus clientes.
+                                        <div className="bg-indigo-500/5 p-5 rounded-[1.5rem] border border-indigo-500/10 flex items-center gap-4">
+                                            <div className="text-2xl">💡</div>
+                                            <p className="text-[10px] text-slate-400 leading-relaxed">
+                                                <b className="text-indigo-400 underline italic">¿No tienes tiempo de conectar?</b> No te preocupes, NexoBot usará su <b className="text-white">Asistente Central</b> para notificarte de todas formas hasta que vincules tu cuenta.
                                             </p>
                                         </div>
                                     </div>
