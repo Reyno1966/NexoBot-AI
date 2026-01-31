@@ -3,6 +3,7 @@ import json
 import sys
 import os
 import logging
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 

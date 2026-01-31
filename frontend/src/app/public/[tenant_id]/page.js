@@ -22,6 +22,7 @@ export default function PublicChat({ params }) {
     const [isLoading, setIsLoading] = useState(false);
     const [isListening, setIsListening] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
+    const [error, setError] = useState(null);
 
     const handleClearMessages = () => {
         if (messages.length > 0 && window.confirm('¿Quieres limpiar la conversación?')) {
@@ -73,9 +74,12 @@ export default function PublicChat({ params }) {
                         businessHours: safeParse(data.business_hours, {}),
                         stripePublicKey: data.stripe_public_key || null
                     });
+                } else {
+                    setError("No pudimos encontrar este negocio. Verifica que el enlace sea correcto.");
                 }
             } catch (error) {
                 console.error("Error al cargar negocio:", error);
+                setError("Error de conexión con el servidor.");
             }
         };
         fetchBusiness();
@@ -141,6 +145,26 @@ export default function PublicChat({ params }) {
     };
 
     if (!isMounted) return <div className="min-h-screen bg-[#0f1115]" />;
+
+    if (error) {
+        return (
+            <div className="min-h-screen bg-[#0f1115] flex items-center justify-center p-6 text-center">
+                <div className="space-y-6">
+                    <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mx-auto border border-red-500/20">
+                        <Info className="text-red-500 w-10 h-10" />
+                    </div>
+                    <h1 className="text-2xl font-bold">¡Ups! Algo salió mal</h1>
+                    <p className="text-slate-400 max-w-sm">{error}</p>
+                    <button
+                        onClick={() => window.location.reload()}
+                        className="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 rounded-2xl font-bold transition-all shadow-xl shadow-indigo-600/20"
+                    >
+                        Reintentar
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-[#0f1115] text-white flex flex-col relative overflow-hidden">
