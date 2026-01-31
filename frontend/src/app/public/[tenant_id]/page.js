@@ -358,6 +358,19 @@ export default function PublicChat({ params }) {
             {/* Smart Tools Section - Dynamic based on Industry */}
             <div className="max-w-3xl mx-auto w-full px-4 mb-2">
                 <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+                    {(!businessInfo.industry || businessInfo.industry === 'general') && (
+                        <>
+                            <button onClick={() => handleSend("Agendar una cita")} className="shrink-0 flex items-center gap-2 px-4 py-2 bg-indigo-500/10 border border-indigo-500/20 rounded-full text-[10px] font-bold uppercase text-indigo-400 hover:bg-indigo-500/20 transition-all">
+                                <Calendar size={14} /> Agendar Cita
+                            </button>
+                            <button onClick={() => handleSend("Ver servicios y precios")} className="shrink-0 flex items-center gap-2 px-4 py-2 bg-indigo-500/10 border border-indigo-500/20 rounded-full text-[10px] font-bold uppercase text-indigo-400 hover:bg-indigo-500/20 transition-all">
+                                <Star size={14} /> Servicios
+                            </button>
+                            <button onClick={() => handleSend("Horarios de atención")} className="shrink-0 flex items-center gap-2 px-4 py-2 bg-indigo-500/10 border border-indigo-500/20 rounded-full text-[10px] font-bold uppercase text-indigo-400 hover:bg-indigo-500/20 transition-all">
+                                <Clock size={14} /> Horarios
+                            </button>
+                        </>
+                    )}
                     {businessInfo.industry === 'barber' && (
                         <>
                             <button onClick={() => setInput("Ver catálogo de cortes")} className="shrink-0 flex items-center gap-2 px-4 py-2 bg-orange-500/10 border border-orange-500/20 rounded-full text-[10px] font-bold uppercase text-orange-400 hover:bg-orange-500/20 transition-all">
