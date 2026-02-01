@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, Bot, ChevronRight, UserPlus, LogIn, ArrowLeft, Scissors, Stethoscope, Gavel, Home, Hotel, Briefcase, Phone, MapPin, Building, Calendar, FileText, Share2, Globe } from 'lucide-react';
+import { Mail, Lock, Bot, ChevronRight, UserPlus, LogIn, ArrowLeft, Scissors, Stethoscope, Gavel, Home, Hotel, Briefcase, Smartphone, MapPin, Building, Calendar, FileText, Share2, Globe } from 'lucide-react';
 import { translations } from './i18n';
 
 export default function AuthPage({ onAuthSuccess }) {
@@ -10,7 +10,7 @@ export default function AuthPage({ onAuthSuccess }) {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [industry, setIndustry] = useState('barber');
-    const [phone, setPhone] = useState('');
+    const [phone, setSmartphone] = useState('');
     const [address, setAddress] = useState('');
     const [country, setCountry] = useState('');
     const [interest, setInterest] = useState('Citas'); // Nuevo: Automatizar Citas, Facturas, Marketing, Asistente
@@ -322,12 +322,12 @@ export default function AuthPage({ onAuthSuccess }) {
                                             <div className="space-y-1">
                                                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-2">{t.phone_label}</label>
                                                 <div className="relative group">
-                                                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyan-400 transition-colors" size={18} />
+                                                    <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyan-400 transition-colors" size={18} />
                                                     <input
                                                         type="text"
                                                         required
                                                         value={phone}
-                                                        onChange={(e) => setPhone(e.target.value)}
+                                                        onChange={(e) => setSmartphone(e.target.value)}
                                                         placeholder="+1 (555) 000-0000"
                                                         className="w-full bg-[#0f1115] border border-white/5 rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-cyan-500/50 transition-all text-sm text-white font-medium"
                                                     />

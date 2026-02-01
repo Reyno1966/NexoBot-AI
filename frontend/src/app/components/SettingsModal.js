@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Trash2, Check, Phone, RefreshCw } from 'lucide-react';
+import { X, Trash2, Check, Smartphone, RefreshCw } from 'lucide-react';
 
 const SettingsModal = ({
     isSettingsOpen,
@@ -343,7 +343,7 @@ const SettingsModal = ({
                                 <div className="bg-white/[0.02] p-6 md:p-8 rounded-[2.5rem] border border-white/5 space-y-6">
                                     <div className="flex items-center gap-4 mb-2">
                                         <div className="w-12 h-12 bg-green-500/10 rounded-2xl flex items-center justify-center">
-                                            <Phone className="text-green-500" size={24} />
+                                            <Smartphone className="text-green-500" size={24} />
                                         </div>
                                         <div>
                                             <h4 className="text-lg font-bold">Conectar mi WhatsApp</h4>

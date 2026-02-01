@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
-import { Bot, User, Send, ChevronRight, Phone, MapPin, Globe, Scissors, Stethoscope, Gavel, Home, Hotel, Briefcase, Calendar, Clock, Star, Zap, Info, Mic, Trash2, X } from 'lucide-react';
+import { Bot, User, Send, ChevronRight, Smartphone, MapPin, Globe, Scissors, Stethoscope, Gavel, Home, Hotel, Briefcase, Calendar, Clock, Star, Zap, Info, Mic, Trash2, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function PublicChat({ params }) {
@@ -267,7 +267,7 @@ export default function PublicChat({ params }) {
                                 <div className="pt-4 border-t border-white/5 space-y-3">
                                     {businessInfo.phone && (
                                         <div className="flex items-center gap-3 text-sm">
-                                            <Phone size={16} className="text-indigo-400" />
+                                            <Smartphone size={16} className="text-indigo-400" />
                                             <span>{businessInfo.phone}</span>
                                         </div>
                                     )}
