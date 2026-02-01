@@ -128,32 +128,34 @@ async def chat_endpoint(request: ChatRequest, raw_request: Request, session: Ses
     # 1. Buscar el Negocio (Tenant)
     
     # Manejo especial para el modo "demo"
+    # Manejo especial para el modo "demo" o tenant inexistente
     target_tenant_id = request.tenant_id
+    tenant = None
+    
     if str(target_tenant_id).lower() == "demo":
-        # Buscamos el primer tenant disponible como fallback para el demo
+        tenant = session.exec(select(Tenant)).first()
+        if tenant: target_tenant_id = tenant.id
+    else:
+        try:
+            from uuid import UUID
+            if isinstance(target_tenant_id, str):
+                target_tenant_id = UUID(target_tenant_id.strip())
+            tenant = session.get(Tenant, target_tenant_id)
+        except Exception as e:
+            print(f">>> [CHAT] Error buscando tenant {target_tenant_id}: {e}")
+            tenant = None
+
+    if not tenant:
+        # Fallback a un tenant de emergencia si no se encuentra
         tenant = session.exec(select(Tenant)).first()
         if tenant:
             target_tenant_id = tenant.id
-    else:
-        try:
-            # Validar que sea un UUID válido antes de consultar
-            from uuid import UUID
-            if isinstance(target_tenant_id, str):
-                UUID(target_tenant_id)
-            tenant = session.get(Tenant, target_tenant_id)
-        except (ValueError, AttributeError):
-            # Si no es un UUID válido, intentamos buscar el primer tenant
-            tenant = session.exec(select(Tenant)).first()
-            if tenant: target_tenant_id = tenant.id
-    
-    # Si aún no hay tenant, usamos uno por defecto o error
-    if not tenant:
-        # Intentar crear un tenant de emergencia si la BD está vacía
-        tenant = Tenant(name="NexoBot Demo", industry="general", main_interest="Citas")
-        session.add(tenant)
-        session.commit()
-        session.refresh(tenant)
-        target_tenant_id = tenant.id
+        else:
+            tenant = Tenant(name="NexoBot Demo", industry="general", main_interest="Citas")
+            session.add(tenant)
+            session.commit()
+            session.refresh(tenant)
+            target_tenant_id = tenant.id
     
     # Obtener Bookings (Reservas) actuales para saber disponibilidad
     bookings = session.exec(select(Booking).where(Booking.tenant_id == target_tenant_id)).all()
@@ -493,4 +495,4 @@ async def chat_endpoint(request: ChatRequest, raw_request: Request, session: Ses
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="127.0.0.1", port=8000)

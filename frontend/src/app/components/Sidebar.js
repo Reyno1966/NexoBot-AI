@@ -1,7 +1,8 @@
+"use client";
 import React from 'react';
 import {
     Calendar, FileText, Users, PieChart, Bell, ChevronDown,
-    Share2, LogIn, ExternalLink, Copy, Bot, X, Menu, Settings, MessageSquare
+    Share2, LogIn, ExternalLink, Copy, Bot, X, Menu, Settings, MessageSquare, Zap
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -79,7 +80,7 @@ const Sidebar = ({
                         </span>
                     </div>
                     <p className="text-[10px] font-bold text-slate-400 leading-tight">
-                        {t.social_proof.joined.replace('{count}', userCount.toLocaleString())}
+                        {t?.social_proof?.joined?.replace('{count}', (userCount || 0).toLocaleString()) || 'NexoBot Community'}
                     </p>
                 </div>
 
@@ -113,17 +114,17 @@ const Sidebar = ({
                     {[
                         {
                             id: 'main',
-                            name: currentIndustry.labels.main,
+                            name: currentIndustry?.labels?.main || (lang === 'es' ? 'Gestión' : 'Management'),
                             icon: Calendar
                         },
                         {
                             id: 'billing_or_docs',
-                            name: businessConfig.industry === 'legal' || businessConfig.industry === 'consulting' ? t.documents : t.billing,
+                            name: businessConfig?.industry === 'legal' || businessConfig?.industry === 'consulting' ? (lang === 'es' ? 'Documentos' : 'Documents') : (lang === 'es' ? 'Facturación' : 'Invoices'),
                             icon: FileText
                         },
                         {
                             id: 'items',
-                            name: currentIndustry.labels.items,
+                            name: currentIndustry?.labels?.items || (lang === 'es' ? 'Items' : 'Items'),
                             icon: Users
                         },
                         {
@@ -131,23 +132,20 @@ const Sidebar = ({
                             name: lang === 'es' ? 'Inventario' : 'Inventory',
                             icon: PieChart
                         },
-                        {
-                            id: 'inbox',
-                            name: lang === 'es' ? 'Inbox IA' : 'AI Inbox',
-                            icon: MessageSquare
-                        },
-                        { id: 'finances', name: t.finances, icon: PieChart },
-                        { id: 'marketing', name: t.marketing, icon: Share2 },
+                        { id: 'inbox', name: lang === 'es' ? 'Inbox IA' : 'AI Inbox', icon: MessageSquare },
+                        { id: 'marketing', name: t?.marketing || 'Marketing', icon: Share2 },
+                        { id: 'finances', name: t?.finances || (lang === 'es' ? 'Finanzas' : 'Finances'), icon: PieChart },
+                        { id: 'billing', name: lang === 'es' ? 'Suscripción Pro' : 'Pro Subscription', icon: Zap },
                     ].map((item) => (
                         <button
                             key={item.id}
                             onClick={() => {
-                                setActiveTab(item.id);
-                                if (window.innerWidth < 768) setIsSidebarOpen(false);
+                                if (item.id) setActiveTab(item.id);
+                                if (typeof window !== 'undefined' && window.innerWidth < 768) setIsSidebarOpen(false);
                             }}
                             className={`sidebar-item w-full ${activeTab === item.id ? 'sidebar-item-active' : ''}`}
                         >
-                            <item.icon size={20} />
+                            {item.icon && <item.icon size={20} />}
                             <span className="font-medium">{item.name}</span>
                         </button>
                     ))}

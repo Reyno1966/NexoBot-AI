@@ -4,12 +4,18 @@ const withPWA = withPWAInit({
     dest: 'public',
     register: true,
     skipWaiting: true,
-    disable: process.env.NODE_ENV === 'development',
+    disable: true, // Forzamos desactivación para limpiar caché
 });
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    /* config options here */
+    // Forzamos Webpack para evitar el error de Turbopack en Railway
+    webpack: (config) => {
+        return config;
+    },
+    // Silenciamos el error de Turbopack poniéndolo SOLO en la raíz
+    // como sugiere el mensaje de Next.js
+    turbopack: {}
 };
 
 export default withPWA(nextConfig);

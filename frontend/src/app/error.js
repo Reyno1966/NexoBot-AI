@@ -3,46 +3,58 @@ import React, { useEffect } from 'react';
 
 export default function Error({ error, reset }) {
     useEffect(() => {
-        // Log the error to an error reporting service
-        console.error("Critical Client Exception:", error);
+        console.error("CRASH DETECTADO:", error);
     }, [error]);
 
-    const handleReset = () => {
-        // Clear local storage as a drastic measure if it's causing the problem
+    const brutalReset = () => {
         if (typeof window !== 'undefined') {
             localStorage.clear();
             sessionStorage.clear();
+            // Limpieza de cookies básica
+            document.cookie.split(";").forEach((c) => {
+                document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+            });
+            // Redirección con cache-buster para forzar recarga de scripts
+            window.location.href = '/?clear=' + Date.now();
         }
-        // Attempt to recover by re-rendering the segment
-        reset();
-        // Redirect to home
-        window.location.href = '/';
     };
 
     return (
-        <div className="min-h-screen bg-[#0f1115] flex items-center justify-center p-4">
-            <div className="bg-[#181a1f] border border-white/10 p-8 rounded-[2.5rem] max-w-md w-full text-center shadow-2xl">
-                <div className="w-20 h-20 bg-red-500/10 rounded-3xl flex items-center justify-center mx-auto mb-6">
-                    <svg className="w-10 h-10 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
+        <div className="min-h-screen bg-black flex items-center justify-center p-6 font-sans">
+            <div className="max-w-xl w-full bg-[#111] border-2 border-red-500 rounded-[3rem] p-12 text-center shadow-2xl">
+                <div className="w-20 h-20 bg-red-600 rounded-full flex items-center justify-center mx-auto mb-8 animate-pulse">
+                    <span className="text-white text-4xl font-black">!</span>
                 </div>
-                <h2 className="text-2xl font-bold text-white mb-2">Ups! Algo salió mal</h2>
-                <p className="text-slate-400 text-sm mb-8">
-                    La aplicación ha detectado un error inesperado. Esto puede deberse a datos antiguos en el navegador.
+
+                <h1 className="text-3xl font-black text-white mb-4 uppercase tracking-tighter">Falla de Integridad</h1>
+                <p className="text-slate-400 mb-8 text-sm font-medium">
+                    El sistema ha detectado un error técnico. Copia el código de abajo para que yo pueda repararlo:
                 </p>
-                <div className="space-y-3">
+
+                <div className="bg-red-950/30 border border-red-500/30 p-6 rounded-2xl mb-10 text-left overflow-hidden">
+                    <p className="text-[9px] font-black uppercase text-red-500 mb-2 tracking-widest">Código de Error:</p>
+                    <code className="text-red-400 font-mono text-[11px] break-all block leading-tight">
+                        {error?.message || "Error desconocido de renderizado"}
+                    </code>
+                    {error?.stack && (
+                        <div className="mt-4 pt-4 border-t border-red-500/10 h-24 overflow-y-auto">
+                            <p className="text-[8px] text-red-700 font-mono">{error.stack}</p>
+                        </div>
+                    )}
+                </div>
+
+                <div className="flex flex-col gap-3">
                     <button
-                        onClick={handleReset}
-                        className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-2xl transition-all shadow-xl shadow-indigo-600/20"
+                        onClick={brutalReset}
+                        className="w-full py-5 bg-white text-black font-black uppercase text-xs tracking-widest rounded-2xl hover:scale-95 transition-all"
                     >
-                        Limpiar y Reiniciar App
+                        Limpiar y Volver al Inicio
                     </button>
                     <button
                         onClick={() => window.location.reload()}
-                        className="w-full py-4 bg-white/5 hover:bg-white/10 text-slate-400 font-bold rounded-2xl transition-all"
+                        className="w-full py-4 bg-white/5 text-slate-500 font-bold uppercase text-[10px] rounded-2xl"
                     >
-                        Intentar de nuevo
+                        Reintentar Carga
                     </button>
                 </div>
             </div>

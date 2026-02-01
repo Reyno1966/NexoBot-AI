@@ -10,16 +10,17 @@ class WhatsAppService:
     API_KEY = settings.WHATSAPP_EVOLUTION_API_KEY
 
     @classmethod
-    def create_instance(cls, instance_name: str) -> Optional[Dict]:
+    def create_instance(cls, instance_name: str, api_key: Optional[str] = None) -> Optional[Dict]:
         """
         Crea una nueva instancia en Evolution API para un tenant.
         """
-        if not cls.BASE_URL or not cls.API_KEY:
+        key = api_key or cls.API_KEY
+        if not cls.BASE_URL or not key:
             print(">>> [WHATSAPP] ERROR: URL o API Key no configurada")
             return None
 
         url = f"{cls.BASE_URL}/instance/create"
-        headers = {"apikey": cls.API_KEY, "Content-Type": "application/json"}
+        headers = {"apikey": key, "Content-Type": "application/json"}
         payload = {
             "instanceName": instance_name,
             "token": None,
@@ -38,12 +39,13 @@ class WhatsAppService:
             return None
 
     @classmethod
-    def get_pairing_code(cls, instance_name: str, number: str) -> Optional[str]:
+    def get_pairing_code(cls, instance_name: str, number: str, api_key: Optional[str] = None) -> Optional[str]:
         """
         Obtiene un código de emparejamiento para vincular la instancia por número de teléfono.
         """
+        key = api_key or cls.API_KEY
         url = f"{cls.BASE_URL}/instance/connect/pairing/{instance_name}"
-        headers = {"apikey": cls.API_KEY}
+        headers = {"apikey": key}
         
         # Limpiar el número
         clean_number = "".join(filter(str.isdigit, number))
@@ -63,12 +65,13 @@ class WhatsAppService:
             return None
 
     @classmethod
-    def get_qr_code(cls, instance_name: str) -> Optional[str]:
+    def get_qr_code(cls, instance_name: str, api_key: Optional[str] = None) -> Optional[str]:
         """
         Obtiene el código QR en base64 para vincular la instancia.
         """
+        key = api_key or cls.API_KEY
         url = f"{cls.BASE_URL}/instance/connect/{instance_name}"
-        headers = {"apikey": cls.API_KEY}
+        headers = {"apikey": key}
 
         try:
             print(f">>> [WHATSAPP] Solicitando QR para: {instance_name} en {url}")
@@ -83,12 +86,13 @@ class WhatsAppService:
             return None
 
     @classmethod
-    def get_status(cls, instance_name: str) -> str:
+    def get_status(cls, instance_name: str, api_key: Optional[str] = None) -> str:
         """
         Verifica el estado de conexión de la instancia.
         """
+        key = api_key or cls.API_KEY
         url = f"{cls.BASE_URL}/instance/connectionStatus/{instance_name}"
-        headers = {"apikey": cls.API_KEY}
+        headers = {"apikey": key}
 
         try:
             print(f">>> [WHATSAPP] Verificando status de: {instance_name}")
@@ -104,12 +108,13 @@ class WhatsAppService:
             return "ERROR"
 
     @classmethod
-    def send_text(cls, instance_name: str, number: str, text: str) -> bool:
+    def send_text(cls, instance_name: str, number: str, text: str, api_key: Optional[str] = None) -> bool:
         """
         Envía un mensaje de texto a través de una instancia específica.
         """
+        key = api_key or cls.API_KEY
         url = f"{cls.BASE_URL}/message/sendText/{instance_name}"
-        headers = {"apikey": cls.API_KEY, "Content-Type": "application/json"}
+        headers = {"apikey": key, "Content-Type": "application/json"}
         
         # Limpiar el número (quitar +, espacios, etc)
         clean_number = "".join(filter(str.isdigit, number))
@@ -129,9 +134,9 @@ class WhatsAppService:
         try:
             print(f">>> [WHATSAPP] Enviando mensaje a {clean_number} via {instance_name}")
             response = requests.post(url, json=payload, headers=headers, timeout=15)
+            print(f">>> [WHATSAPP] Respuesta Servidor ({response.status_code}): {response.text}")
             if response.status_code in [200, 201]:
                 return True
-            print(f">>> [WHATSAPP] Error enviando mensaje: {response.status_code} - {response.text}")
             return False
         except Exception as e:
             print(f">>> [WHATSAPP] Excepción enviando mensaje: {str(e)}")

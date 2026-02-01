@@ -22,9 +22,26 @@ from app.schemas.auth import (
 from app.services.notification_service import NotificationService
 router = APIRouter()
 
-@router.get("/public/tenant/{tenant_id}", response_model=TenantPublicRead)
-def get_public_tenant_info(tenant_id: UUID, session: Session = Depends(get_db)):
-    tenant = session.get(Tenant, tenant_id)
+@router.get("/public/tenant/{tenant_id}")
+def get_public_tenant_info(tenant_id: str, session: Session = Depends(get_db)):
+    target_id = None
+    if str(tenant_id).lower() == "demo":
+        tenant = session.exec(select(Tenant)).first()
+        if not tenant:
+            # Crear tenant demo de emergencia
+            tenant = Tenant(name="NexoBot Demo", industry="general", main_interest="Citas")
+            session.add(tenant)
+            session.commit()
+            session.refresh(tenant)
+        return tenant
+    
+    try:
+        from uuid import UUID
+        target_id = UUID(tenant_id)
+        tenant = session.get(Tenant, target_id)
+    except Exception:
+        tenant = session.exec(select(Tenant)).first()
+
     if not tenant:
         raise HTTPException(status_code=404, detail="Negocio no encontrado")
     return tenant
@@ -160,11 +177,15 @@ def login_for_access_token(
 
 @router.post("/forgot-password")
 async def forgot_password(request: ForgotPasswordRequest, session: Session = Depends(get_db)):
+    print(f">>> [FORGOT-PASSWORD] Solicitud para: {request.email}")
     user = session.exec(select(User).where(User.email == request.email)).first()
     
     # Por seguridad, no revelamos si el correo existe o no
     if not user:
+        print(f">>> [FORGOT-PASSWORD] Usuario NO ENCONTRADO: {request.email}")
         return {"message": "Si el correo está registrado, recibirás las instrucciones en breve."}
+    
+    print(f">>> [FORGOT-PASSWORD] Usuario encontrado. Generando token...")
     
     # Generar un token temporal de recuperación (reutilizamos la lógica de JWT por simplificar)
     recovery_token = create_access_token(
@@ -193,8 +214,14 @@ async def forgot_password(request: ForgotPasswordRequest, session: Session = Dep
     </div>
     """
     
-    NotificationService.send_email_alert(user.email, "🔑 Recuperación de Contraseña - NexoBot AI", html_msg)
+    print(f">>> [FORGOT-PASSWORD] Enviando email a: {user.email} con link: {reset_link}")
+    success = NotificationService.send_email_alert(user.email, "🔑 Recuperación de Contraseña - NexoBot AI", html_msg)
     
+    if success:
+        print(f">>> [FORGOT-PASSWORD] Email enviado con éxito.")
+    else:
+        print(f">>> [FORGOT-PASSWORD] ERROR: El email NO se pudo enviar. Verifica configuración SMTP.")
+        
     return {"message": "Si el correo está registrado, recibirás las instrucciones en breve."}
 
 @router.post("/reset-password")

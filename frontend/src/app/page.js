@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import AuthPage from './AuthPage';
 import { translations } from './i18n';
 import {
@@ -134,11 +134,35 @@ export default function NexoBotDashboard() {
         secondary_color: '#22d3ee'
     });
 
-    const industries = industryPresets.map(preset => ({
-        ...preset,
-        name: t.industries[preset.id].name,
-        labels: t.industries[preset.id].labels
-    }));
+    const industries = useMemo(() => {
+        try {
+            if (!t || !t.industries) return industryPresets;
+            return industryPresets.map(preset => ({
+                ...preset,
+                name: t.industries[preset.id]?.name || preset.id,
+                labels: t.industries[preset.id]?.labels || { main: 'Gestión', items: 'Items', clients: 'Clientes', action: 'Nuevo' }
+            }));
+        } catch (e) {
+            console.error("Error generating industries", e);
+            return industryPresets;
+        }
+    }, [t]);
+
+    const currentIndustry = useMemo(() => {
+        try {
+            const industryId = businessConfig?.industry || 'barber';
+            const found = (industries && industries.length > 0)
+                ? (industries.find(i => i.id === industryId) || industries[0])
+                : industryPresets[0];
+
+            return {
+                ...found,
+                labels: found?.labels || { main: 'Gestión', items: 'Items', clients: 'Clientes', action: 'Nuevo' }
+            };
+        } catch (e) {
+            return { id: 'barber', name: 'General', labels: { main: 'Gestión', items: 'Items', clients: 'Clientes', action: 'Nuevo' }, icon: Calendar, color: 'text-indigo-400' };
+        }
+    }, [industries, businessConfig?.industry]);
 
     useEffect(() => {
         let interval;
@@ -146,7 +170,7 @@ export default function NexoBotDashboard() {
             // Verificación inicial de estatus
             const checkStatus = async () => {
                 try {
-                    const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com');
+                    const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? (window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1') ? 'http://localhost:8000' : 'https://fearless-nature-production.up.railway.app') : 'https://fearless-nature-production.up.railway.app');
                     const response = await fetch(`${apiUrl}/api/v1/whatsapp/status`, { headers: { 'token': token } });
                     const data = await response.json();
                     if (data.status) setWhatsappStatus(data.status);
@@ -172,18 +196,40 @@ export default function NexoBotDashboard() {
         return () => clearInterval(interval);
     }, []);
 
-    useEffect(() => {
-        const savedToken = localStorage.getItem('token');
-        if (savedToken) {
-            setToken(savedToken);
-            setIsAuthenticated(true);
-            loadUserData(savedToken);
+    const loadDashboardData = async (authToken) => {
+        try {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? (window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1') ? 'http://localhost:8000' : 'https://fearless-nature-production.up.railway.app') : 'https://fearless-nature-production.up.railway.app');
+            const headers = { 'token': authToken, 'Content-Type': 'application/json' };
+
+            const [bookingsRes, customersRes, transactionsRes, messagesRes] = await Promise.all([
+                fetch(`${apiUrl}/api/v1/data/bookings`, { headers }),
+                fetch(`${apiUrl}/api/v1/data/customers`, { headers }),
+                fetch(`${apiUrl}/api/v1/data/transactions`, { headers }),
+                fetch(`${apiUrl}/api/v1/data/messages`, { headers })
+            ]);
+
+            const [bookings, customers, transactions, messages] = await Promise.all([
+                bookingsRes.json(),
+                customersRes.json(),
+                transactionsRes.json(),
+                messagesRes.json()
+            ]);
+
+            setDashboardData({
+                bookings: Array.isArray(bookings) ? bookings : [],
+                customers: Array.isArray(customers) ? customers : [],
+                transactions: Array.isArray(transactions) ? transactions : [],
+                messages: Array.isArray(messages) ? messages : [],
+                isLoaded: true
+            });
+        } catch (error) {
+            console.error("Error cargando datos del dashboard:", error);
         }
-    }, []);
+    };
 
     const loadUserData = async (authToken) => {
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com');
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? (window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1') ? 'http://localhost:8000' : 'https://fearless-nature-production.up.railway.app') : 'https://fearless-nature-production.up.railway.app');
             const response = await fetch(`${apiUrl}/api/v1/auth/me`, {
                 headers: { 'token': authToken || '' }
             });
@@ -236,42 +282,25 @@ export default function NexoBotDashboard() {
         }
     };
 
-    const loadDashboardData = async (authToken) => {
-        try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com');
-            const headers = { 'token': authToken, 'Content-Type': 'application/json' };
-
-            const [bookingsRes, customersRes, transactionsRes, messagesRes] = await Promise.all([
-                fetch(`${apiUrl}/api/v1/data/bookings`, { headers }),
-                fetch(`${apiUrl}/api/v1/data/customers`, { headers }),
-                fetch(`${apiUrl}/api/v1/data/transactions`, { headers }),
-                fetch(`${apiUrl}/api/v1/data/messages`, { headers })
-            ]);
-
-            const [bookings, customers, transactions, messages] = await Promise.all([
-                bookingsRes.json(),
-                customersRes.json(),
-                transactionsRes.json(),
-                messagesRes.json()
-            ]);
-
-            setDashboardData({
-                bookings: Array.isArray(bookings) ? bookings : [],
-                customers: Array.isArray(customers) ? customers : [],
-                transactions: Array.isArray(transactions) ? transactions : [],
-                messages: Array.isArray(messages) ? messages : [],
-                isLoaded: true
-            });
-        } catch (error) {
-            console.error("Error cargando datos del dashboard:", error);
+    useEffect(() => {
+        const savedToken = localStorage.getItem('token');
+        if (savedToken) {
+            setToken(savedToken);
+            setIsAuthenticated(true);
+            loadUserData(savedToken);
         }
-    };
+    }, []);
 
     useEffect(() => {
+        let interval;
         if (isAuthenticated && token) {
             loadDashboardData(token);
+            interval = setInterval(() => {
+                loadDashboardData(token);
+            }, 20000); // Refrescar datos cada 20 segundos para ver nuevos mensajes/citas
         }
-    }, [isAuthenticated, token, activeTab]);
+        return () => clearInterval(interval);
+    }, [isAuthenticated, token]);
 
     const handleAuthSuccess = (newToken) => {
         setToken(newToken);
@@ -286,19 +315,30 @@ export default function NexoBotDashboard() {
     };
 
     const handleSocialShare = (platform) => {
-        const shareLink = `${window.location.origin}/public/${user?.tenant_id || 'demo'}`;
-        const text = lang === 'es'
-            ? `¡Hola! Mira el asistente inteligente de ${businessConfig.name} para agendar citas y comprar online: ${shareLink}`
-            : `Hi! Check out ${businessConfig.name}'s new AI assistant for bookings and orders: ${shareLink}`;
+        try {
+            if (typeof window === 'undefined') return;
 
-        if (platform === 'whatsapp') {
-            window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
-        } else if (platform === 'facebook') {
-            window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareLink)}`, '_blank');
-        } else if (platform === 'instagram') {
-            navigator.clipboard.writeText(shareLink);
-            alert(lang === 'es' ? '¡Link copiado!' : 'Link copied!');
-            window.open('https://instagram.com', '_blank');
+            const tenantId = user?.tenant_id || 'demo';
+            const bizName = businessConfig?.name || 'NexoBot';
+            const shareLink = `${window.location.origin}/public/${tenantId}`;
+
+            const text = lang === 'es'
+                ? `¡Hola! Mira el asistente inteligente de ${bizName} para agendar citas y comprar online: ${shareLink}`
+                : `Hi! Check out ${bizName}'s new AI assistant for bookings and orders: ${shareLink}`;
+
+            if (platform === 'whatsapp') {
+                window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+            } else if (platform === 'facebook') {
+                window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareLink)}`, '_blank');
+            } else if (platform === 'instagram') {
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(shareLink).catch(err => console.error("Clipboard err", err));
+                }
+                alert(lang === 'es' ? '¡Link copiado! Pégalo en tu biografía o stories de Instagram.' : 'Link copied! Paste it in your Instagram bio or stories.');
+                window.open('https://instagram.com', '_blank');
+            }
+        } catch (error) {
+            console.error("Error in social share:", error);
         }
     };
 
@@ -342,7 +382,7 @@ export default function NexoBotDashboard() {
         setInput('');
         setIsLoading(true);
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com');
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? (window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1') ? 'http://localhost:8000' : 'https://fearless-nature-production.up.railway.app') : 'https://fearless-nature-production.up.railway.app');
             const response = await fetch(`${apiUrl}/api/v1/chat`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -372,7 +412,7 @@ export default function NexoBotDashboard() {
         setIsLoading(true);
         const configToSave = configOverride || businessConfig;
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com');
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? (window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1') ? 'http://localhost:8000' : 'https://fearless-nature-production.up.railway.app') : 'https://fearless-nature-production.up.railway.app');
             const response = await fetch(`${apiUrl}/api/v1/auth/tenant`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'token': token },
@@ -417,7 +457,7 @@ export default function NexoBotDashboard() {
         setIsGeneratingQr(true);
         setWhatsappPairingCode(null);
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com');
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? (window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1') ? 'http://localhost:8000' : 'https://fearless-nature-production.up.railway.app') : 'https://fearless-nature-production.up.railway.app');
             const response = await fetch(`${apiUrl}/api/v1/whatsapp/qr`, { headers: { 'token': token } });
             const data = await response.json();
             if (response.ok && data.qrcode) setWhatsappQr(data.qrcode);
@@ -437,7 +477,7 @@ export default function NexoBotDashboard() {
         setIsGeneratingQr(true);
         setWhatsappQr(null);
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com');
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? (window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1') ? 'http://localhost:8000' : 'https://fearless-nature-production.up.railway.app') : 'https://fearless-nature-production.up.railway.app');
             const response = await fetch(`${apiUrl}/api/v1/whatsapp/pairing-code?number=${phoneNumber}`, {
                 headers: { 'token': token }
             });
@@ -459,7 +499,7 @@ export default function NexoBotDashboard() {
     const handleWhatsappLogout = async () => {
         if (!confirm('¿Desvincular WhatsApp?')) return;
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com');
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? (window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1') ? 'http://localhost:8000' : 'https://fearless-nature-production.up.railway.app') : 'https://fearless-nature-production.up.railway.app');
             await fetch(`${apiUrl}/api/v1/whatsapp/logout`, { method: 'POST', headers: { 'token': token } });
             setWhatsappStatus('DISCONNECTED');
             setWhatsappQr(null);
@@ -469,9 +509,13 @@ export default function NexoBotDashboard() {
     };
 
     const handleSubscription = async () => {
+        if (!user || !user.tenant_id) {
+            alert(lang === 'es' ? 'Error: Inicia sesión para suscribirte.' : 'Error: Log in to subscribe.');
+            return;
+        }
         setIsSubscribing(true);
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com');
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? (window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1') ? 'http://localhost:8000' : 'https://fearless-nature-production.up.railway.app') : 'https://fearless-nature-production.up.railway.app');
             const price = 9.99;
             const response = await fetch(`${apiUrl}/api/v1/payments/create-checkout-session?tenant_id=${user.tenant_id}&amount=${price}`, { method: 'POST' });
             const data = await response.json();
@@ -486,7 +530,7 @@ export default function NexoBotDashboard() {
     const handleTestWhatsapp = async () => {
         setIsLoading(true);
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com');
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? (window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1') ? 'http://localhost:8000' : 'https://fearless-nature-production.up.railway.app') : 'https://fearless-nature-production.up.railway.app');
             const response = await fetch(`${apiUrl}/api/v1/whatsapp/test-message`, {
                 method: 'POST',
                 headers: { 'token': token }
@@ -501,7 +545,7 @@ export default function NexoBotDashboard() {
         }
     };
 
-    const currentIndustry = industries.find(i => i.id === businessConfig.industry) || industries[0];
+
 
     if (!isMounted) return <div className="min-h-screen bg-[#0f1115]" />;
 
@@ -544,19 +588,25 @@ export default function NexoBotDashboard() {
                         <button onClick={() => setIsSidebarOpen(true)} className="p-2 -ml-2 text-slate-400">
                             <Menu size={24} />
                         </button>
-                        <span className="font-bold text-sm tracking-tight text-gradient-premium">NexoBot</span>
+                        <span className="font-bold text-sm tracking-tight text-gradient-premium">NexoBot V6.0</span>
                     </div>
+                    <button
+                        onClick={() => { localStorage.clear(); sessionStorage.clear(); window.location.reload(); }}
+                        className="bg-red-600/20 text-red-500 px-3 py-1 rounded-full text-[9px] font-black uppercase border border-red-500/20"
+                    >
+                        Limpiar App
+                    </button>
                 </div>
 
                 <div className="p-4 md:p-8 max-w-7xl mx-auto">
                     <header className="hidden md:flex justify-between items-center mb-10">
                         <div className="flex items-center gap-4">
-                            <div className={`p-4 bg-white/5 rounded-2xl ${currentIndustry.color} shadow-lg shadow-black/20 backdrop-blur-sm`}>
-                                <currentIndustry.icon size={28} />
+                            <div className={`p-4 bg-white/5 rounded-2xl ${currentIndustry?.color || 'text-indigo-400'} shadow-lg shadow-black/20 backdrop-blur-sm`}>
+                                {currentIndustry?.icon && <currentIndustry.icon size={28} />}
                             </div>
                             <div>
-                                <h1 className="text-3xl font-bold tracking-tight">{businessConfig.name}</h1>
-                                <p className="text-sm text-slate-500 font-medium uppercase tracking-widest">{currentIndustry.name}</p>
+                                <h1 className="text-3xl font-bold tracking-tight">{businessConfig?.name || 'NexoBot'} <span className="text-[10px] font-black text-indigo-600 bg-indigo-600/10 px-2 py-1 rounded-md ml-2">CORE-V2</span></h1>
+                                <p className="text-sm text-slate-500 font-medium uppercase tracking-widest">{currentIndustry?.name || 'Smart Assistant'}</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-6">
@@ -574,6 +624,7 @@ export default function NexoBotDashboard() {
 
                     <DashboardContent
                         activeTab={activeTab}
+                        setActiveTab={setActiveTab}
                         currentIndustry={currentIndustry}
                         businessConfig={businessConfig}
                         dashboardData={dashboardData}

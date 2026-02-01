@@ -1,3 +1,4 @@
+"use client";
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageSquare, Bot, Trash2, Plus, Users, Mic, Send } from 'lucide-react';
@@ -52,7 +53,7 @@ const AIChatAssistant = ({
                                         <div className="flex items-center gap-1.5">
                                             <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse" />
                                             <span className="text-[10px] font-bold text-white/70 uppercase">
-                                                {t.mode_active.replace('{mode}', currentIndustry.name)}
+                                                {t?.mode_active?.replace('{mode}', currentIndustry?.name || 'IA') || `AI Mode Active`}
                                             </span>
                                         </div>
                                     </div>

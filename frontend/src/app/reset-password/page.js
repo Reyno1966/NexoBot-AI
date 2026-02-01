@@ -25,7 +25,7 @@ function ResetPasswordForm() {
         setIsLoading(true);
         setError('');
 
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://nexobot-ai.onrender.com';
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? (window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1') ? 'http://localhost:8000' : 'https://fearless-nature-production.up.railway.app') : 'https://fearless-nature-production.up.railway.app');
 
         try {
             const response = await fetch(`${apiUrl}/api/v1/auth/reset-password`, {
