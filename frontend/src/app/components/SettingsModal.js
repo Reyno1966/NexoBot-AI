@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Trash2, Check, Smartphone, RefreshCw } from 'lucide-react';
+import { X, Trash2, Check, Smartphone, Phone, RefreshCw } from 'lucide-react';
 
 const SettingsModal = ({
     isSettingsOpen,

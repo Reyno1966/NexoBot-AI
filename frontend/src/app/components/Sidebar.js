@@ -1,7 +1,7 @@
 "use client";
 import React from 'react';
 import {
-    Calendar, FileText, Users, PieChart, Bell, ChevronDown,
+    Calendar, FileText, Users, PieChart, Bell, ChevronDown, Smartphone, Phone,
     Share2, LogIn, ExternalLink, Copy, Bot, X, Menu, Settings, MessageSquare, Zap
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
