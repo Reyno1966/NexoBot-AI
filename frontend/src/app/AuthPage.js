@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, Bot, ChevronRight, UserPlus, LogIn, ArrowLeft, Scissors, Stethoscope, Gavel, Home, Hotel, Briefcase, Smartphone, Phone, MapPin, Building, Calendar, FileText, Share2, Globe } from 'lucide-react';
+import { Mail, Lock, Bot, ChevronRight, UserPlus, LogIn, ArrowLeft, Scissors, Stethoscope, Gavel, Home, Hotel, Briefcase, Smartphone, MapPin, Building, Calendar, FileText, Share2, Globe } from 'lucide-react';
 import { translations } from './i18n';
 
 export default function AuthPage({ onAuthSuccess }) {

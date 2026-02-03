@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Share2, Bot, Globe, Smartphone, Phone, Facebook, Instagram, Copy, Zap,
-    ExternalLink, QrCode, Calendar, Clock, Users, PieChart, FileText,
+    Share2, Bot, Globe, Smartphone, Facebook, Instagram, Copy, Zap,
+    ExternalLink, QrCode, Calendar, Clock, Users, FileText,
     MessageSquare, ChevronLeft, ChevronRight, Plus, User, Star
 } from 'lucide-react';
 import {

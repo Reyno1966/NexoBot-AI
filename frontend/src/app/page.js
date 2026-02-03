@@ -26,8 +26,7 @@ import {
     Zap,
     Clock,
     Trash2,
-    Smartphone,
-    Phone
+    Smartphone
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
