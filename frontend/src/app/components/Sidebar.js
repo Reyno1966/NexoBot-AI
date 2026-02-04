@@ -58,7 +58,7 @@ const Sidebar = ({
                         </div>
                         <div>
                             <h1 className="text-base md:text-lg font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-orange-400 leading-none">NexoBot</h1>
-                            <p className="text-[8px] md:text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">{t.tagline}</p>
+                            <p className="text-[8px] md:text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">{t?.tagline || 'AI Business Partner'}</p>
                         </div>
                     </div>
                     <button onClick={() => setIsSidebarOpen(false)} className="md:hidden p-2 text-slate-400">
@@ -87,21 +87,21 @@ const Sidebar = ({
                 <div className="hidden md:block bg-[#1e2126] rounded-2xl p-4 border border-white/5 space-y-3 mb-6">
                     <div className="flex items-center gap-2 text-indigo-400">
                         <Bot size={18} />
-                        <p className="text-[10px] font-bold uppercase tracking-widest">{t.public_link}</p>
+                        <p className="text-[10px] font-bold uppercase tracking-widest">{t?.public_link || 'Link Público'}</p>
                     </div>
-                    <p className="text-[10px] text-slate-500 font-medium leading-relaxed">{t.public_link_desc}</p>
+                    <p className="text-[10px] text-slate-500 font-medium leading-relaxed">{t?.public_link_desc || 'Tu asistente está listo para atender clientes.'}</p>
                     <div className="flex gap-2">
                         <button
                             onClick={() => window.open(`/public/${user?.tenant_id}`, '_blank')}
                             className="flex-1 py-3 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 border border-indigo-500/20 rounded-xl text-[10px] font-bold uppercase transition-all flex items-center justify-center gap-2"
                         >
-                            <ExternalLink size={14} /> {t.view}
+                            <ExternalLink size={14} /> {t?.view || 'Ver'}
                         </button>
                         <button
                             onClick={() => {
                                 const link = `${window.location.origin}/public/${user?.tenant_id}`;
                                 navigator.clipboard.writeText(link);
-                                alert(t.copied);
+                                alert(t?.copied || 'Copiado');
                             }}
                             className="p-3 bg-white/5 hover:bg-white/10 text-slate-400 rounded-xl transition-all border border-white/5"
                         >
@@ -154,7 +154,7 @@ const Sidebar = ({
                         className={`sidebar-item w-full ${isSettingsOpen ? 'sidebar-item-active' : ''}`}
                     >
                         <Settings size={20} />
-                        <span className="font-medium">{t.my_business}</span>
+                        <span className="font-medium">{t?.my_business || 'Mi Negocio'}</span>
                     </button>
 
                     {/* Selector de Idioma */}
@@ -204,9 +204,9 @@ const Sidebar = ({
 
                 <div className="mt-8 space-y-4">
                     <div className="bg-gradient-to-br from-cyan-600/20 to-blue-600/20 rounded-2xl p-4 border border-cyan-500/20">
-                        <p className="text-xs font-bold text-cyan-400 uppercase tracking-widest mb-1">{t.trial_active}</p>
+                        <p className="text-xs font-bold text-cyan-400 uppercase tracking-widest mb-1">{t?.trial_active || 'PRUEBA ACTIVA'}</p>
                         <p className="text-[10px] font-medium text-slate-300 mb-3 leading-relaxed">
-                            {t.subscribe_desc}
+                            {t?.subscribe_desc || 'Suscríbete para mantener tu asistente activo.'}
                             <br />
                             {lang === 'es' ? `El abono de $9.99/mes iniciará automáticamente.` : `A monthly fee of $9.99/month will start automatically.`}
                         </p>
@@ -215,7 +215,7 @@ const Sidebar = ({
                             disabled={isSubscribing}
                             className={`w-full py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 rounded-xl text-xs font-bold transition-all shadow-lg shadow-cyan-500/20 ${isSubscribing ? 'opacity-70 cursor-not-allowed' : ''}`}
                         >
-                            {isSubscribing ? (lang === 'en' ? 'Connecting...' : 'Conectando...') : t.subscribe}
+                            {isSubscribing ? (lang === 'en' ? 'Connecting...' : 'Conectando...') : (t?.subscribe || 'Suscribirse')}
                         </button>
                     </div>
                     <button
@@ -223,7 +223,7 @@ const Sidebar = ({
                         className="flex items-center gap-3 text-slate-500 hover:text-red-400 transition-colors px-2 w-full text-left"
                     >
                         <LogIn size={20} className="rotate-180" />
-                        <span className="text-sm font-medium">{t.logout}</span>
+                        <span className="text-sm font-medium">{t?.logout || 'Salir'}</span>
                     </button>
                     {/* Padding bottom for mobile safely */}
                     <div className="h-20 md:hidden" />

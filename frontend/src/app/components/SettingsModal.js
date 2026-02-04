@@ -35,7 +35,7 @@ const SettingsModal = ({
                         className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[95%] max-w-2xl max-h-[90vh] overflow-y-auto bg-[#181a1f] p-4 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border border-white/10 shadow-2xl z-[110]"
                     >
                         <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-xl md:text-2xl font-bold">Transforma tu Negocio</h3>
+                            <h3 className="text-xl md:text-2xl font-bold">{lang === 'es' ? 'Transforma tu Negocio' : 'Transform your Business'}</h3>
                             <button onClick={() => setIsSettingsOpen(false)} className="md:hidden p-2 text-slate-400">
                                 <X size={20} />
                             </button>
@@ -43,7 +43,7 @@ const SettingsModal = ({
 
                         <div className="space-y-6">
                             <div>
-                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 block">Nombre de la Empresa</label>
+                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 block">{t?.business_name_label || 'Business Name'}</label>
                                 <input
                                     type="text"
                                     value={businessConfig.name}
@@ -54,7 +54,7 @@ const SettingsModal = ({
                             </div>
 
                             <div>
-                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 block">{t.business_logo}</label>
+                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 block">{t?.business_logo || 'Business Logo'}</label>
                                 <div className="flex gap-4 items-center">
                                     <div className="w-16 h-16 bg-[#0f1115] rounded-2xl border border-white/5 flex items-center justify-center overflow-hidden">
                                         <img src={businessConfig.logoUrl} className="w-full h-full object-contain" alt="Logo" />
@@ -101,7 +101,7 @@ const SettingsModal = ({
 
                             <div>
                                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 block">
-                                    ¿A qué te dedicas?
+                                    {lang === 'es' ? '¿A qué te dedicas?' : 'What do you do?'}
                                 </label>
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                                     {industries.map((ind) => (
@@ -111,7 +111,7 @@ const SettingsModal = ({
                                             className={`p-3 md:p-4 rounded-2xl border transition-all flex flex-col items-center gap-2 ${businessConfig.industry === ind.id ? 'bg-indigo-600 border-indigo-400' : 'bg-[#0f1115] border-white/5 text-slate-400'}`}
                                         >
                                             <ind.icon size={20} />
-                                            <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-tight text-center">{ind.name}</span>
+                                            <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-tight text-center">{t?.industries?.[ind.id]?.name || ind.name}</span>
                                         </button>
                                     ))}
                                 </div>
@@ -119,7 +119,7 @@ const SettingsModal = ({
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-2 block">{t.phone_label}</label>
+                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-2 block">{t?.phone_label || 'Phone'}</label>
                                     <input
                                         type="text"
                                         value={businessConfig.phone}
@@ -128,7 +128,7 @@ const SettingsModal = ({
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-2 block">{t.country_label}</label>
+                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-2 block">{t?.country_label || 'Country'}</label>
                                     <input
                                         type="text"
                                         value={businessConfig.country}
@@ -137,7 +137,7 @@ const SettingsModal = ({
                                     />
                                 </div>
                                 <div className="col-span-2 space-y-1">
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-2 block">{t.address_label}</label>
+                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-2 block">{t?.address_label || 'Address'}</label>
                                     <input
                                         type="text"
                                         value={businessConfig.address}
@@ -231,7 +231,7 @@ const SettingsModal = ({
                                                     }}
                                                     className="w-4 h-4 rounded border-white/10 bg-white/5 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"
                                                 />
-                                                <span className="text-xs font-bold uppercase w-20 text-slate-300">{t[day] || day}</span>
+                                                <span className="text-xs font-bold uppercase w-20 text-slate-300">{t?.[day] || day}</span>
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <input
@@ -272,7 +272,7 @@ const SettingsModal = ({
                                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-2 block">Stripe Public Key</label>
                                         <input
                                             type="text"
-                                            value={businessConfig.stripe_public_key}
+                                            value={businessConfig?.stripe_public_key || ''}
                                             onChange={(e) => setBusinessConfig({ ...businessConfig, stripe_public_key: e.target.value })}
                                             placeholder="pk_live_..."
                                             className="w-full bg-[#0f1115] border border-white/5 p-3 rounded-xl outline-none focus:border-orange-500 text-xs font-mono"
@@ -282,7 +282,7 @@ const SettingsModal = ({
                                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-2 block">Stripe Secret Key</label>
                                         <input
                                             type="password"
-                                            value={businessConfig.stripe_secret_key}
+                                            value={businessConfig?.stripe_secret_key || ''}
                                             onChange={(e) => setBusinessConfig({ ...businessConfig, stripe_secret_key: e.target.value })}
                                             placeholder="sk_live_..."
                                             className="w-full bg-[#0f1115] border border-white/5 p-3 rounded-xl outline-none focus:border-orange-500 text-xs font-mono"
@@ -420,7 +420,7 @@ const SettingsModal = ({
                                 disabled={isLoading}
                                 className="w-full py-5 bg-white text-black font-bold rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-2xl text-lg mt-8 disabled:opacity-50"
                             >
-                                {isLoading ? 'Guardando...' : 'Guardar y Transformar Aplicación'}
+                                {isLoading ? (lang === 'es' ? 'Guardando...' : 'Saving...') : (lang === 'es' ? 'Guardar y Transformar Aplicación' : 'Save and Transform App')}
                             </button>
                         </div>
                     </motion.div>

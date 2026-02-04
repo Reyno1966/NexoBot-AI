@@ -60,7 +60,7 @@ export default function PublicChat({ params }) {
         // Cargar datos públicos del negocio
         const fetchBusiness = async () => {
             try {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://nexobot-ai.onrender.com';
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com');
                 const response = await fetch(`${apiUrl}/api/v1/auth/public/tenant/${tenant_id}`);
                 const data = await response.json();
                 if (response.ok) {
@@ -107,7 +107,7 @@ export default function PublicChat({ params }) {
         setIsLoading(true);
 
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://nexobot-ai.onrender.com';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com');
             const response = await fetch(`${apiUrl}/api/v1/chat`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -179,10 +179,10 @@ export default function PublicChat({ params }) {
                         <img src={businessInfo.logoUrl} alt="Logo" className="w-full h-full object-cover" />
                     </div>
                     <div>
-                        <h1 className="text-xl font-bold tracking-tight">{businessInfo.name}</h1>
+                        <h1 className="text-xl font-bold tracking-tight">{businessInfo?.name || 'Negocio'}</h1>
                         <div className="flex items-center gap-2 text-xs text-indigo-400 font-bold uppercase tracking-widest">
                             <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                            Asistente Virtual Activo
+                            {lang === 'en' ? 'Virtual Assistant Active' : 'Asistente Virtual Activo'}
                         </div>
                     </div>
                 </div>
@@ -223,17 +223,17 @@ export default function PublicChat({ params }) {
                                     <div className="space-y-3">
                                         <h4 className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest border-b border-white/5 pb-2">Nuestros Servicios y Productos</h4>
                                         <div className="grid grid-cols-1 gap-2">
-                                            {businessInfo.services.map((svc, idx) => (
+                                            {businessInfo?.services?.map((svc, idx) => (
                                                 <div key={idx} className="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/5">
                                                     <div>
-                                                        <p className="text-sm font-bold text-white">{svc.name}</p>
-                                                        {svc.stock !== '0' && <p className="text-[10px] text-slate-500">Stock disponible: {svc.stock}</p>}
+                                                        <p className="text-sm font-bold text-white">{svc?.name}</p>
+                                                        {svc?.stock !== '0' && <p className="text-[10px] text-slate-500">Stock disponible: {svc?.stock}</p>}
                                                     </div>
                                                     <div className="flex flex-col items-end gap-2">
-                                                        <span className="text-indigo-400 font-bold">${svc.price}</span>
-                                                        {businessInfo.stripePublicKey && (
+                                                        <span className="text-indigo-400 font-bold">${svc?.price}</span>
+                                                        {businessInfo?.stripePublicKey && (
                                                             <button
-                                                                onClick={() => alert(`Iniciando pago de ${svc.name} por $${svc.price}... (Función en desarrollo)`)}
+                                                                onClick={() => alert(`Iniciando pago de ${svc?.name} por $${svc?.price}... (Función en desarrollo)`)}
                                                                 className="px-3 py-1 bg-green-500/20 text-green-400 border border-green-500/20 rounded-lg text-[8px] font-bold uppercase hover:bg-green-500/30 transition-all"
                                                             >
                                                                 💳 Pagar Ahora

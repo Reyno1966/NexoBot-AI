@@ -84,7 +84,7 @@ export default function NexoBotDashboard() {
     const [lang, setLang] = useState('es');
     const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const t = translations[lang] || translations['es'];
+    const t = translations?.[lang] || translations?.['es'] || {};
 
     const [dashboardData, setDashboardData] = useState({
         bookings: [],
@@ -140,8 +140,8 @@ export default function NexoBotDashboard() {
             if (!t || !t.industries) return industryPresets;
             return industryPresets.map(preset => ({
                 ...preset,
-                name: t.industries[preset.id]?.name || preset.id,
-                labels: t.industries[preset.id]?.labels || { main: 'Gestión', items: 'Items', clients: 'Clientes', action: 'Nuevo' }
+                name: t?.industries?.[preset.id]?.name || preset.id,
+                labels: t?.industries?.[preset.id]?.labels || { main: 'Gestión', items: 'Items', clients: 'Clientes', action: 'Nuevo' }
             }));
         } catch (e) {
             console.error("Error generating industries", e);
@@ -171,7 +171,7 @@ export default function NexoBotDashboard() {
             // Verificación inicial de estatus
             const checkStatus = async () => {
                 try {
-                    const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? (window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1') ? 'http://localhost:8000' : 'https://fearless-nature-production.up.railway.app') : 'https://fearless-nature-production.up.railway.app');
+                    const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? (window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1') ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com') : 'https://nexobot-ai.onrender.com');
                     const response = await fetch(`${apiUrl}/api/v1/whatsapp/status`, { headers: { 'token': token } });
                     const data = await response.json();
                     if (data.status) setWhatsappStatus(data.status);
@@ -199,7 +199,7 @@ export default function NexoBotDashboard() {
 
     const loadDashboardData = async (authToken) => {
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? (window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1') ? 'http://localhost:8000' : 'https://fearless-nature-production.up.railway.app') : 'https://fearless-nature-production.up.railway.app');
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? (window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1') ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com') : 'https://nexobot-ai.onrender.com');
             const headers = { 'token': authToken, 'Content-Type': 'application/json' };
 
             const [bookingsRes, customersRes, transactionsRes, messagesRes] = await Promise.all([
@@ -230,7 +230,7 @@ export default function NexoBotDashboard() {
 
     const loadUserData = async (authToken) => {
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? (window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1') ? 'http://localhost:8000' : 'https://fearless-nature-production.up.railway.app') : 'https://fearless-nature-production.up.railway.app');
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? (window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1') ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com') : 'https://nexobot-ai.onrender.com');
             const response = await fetch(`${apiUrl}/api/v1/auth/me`, {
                 headers: { 'token': authToken || '' }
             });
@@ -360,7 +360,7 @@ export default function NexoBotDashboard() {
     const [isListening, setIsListening] = useState(false);
 
     const handleClearMessages = () => {
-        if (messages.length > 0 && window.confirm(t.confirm_delete)) {
+        if (messages.length > 0 && window.confirm(t?.confirm_delete || '¿Borrar conversación?')) {
             setMessages([]);
         }
     };
@@ -383,7 +383,7 @@ export default function NexoBotDashboard() {
         setInput('');
         setIsLoading(true);
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? (window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1') ? 'http://localhost:8000' : 'https://fearless-nature-production.up.railway.app') : 'https://fearless-nature-production.up.railway.app');
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? (window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1') ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com') : 'https://nexobot-ai.onrender.com');
             const response = await fetch(`${apiUrl}/api/v1/chat`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -413,7 +413,7 @@ export default function NexoBotDashboard() {
         setIsLoading(true);
         const configToSave = configOverride || businessConfig;
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? (window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1') ? 'http://localhost:8000' : 'https://fearless-nature-production.up.railway.app') : 'https://fearless-nature-production.up.railway.app');
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? (window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1') ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com') : 'https://nexobot-ai.onrender.com');
             const response = await fetch(`${apiUrl}/api/v1/auth/tenant`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'token': token },
@@ -444,7 +444,7 @@ export default function NexoBotDashboard() {
                 })
             });
             if (response.ok) {
-                if (!configOverride) alert(t.save_success);
+                if (!configOverride) alert(t?.save_success || 'Guardado.');
                 setIsSettingsOpen(false);
             }
         } catch (error) {
@@ -458,7 +458,7 @@ export default function NexoBotDashboard() {
         setIsGeneratingQr(true);
         setWhatsappPairingCode(null);
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? (window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1') ? 'http://localhost:8000' : 'https://fearless-nature-production.up.railway.app') : 'https://fearless-nature-production.up.railway.app');
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? (window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1') ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com') : 'https://nexobot-ai.onrender.com');
             const response = await fetch(`${apiUrl}/api/v1/whatsapp/qr`, { headers: { 'token': token } });
             const data = await response.json();
             if (response.ok && data.qrcode) setWhatsappQr(data.qrcode);
@@ -478,7 +478,7 @@ export default function NexoBotDashboard() {
         setIsGeneratingQr(true);
         setWhatsappQr(null);
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? (window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1') ? 'http://localhost:8000' : 'https://fearless-nature-production.up.railway.app') : 'https://fearless-nature-production.up.railway.app');
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? (window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1') ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com') : 'https://nexobot-ai.onrender.com');
             const response = await fetch(`${apiUrl}/api/v1/whatsapp/pairing-code?number=${phoneNumber}`, {
                 headers: { 'token': token }
             });
@@ -500,7 +500,7 @@ export default function NexoBotDashboard() {
     const handleWhatsappLogout = async () => {
         if (!confirm('¿Desvincular WhatsApp?')) return;
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? (window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1') ? 'http://localhost:8000' : 'https://fearless-nature-production.up.railway.app') : 'https://fearless-nature-production.up.railway.app');
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? (window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1') ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com') : 'https://nexobot-ai.onrender.com');
             await fetch(`${apiUrl}/api/v1/whatsapp/logout`, { method: 'POST', headers: { 'token': token } });
             setWhatsappStatus('DISCONNECTED');
             setWhatsappQr(null);
@@ -516,7 +516,7 @@ export default function NexoBotDashboard() {
         }
         setIsSubscribing(true);
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? (window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1') ? 'http://localhost:8000' : 'https://fearless-nature-production.up.railway.app') : 'https://fearless-nature-production.up.railway.app');
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? (window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1') ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com') : 'https://nexobot-ai.onrender.com');
             const price = 9.99;
             const response = await fetch(`${apiUrl}/api/v1/payments/create-checkout-session?tenant_id=${user.tenant_id}&amount=${price}`, { method: 'POST' });
             const data = await response.json();
@@ -531,7 +531,7 @@ export default function NexoBotDashboard() {
     const handleTestWhatsapp = async () => {
         setIsLoading(true);
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? (window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1') ? 'http://localhost:8000' : 'https://fearless-nature-production.up.railway.app') : 'https://fearless-nature-production.up.railway.app');
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? (window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1') ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com') : 'https://nexobot-ai.onrender.com');
             const response = await fetch(`${apiUrl}/api/v1/whatsapp/test-message`, {
                 method: 'POST',
                 headers: { 'token': token }

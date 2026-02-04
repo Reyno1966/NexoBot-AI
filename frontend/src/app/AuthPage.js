@@ -20,7 +20,7 @@ export default function AuthPage({ onAuthSuccess }) {
     const [isMounted, setIsMounted] = useState(false);
     const [userCount, setUserCount] = useState(12430);
     const [onlineCount, setOnlineCount] = useState(842);
-    const t = translations[lang] || translations['es'];
+    const t = translations?.[lang] || translations?.['es'] || {};
 
     useEffect(() => {
         setIsMounted(true);
@@ -59,7 +59,7 @@ export default function AuthPage({ onAuthSuccess }) {
         setError('');
 
         const endpoint = isLogin ? '/api/v1/auth/login' : '/api/v1/auth/register';
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com');
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com');
 
         try {
             let response;
@@ -113,7 +113,7 @@ export default function AuthPage({ onAuthSuccess }) {
     const handleForgotPassword = async () => {
         setIsLoading(true);
         setError('');
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com');
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com');
 
         try {
             const response = await fetch(`${apiUrl}/api/v1/auth/forgot-password`, {
@@ -184,9 +184,9 @@ export default function AuthPage({ onAuthSuccess }) {
                         </div>
                     </div>
                     <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center px-4">
-                        <span className="text-cyan-400">{t.social_proof.joined.replace('{count}', userCount.toLocaleString())}</span>
+                        <span className="text-cyan-400">{t?.social_proof?.joined?.replace('{count}', userCount.toLocaleString()) || ''}</span>
                         <span className="mx-2 opacity-30">|</span>
-                        <span className="text-green-500">{t.social_proof.active_now.replace('{count}', onlineCount)}</span>
+                        <span className="text-green-500">{t?.social_proof?.active_now?.replace('{count}', onlineCount) || ''}</span>
                     </p>
                 </motion.div>
 
@@ -211,16 +211,16 @@ export default function AuthPage({ onAuthSuccess }) {
                             <img src="/logo.jpg" alt="NexoBot" className="w-full h-full object-cover" />
                         </div>
                         <h2 className="text-3xl font-bold tracking-tight text-white mb-2 text-center">
-                            {isForgotPassword ? t.auth.forgot_pass : (isLogin ? t.auth.login_title : t.auth.register_title)}
+                            {isForgotPassword ? t?.auth?.forgot_pass : (isLogin ? t?.auth?.login_title : t?.auth?.register_title)}
                         </h2>
                         <p className="text-slate-400 text-sm text-center">
-                            {isForgotPassword ? (lang === 'es' ? 'Introduce tu email para recuperar tu acceso' : 'Enter your email to recover access') : (isLogin ? t.auth.login_desc : t.auth.register_desc)}
+                            {isForgotPassword ? (lang === 'es' ? 'Introduce tu email para recuperar tu acceso' : 'Enter your email to recover access') : (isLogin ? t?.auth?.login_desc : t?.auth?.register_desc)}
                         </p>
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-4">{t.auth.email}</label>
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-4">{t?.auth?.email || 'Email'}</label>
                             <div className="relative group">
                                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyan-400 transition-colors" size={20} />
                                 <input
@@ -239,7 +239,7 @@ export default function AuthPage({ onAuthSuccess }) {
                                 <div className={`grid gap-5 ${!isLogin ? 'md:grid-cols-2' : 'grid-cols-1'}`}>
                                     <div className="space-y-2">
                                         <div className="flex justify-between items-center ml-4">
-                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{t.auth.pass}</label>
+                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{t?.auth?.pass || 'Password'}</label>
                                         </div>
                                         <div className="relative group">
                                             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-orange-400 transition-colors" size={20} />
@@ -256,7 +256,7 @@ export default function AuthPage({ onAuthSuccess }) {
 
                                     {!isLogin && (
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-4">{t.auth.repeat_pass}</label>
+                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-4">{t?.auth?.repeat_pass || 'Repeat Password'}</label>
                                             <div className="relative group">
                                                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyan-400 transition-colors" size={20} />
                                                 <input
@@ -279,7 +279,7 @@ export default function AuthPage({ onAuthSuccess }) {
                                         className="space-y-4 pt-4 border-t border-white/5"
                                     >
                                         <div>
-                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-4 block mb-3">{t.auth.tool_select}</label>
+                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-4 block mb-3">{t?.auth?.tool_select || 'Select Tool'}</label>
                                             <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3">
                                                 {industries.map((ind) => (
                                                     <button
@@ -290,14 +290,14 @@ export default function AuthPage({ onAuthSuccess }) {
                                                     >
                                                         {industry === ind.id && <div className="absolute top-0 right-0 p-1 bg-white/20 rounded-bl-xl text-[7px] md:text-[8px]">Ok</div>}
                                                         <ind.icon size={18} className={industry === ind.id ? 'text-white' : 'text-slate-500 group-hover/item:text-cyan-400 transition-colors'} />
-                                                        <span className="text-center leading-tight">{t.industries[ind.id].name}</span>
+                                                        <span className="text-center leading-tight">{t?.industries?.[ind.id]?.name || ind.name}</span>
                                                     </button>
                                                 ))}
                                             </div>
                                         </div>
 
                                         <div className="pt-4 border-t border-white/5">
-                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-4 block mb-3">{t.objective_label}</label>
+                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-4 block mb-3">{t?.objective_label || 'Select your objective'}</label>
                                             <div className="grid grid-cols-2 gap-3">
                                                 {[
                                                     { id: 'Citas', label: lang === 'es' ? 'Automatizar Citas' : 'Automate Appointments', icon: Calendar },
@@ -320,7 +320,7 @@ export default function AuthPage({ onAuthSuccess }) {
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div className="space-y-1">
-                                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-2">{t.phone_label}</label>
+                                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-2">{t?.phone_label || 'Phone'}</label>
                                                 <div className="relative group">
                                                     <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyan-400 transition-colors" size={18} />
                                                     <input
@@ -334,7 +334,7 @@ export default function AuthPage({ onAuthSuccess }) {
                                                 </div>
                                             </div>
                                             <div className="space-y-1">
-                                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-2">{t.country_label}</label>
+                                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-2">{t?.country_label || 'Country'}</label>
                                                 <div className="relative group">
                                                     <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-orange-400 transition-colors" size={18} />
                                                     <input
@@ -348,7 +348,7 @@ export default function AuthPage({ onAuthSuccess }) {
                                                 </div>
                                             </div>
                                             <div className="md:col-span-2 space-y-1">
-                                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-2">{t.address_label}</label>
+                                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-2">{t?.address_label || 'Address'}</label>
                                                 <div className="relative group">
                                                     <Building className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyan-400 transition-colors" size={18} />
                                                     <input
@@ -376,7 +376,7 @@ export default function AuthPage({ onAuthSuccess }) {
                             >
                                 <Lock size={14} className="text-slate-400 group-hover:text-white transition-colors" />
                                 <span className="text-[11px] font-bold text-slate-400 group-hover:text-white uppercase tracking-widest transition-colors">
-                                    {t.auth.forgot_pass}
+                                    {t?.auth?.forgot_pass || 'Forgot Password?'}
                                 </span>
                             </button>
                         )}
@@ -398,7 +398,7 @@ export default function AuthPage({ onAuthSuccess }) {
                                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                             ) : (
                                 <>
-                                    {isForgotPassword ? (lang === 'es' ? "ENVIAR EMAIL DE RECUPERACIÓN" : "SEND RECOVERY EMAIL") : (isLogin ? t.auth.login_btn : t.auth.register_btn)}
+                                    {isForgotPassword ? (lang === 'es' ? "ENVIAR EMAIL DE RECUPERACIÓN" : "SEND RECOVERY EMAIL") : (isLogin ? (t?.auth?.login_btn || 'Login') : (t?.auth?.register_btn || 'Register'))}
                                     <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
                                 </>
                             )}
