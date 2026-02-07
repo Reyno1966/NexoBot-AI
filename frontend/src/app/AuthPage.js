@@ -1,7 +1,9 @@
+```javascript
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, Bot, ChevronRight, UserPlus, LogIn, ArrowLeft, Scissors, Stethoscope, Gavel, Home, Hotel, Briefcase, Smartphone, MapPin, Building, Calendar, FileText, Share2, Globe } from 'lucide-react';
+import { Mail, Lock, Bot, ChevronRight, UserPlus, LogIn, ArrowLeft, Scissors, Stethoscope, Gavel, Home, Hotel, Briefcase, Smartphone, MapPin, Building, Calendar, FileText, Share2, Globe, Eye, EyeOff } from 'lucide-react';
 import { translations } from './i18n';
+import { getApiUrl } from './api-config';
 
 export default function AuthPage({ onAuthSuccess }) {
     const [isLogin, setIsLogin] = useState(true);
@@ -9,11 +11,13 @@ export default function AuthPage({ onAuthSuccess }) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [industry, setIndustry] = useState('barber');
     const [phone, setSmartphone] = useState('');
     const [address, setAddress] = useState('');
     const [country, setCountry] = useState('');
-    const [interest, setInterest] = useState('Citas'); // Nuevo: Automatizar Citas, Facturas, Marketing, Asistente
+    const [interest, setInterest] = useState('Citas');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [lang, setLang] = useState('es');
@@ -59,7 +63,7 @@ export default function AuthPage({ onAuthSuccess }) {
         setError('');
 
         const endpoint = isLogin ? '/api/v1/auth/login' : '/api/v1/auth/register';
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com');
+        const apiUrl = getApiUrl();
 
         try {
             let response;
@@ -93,13 +97,13 @@ export default function AuthPage({ onAuthSuccess }) {
             if (!response.ok) {
                 const errorMessage = typeof data.detail === 'object' ? JSON.stringify(data.detail) : (data.detail || 'Algo salió mal');
                 throw new Error(errorMessage);
-            }
+``````javascript
+           }
 
             if (isLogin) {
                 localStorage.setItem('token', data.access_token);
                 onAuthSuccess(data.access_token);
             } else {
-                // Después de registrar, pasar a login
                 setIsLogin(true);
                 setError('¡Registro exitoso! Ahora puedes iniciar sesión.');
             }
@@ -113,7 +117,7 @@ export default function AuthPage({ onAuthSuccess }) {
     const handleForgotPassword = async () => {
         setIsLoading(true);
         setError('');
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'http://localhost:8000' : 'https://nexobot-ai.onrender.com');
+        const apiUrl = getApiUrl();
 
         try {
             const response = await fetch(`${apiUrl}/api/v1/auth/forgot-password`, {
@@ -139,11 +143,8 @@ export default function AuthPage({ onAuthSuccess }) {
         }
     };
 
-
-
     return (
         <div className="min-h-screen bg-[#0f1115] flex items-center justify-center p-4 relative overflow-hidden">
-            {/* Mesh Gradient Background */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
                 <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-600/10 blur-[120px] rounded-full animate-blob transition-all duration-1000" />
                 <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-cyan-600/10 blur-[120px] rounded-full animate-blob animation-delay-2000 transition-all duration-1000" />
@@ -169,7 +170,6 @@ export default function AuthPage({ onAuthSuccess }) {
                 animate={{ opacity: 1, y: 0 }}
                 className={`w-full transition-all duration-500 overflow-hidden ${isLogin || isForgotPassword ? 'max-w-md' : 'max-w-md md:max-w-2xl'}`}
             >
-                {/* Social Proof Header */}
                 <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -186,7 +186,8 @@ export default function AuthPage({ onAuthSuccess }) {
                     <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center px-4">
                         <span className="text-cyan-400">{t?.social_proof?.joined?.replace('{count}', userCount.toLocaleString()) || ''}</span>
                         <span className="mx-2 opacity-30">|</span>
-                        <span className="text-green-500">{t?.social_proof?.active_now?.replace('{count}', onlineCount) || ''}</span>
+``````javascript
+                       <span className="text-green-500">{t?.social_proof?.active_now?.replace('{count}', onlineCount) || ''}</span>
                     </p>
                 </motion.div>
 
@@ -242,15 +243,23 @@ export default function AuthPage({ onAuthSuccess }) {
                                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{t?.auth?.pass || 'Password'}</label>
                                         </div>
                                         <div className="relative group">
-                                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-orange-400 transition-colors" size={20} />
+``````javascript
+                                           <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-orange-400 transition-colors" size={20} />
                                             <input
-                                                type="password"
+                                                type={showPassword ? "text" : "password"}
                                                 required
                                                 value={password}
                                                 onChange={(e) => setPassword(e.target.value)}
                                                 placeholder="••••••••"
-                                                className="w-full bg-[#0f1115] border border-white/5 rounded-2xl py-3 md:py-4 pl-12 pr-4 outline-none focus:border-orange-500/50 transition-all text-white font-medium shadow-inner text-sm md:text-base"
+                                                className="w-full bg-[#0f1115] border border-white/5 rounded-2xl py-3 md:py-4 pl-12 pr-12 outline-none focus:border-orange-500/50 transition-all text-white font-medium shadow-inner text-sm md:text-base"
                                             />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors"
+                                            >
+                                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                            </button>
                                         </div>
                                     </div>
 
@@ -260,13 +269,20 @@ export default function AuthPage({ onAuthSuccess }) {
                                             <div className="relative group">
                                                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyan-400 transition-colors" size={20} />
                                                 <input
-                                                    type="password"
+                                                    type={showConfirmPassword ? "text" : "password"}
                                                     required
                                                     value={confirmPassword}
                                                     onChange={(e) => setConfirmPassword(e.target.value)}
                                                     placeholder="••••••••"
-                                                    className="w-full bg-[#0f1115] border border-white/5 rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-cyan-500/50 transition-all text-white font-medium shadow-inner"
+                                                    className="w-full bg-[#0f1115] border border-white/5 rounded-2xl py-4 pl-12 pr-12 outline-none focus:border-cyan-500/50 transition-all text-white font-medium shadow-inner"
                                                 />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors"
+                                                >
+                                                    {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                                </button>
                                             </div>
                                         </div>
                                     )}
@@ -276,7 +292,8 @@ export default function AuthPage({ onAuthSuccess }) {
                                     <motion.div
                                         initial={{ opacity: 0, height: 0 }}
                                         animate={{ opacity: 1, height: 'auto' }}
-                                        className="space-y-4 pt-4 border-t border-white/5"
+``````javascript
+                                       className="space-y-4 pt-4 border-t border-white/5"
                                     >
                                         <div>
                                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-4 block mb-3">{t?.auth?.tool_select || 'Select Tool'}</label>
@@ -311,7 +328,8 @@ export default function AuthPage({ onAuthSuccess }) {
                                                         onClick={() => setInterest(opt.id)}
                                                         className={`p-3 md:p-4 rounded-2xl border text-[9px] md:text-[10px] font-bold uppercase transition-all flex items-center gap-2 md:gap-3 ${interest === opt.id ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg shadow-indigo-500/20' : 'bg-[#0f1115] border-white/5 text-slate-400 hover:border-white/10'}`}
                                                     >
-                                                        <opt.icon size={16} className={interest === opt.id ? 'text-white' : 'text-slate-500'} />
+``````javascript
+                                                       <opt.icon size={16} className={interest === opt.id ? 'text-white' : 'text-slate-500'} />
                                                         <span>{opt.label}</span>
                                                     </button>
                                                 ))}
@@ -353,7 +371,8 @@ export default function AuthPage({ onAuthSuccess }) {
                                                     <Building className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyan-400 transition-colors" size={18} />
                                                     <input
                                                         type="text"
-                                                        value={address}
+``````javascript
+                                                       value={address}
                                                         onChange={(e) => setAddress(e.target.value)}
                                                         placeholder={lang === 'es' ? "Puedes añadirla más tarde..." : "You can add it later..."}
                                                         className="w-full bg-[#0f1115] border border-white/5 rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-cyan-500/50 transition-all text-sm text-white font-medium"
@@ -406,15 +425,14 @@ export default function AuthPage({ onAuthSuccess }) {
                     </form>
 
                     <div className="mt-8 pt-6 border-t border-white/5 flex flex-col items-center gap-5">
-
-
                         <button
                             type="button"
                             onClick={() => {
                                 if (isForgotPassword) {
                                     setIsForgotPassword(false);
                                 } else {
-                                    setIsLogin(!isLogin);
+``````javascript
+                                   setIsLogin(!isLogin);
                                 }
                                 setError('');
                             }}
@@ -436,3 +454,4 @@ export default function AuthPage({ onAuthSuccess }) {
         </div>
     );
 }
+```
