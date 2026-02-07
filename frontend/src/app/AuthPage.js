@@ -1,5 +1,4 @@
-```javascript
-import React, { useState, useEffect } from 'react';
+[07.02.26, 15:39:25] Reynoso Israel: import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Lock, Bot, ChevronRight, UserPlus, LogIn, ArrowLeft, Scissors, Stethoscope, Gavel, Home, Hotel, Briefcase, Smartphone, MapPin, Building, Calendar, FileText, Share2, Globe, Eye, EyeOff } from 'lucide-react';
 import { translations } from './i18n';
@@ -72,12 +71,12 @@ export default function AuthPage({ onAuthSuccess }) {
                 formData.append('username', email);
                 formData.append('password', password);
 
-                response = await fetch(`${apiUrl}${endpoint}`, {
+                response = await fetch(⁠ ${apiUrl}${endpoint} ⁠, {
                     method: 'POST',
                     body: formData,
                 });
             } else {
-                response = await fetch(`${apiUrl}${endpoint}`, {
+                response = await fetch(⁠ ${apiUrl}${endpoint} ⁠, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -92,13 +91,12 @@ export default function AuthPage({ onAuthSuccess }) {
                 });
             }
 
-            const data = await response.json();
+[07.02.26, 15:39:25] Reynoso Israel:             const data = await response.json();
 
             if (!response.ok) {
                 const errorMessage = typeof data.detail === 'object' ? JSON.stringify(data.detail) : (data.detail || 'Algo salió mal');
                 throw new Error(errorMessage);
-``````javascript
-           }
+            }
 
             if (isLogin) {
                 localStorage.setItem('token', data.access_token);
@@ -120,7 +118,7 @@ export default function AuthPage({ onAuthSuccess }) {
         const apiUrl = getApiUrl();
 
         try {
-            const response = await fetch(`${apiUrl}/api/v1/auth/forgot-password`, {
+            const response = await fetch(⁠ ${apiUrl}/api/v1/auth/forgot-password ⁠, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email }),
@@ -143,7 +141,8 @@ export default function AuthPage({ onAuthSuccess }) {
         }
     };
 
-    return (
+[07.02.26, 15:39:25] Reynoso Israel:     return
+[07.02.26, 15:39:25] Reynoso Israel: (
         <div className="min-h-screen bg-[#0f1115] flex items-center justify-center p-4 relative overflow-hidden">
             <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
                 <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-600/10 blur-[120px] rounded-full animate-blob transition-all duration-1000" />
@@ -168,7 +167,7 @@ export default function AuthPage({ onAuthSuccess }) {
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className={`w-full transition-all duration-500 overflow-hidden ${isLogin || isForgotPassword ? 'max-w-md' : 'max-w-md md:max-w-2xl'}`}
+                className={⁠ w-full transition-all duration-500 overflow-hidden ${isLogin || isForgotPassword ? 'max-w-md' : 'max-w-md md:max-w-2xl'} ⁠}
             >
                 <motion.div
                     initial={{ opacity: 0, y: -10 }}
@@ -177,7 +176,7 @@ export default function AuthPage({ onAuthSuccess }) {
                 >
                     <div className="flex -space-x-2 mb-3">
                         {[1, 2, 3, 4, 5].map((i) => (
-                            <img key={i} src={`https://i.pravatar.cc/100?u=user${i}`} alt="User" className="w-8 h-8 rounded-full border-2 border-[#181a1f] shadow-lg" />
+                            <img key={i} src={⁠ https://i.pravatar.cc/100?u=user${i} ⁠} alt="User" className="w-8 h-8 rounded-full border-2 border-[#181a1f] shadow-lg" />
                         ))}
                         <div className="w-8 h-8 rounded-full bg-cyan-600 border-2 border-[#181a1f] flex items-center justify-center text-[10px] font-bold text-white shadow-lg">
                             +
@@ -186,8 +185,7 @@ export default function AuthPage({ onAuthSuccess }) {
                     <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center px-4">
                         <span className="text-cyan-400">{t?.social_proof?.joined?.replace('{count}', userCount.toLocaleString()) || ''}</span>
                         <span className="mx-2 opacity-30">|</span>
-``````javascript
-                       <span className="text-green-500">{t?.social_proof?.active_now?.replace('{count}', onlineCount) || ''}</span>
+                        <span className="text-green-500">{t?.social_proof?.active_now?.replace('{count}', onlineCount) || ''}</span>
                     </p>
                 </motion.div>
 
@@ -198,7 +196,7 @@ export default function AuthPage({ onAuthSuccess }) {
                                 <button
                                     key={l}
                                     onClick={() => setLang(l)}
-                                    className={`px-2 py-1 text-[10px] font-bold rounded-lg transition-all ${lang === l ? 'bg-cyan-600 text-white' : 'text-slate-500 hover:text-white'}`}
+                                    className={⁠ px-2 py-1 text-[10px] font-bold rounded-lg transition-all ${lang === l ? 'bg-cyan-600 text-white' : 'text-slate-500 hover:text-white'} ⁠}
                                 >
                                     {l.toUpperCase()}
                                 </button>
@@ -208,7 +206,8 @@ export default function AuthPage({ onAuthSuccess }) {
                     </div>
 
                     <div className="flex flex-col items-center mb-8">
-                        <div className="w-20 h-20 rounded-2xl overflow-hidden mb-4 shadow-2xl shadow-cyan-500/20">
+                        <div className="w-20 h-20 rounded-2xl overflow-hidden mb-4 shadow-2xl shado
+[07.02.26, 15:39:25] Reynoso Israel: w-cyan-500/20">
                             <img src="/logo.jpg" alt="NexoBot" className="w-full h-full object-cover" />
                         </div>
                         <h2 className="text-3xl font-bold tracking-tight text-white mb-2 text-center">
@@ -235,16 +234,16 @@ export default function AuthPage({ onAuthSuccess }) {
                             </div>
                         </div>
 
-                        {!isForgotPassword && (
+[07.02.26, 15:39:25] Reynoso Israel:                         {!isForgotPassword &&
+[07.02.26, 15:39:25] Reynoso Israel: (
                             <>
-                                <div className={`grid gap-5 ${!isLogin ? 'md:grid-cols-2' : 'grid-cols-1'}`}>
+                                <div className={⁠ grid gap-5 ${!isLogin ? 'md:grid-cols-2' : 'grid-cols-1'} ⁠}>
                                     <div className="space-y-2">
                                         <div className="flex justify-between items-center ml-4">
                                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{t?.auth?.pass || 'Password'}</label>
                                         </div>
                                         <div className="relative group">
-``````javascript
-                                           <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-orange-400 transition-colors" size={20} />
+                                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-orange-400 transition-colors" size={20} />
                                             <input
                                                 type={showPassword ? "text" : "password"}
                                                 required
@@ -281,19 +280,20 @@ export default function AuthPage({ onAuthSuccess }) {
                                                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                                                     className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors"
                                                 >
-                                                    {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                                    {showConfirmPassword ? <EyeOff size={1
+[07.02.26, 15:39:25] Reynoso Israel: 8} /> : <Eye size={18} />}
                                                 </button>
                                             </div>
                                         </div>
                                     )}
                                 </div>
 
-                                {!isLogin && (
+[07.02.26, 15:39:25] Reynoso Israel:                                 {!isLogin &&
+[07.02.26, 15:39:25] Reynoso Israel: (
                                     <motion.div
                                         initial={{ opacity: 0, height: 0 }}
                                         animate={{ opacity: 1, height: 'auto' }}
-``````javascript
-                                       className="space-y-4 pt-4 border-t border-white/5"
+                                        className="space-y-4 pt-4 border-t border-white/5"
                                     >
                                         <div>
                                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-4 block mb-3">{t?.auth?.tool_select || 'Select Tool'}</label>
@@ -303,7 +303,7 @@ export default function AuthPage({ onAuthSuccess }) {
                                                         key={ind.id}
                                                         type="button"
                                                         onClick={() => setIndustry(ind.id)}
-                                                        className={`p-3 md:p-4 rounded-2xl border text-[9px] md:text-[10px] font-bold uppercase transition-all flex flex-col items-center gap-2 md:gap-3 relative overflow-hidden group/item ${industry === ind.id ? 'bg-cyan-600 border-cyan-400 text-white shadow-xl shadow-cyan-600/20 scale-[1.02]' : 'bg-[#0f1115] border-white/5 text-slate-400 hover:border-white/10'}`}
+                                                        className={⁠ p-3 md:p-4 rounded-2xl border text-[9px] md:text-[10px] font-bold uppercase transition-all flex flex-col items-center gap-2 md:gap-3 relative overflow-hidden group/item ${industry === ind.id ? 'bg-cyan-600 border-cyan-400 text-white shadow-xl shadow-cyan-600/20 scale-[1.02]' : 'bg-[#0f1115] border-white/5 text-slate-400 hover:border-white/10'} ⁠}
                                                     >
                                                         {industry === ind.id && <div className="absolute top-0 right-0 p-1 bg-white/20 rounded-bl-xl text-[7px] md:text-[8px]">Ok</div>}
                                                         <ind.icon size={18} className={industry === ind.id ? 'text-white' : 'text-slate-500 group-hover/item:text-cyan-400 transition-colors'} />
@@ -326,10 +326,10 @@ export default function AuthPage({ onAuthSuccess }) {
                                                         key={opt.id}
                                                         type="button"
                                                         onClick={() => setInterest(opt.id)}
-                                                        className={`p-3 md:p-4 rounded-2xl border text-[9px] md:text-[10px] font-bold uppercase transition-all flex items-center gap-2 md:gap-3 ${interest === opt.id ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg shadow-indigo-500/20' : 'bg-[#0f1115] border-white/5 text-slate-400 hover:border-white/10'}`}
+                                                        className={`p-3 md:p-4 rounded-2xl border text-[9px] md:text-[10px] font-bold uppercase transition-all flex items-center gap-2 md:gap-3 ${interest === opt.id ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg shadow-indigo-500/20' : 'bg-[#0f1115] border-white/5 text-slate-40
+[07.02.26, 15:39:25] Reynoso Israel: 0 hover:border-white/10'}`}
                                                     >
-``````javascript
-                                                       <opt.icon size={16} className={interest === opt.id ? 'text-white' : 'text-slate-500'} />
+                                                        <opt.icon size={16} className={interest === opt.id ? 'text-white' : 'text-slate-500'} />
                                                         <span>{opt.label}</span>
                                                     </button>
                                                 ))}
@@ -371,8 +371,7 @@ export default function AuthPage({ onAuthSuccess }) {
                                                     <Building className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyan-400 transition-colors" size={18} />
                                                     <input
                                                         type="text"
-``````javascript
-                                                       value={address}
+[07.02.26, 15:39:25] Reynoso Israel:                                                         value={address}
                                                         onChange={(e) => setAddress(e.target.value)}
                                                         placeholder={lang === 'es' ? "Puedes añadirla más tarde..." : "You can add it later..."}
                                                         className="w-full bg-[#0f1115] border border-white/5 rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-cyan-500/50 transition-all text-sm text-white font-medium"
@@ -403,7 +402,7 @@ export default function AuthPage({ onAuthSuccess }) {
                         {error && (
                             <motion.div
                                 initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                                className={`text-xs p-4 rounded-xl text-center font-medium ${error.includes('exitoso') || error.includes('instrucciones') || error.includes('successful') ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}
+                                className={⁠ text-xs p-4 rounded-xl text-center font-medium ${error.includes('exitoso') || error.includes('instrucciones') || error.includes('successful') ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'} ⁠}
                             >
                                 {error}
                             </motion.div>
@@ -431,8 +430,7 @@ export default function AuthPage({ onAuthSuccess }) {
                                 if (isForgotPassword) {
                                     setIsForgotPassword(false);
                                 } else {
-``````javascript
-                                   setIsLogin(!isLogin);
+[07.02.26, 15:39:25] Reynoso Israel:                                     setIsLogin(!isLogin);
                                 }
                                 setError('');
                             }}
@@ -454,4 +452,3 @@ export default function AuthPage({ onAuthSuccess }) {
         </div>
     );
 }
-```
