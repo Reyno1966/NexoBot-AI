@@ -1,4 +1,3 @@
- python
 import sys
 import os
 
@@ -48,8 +47,8 @@ def get_engine():
     
     # Aumentamos el timeout y el pool_size para mayor estabilidad
     return create_engine(
-        db_url,
-        echo=False,
+        db_url, 
+        echo=False, 
         pool_pre_ping=True,
         pool_recycle=300,
         connect_args={"connect_timeout": 10} if "sqlite" not in db_url else {}
@@ -87,8 +86,7 @@ def init_db():
             conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS main_interest VARCHAR;"))
             conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS business_hours VARCHAR;"))
             conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS is_locked BOOLEAN DEFAULT FALSE;"))
- python
-           conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS whatsapp_notifications_enabled BOOLEAN DEFAULT FALSE;"))
+            conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS whatsapp_notifications_enabled BOOLEAN DEFAULT FALSE;"))
             conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS smtp_host VARCHAR;"))
             conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS smtp_port INTEGER;"))
             conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS smtp_user VARCHAR;"))
@@ -129,5 +127,3 @@ def get_session():
     engine = get_db_engine()
     with Session(engine) as session:
         yield session
- ⁠
-
