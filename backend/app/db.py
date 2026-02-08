@@ -1,60 +1,93 @@
 import sys
 import os
+import logging
+from urllib.parse import quote_plus
 
 # IMPRESIÓN INMEDIATA PARA DIAGNÓSTICO
-print(">>> [DB.PY] CARGANDO MÓDULO DB...", file=sys.stderr)
+print(">>> [DB.PY] CARGANDO MÓDULO DB... INICIANDO...", file=sys.stderr)
 
 from sqlmodel import create_engine, SQLModel, Session
 from app.core.config import settings
-import logging
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-from urllib.parse import urlparse, urlunparse, quote_plus
+def get_database_url():
+    """
+    Intenta obtener la URL de la base de datos de todas las formas posibles.
+    Prioridad:
+    1. Variable DATABASE_URL explícita.
+    2. Variables desglosadas de Railway (PGHOST, PGUSER, etc).
+    3. SQLite local (fallback).
+    """
+    # 1. Intentar DATABASE_URL directa
+    url = os.getenv("DATABASE_URL") or settings.DATABASE_URL
+    
+    # 2. Si no hay URL, intentar construirla con variables de Railway
+    if not url:
+        print(">>> [DB.PY] DATABASE_URL no encontrada. Buscando variables PG*...", file=sys.stderr)
+        pg_user = os.getenv("PGUSER")
+        pg_pass = os.getenv("PGPASSWORD")
+        pg_host = os.getenv("PGHOST")
+        pg_port = os.getenv("PGPORT")
+        pg_db = os.getenv("PGDATABASE")
+        
+        if pg_user and pg_host and pg_db:
+            print(">>> [DB.PY] Variables PG encontradas. Construyendo URL...", file=sys.stderr)
+            # Codificar contraseña por si tiene caracteres raros
+            safe_pass = quote_plus(pg_pass) if pg_pass else ""
+            url = f"postgresql://{pg_user}:{safe_pass}@{pg_host}:{pg_port}/{pg_db}"
+        else:
+            print(">>> [DB.PY] No se encontraron variables PG completas.", file=sys.stderr)
+
+    # 3. Limpieza y corrección de URL
+    if url:
+        # Quitar comillas si las hay
+        url = url.strip().replace('"', '').replace("'", "")
+        # Corregir protocolo postgres:// -> postgresql://
+        if url.startswith("postgres://"):
+            print(">>> [DB.PY] AUTO-CORRECCIÓN: Cambiando 'postgres://' a 'postgresql://'", file=sys.stderr)
+            url = url.replace("postgres://", "postgresql://", 1)
+        return url
+    
+    # 4. Fallback a SQLite
+    print(">>> [DB.PY] ADVERTENCIA CRÍTICA: Usando SQLite temporal (database.db).", file=sys.stderr)
+    return "sqlite:///./database.db"
 
 def get_engine():
-    raw_url = settings.DATABASE_URL or os.getenv("DATABASE_URL")
-    if not raw_url:
-        print(">>> [DB.PY] ADVERTENCIA: DATABASE_URL no configurada. Usando SQLite temporal.", file=sys.stderr)
-        db_url = "sqlite:///./database.db"
-    else:
-        db_url = raw_url.strip().replace('"', '').replace("'", "")
+    db_url = get_database_url()
     
-    # Automatización: Si es Supabase y usa puerto 5432, advertir sobre el Pooler (6543)
-    if "supabase.co" in db_url and ":5432" in db_url:
-        print(">>> [DB.PY] AVISO: Detectada URL de Supabase en puerto 5432. Si falla, usa el puerto 6543 (Transaction Pooler).", file=sys.stderr)
-
-    # AUTO-FIX: Corregir postgres:// a postgresql:// automáticamente
-    if db_url.startswith("postgres://"):
-        print(">>> [DB.PY] AUTO-CORRECCIÓN: Cambiando 'postgres://' a 'postgresql://'", file=sys.stderr)
-        db_url = db_url.replace("postgres://", "postgresql://", 1)
-
+    # Ocultar contraseña en logs
+    masked_url = db_url
+    if "@" in db_url:
+        try:
+            prefix = db_url.split("@")[1]
+            masked_url = f"...@{prefix}"
+        except:
+            masked_url = "..."
+            
+    print(f">>> [DB.PY] CONECTANDO A: {masked_url}", file=sys.stderr)
+    
     try:
-        if "://" in db_url and "@" in db_url:
-            protocol, rest = db_url.split("://", 1)
-            if protocol != "sqlite":
-                auth_part, host_part = rest.rsplit("@", 1)
-                if ":" in auth_part:
-                    user, password = auth_part.split(":", 1)
-                    if "%" not in password:
-                        safe_password = quote_plus(password)
-                        db_url = f"{protocol}://{user}:{safe_password}@{host_part}"
+        # Configuración específica según el tipo de DB
+        if "sqlite" in db_url:
+            return create_engine(
+                db_url,
+                connect_args={"check_same_thread": False}, # Necesario para SQLite en FastAPI
+                pool_pre_ping=True
+            )
+        else:
+            return create_engine(
+                db_url,
+                pool_pre_ping=True,
+                pool_recycle=300,
+                pool_size=10,
+                max_overflow=20
+            )
     except Exception as e:
-        print(f">>> [DB.PY] Error procesando URL: {e}", file=sys.stderr)
-
-    masked_url = db_url.split("@")[-1] if "@" in db_url else db_url
-    print(f">>> [DB.PY] CONECTANDO A: ...@{masked_url}", file=sys.stderr)
-    
-    # Aumentamos el timeout y el pool_size para mayor estabilidad
-    return create_engine(
-        db_url, 
-        echo=False, 
-        pool_pre_ping=True,
-        pool_recycle=300,
-        connect_args={"connect_timeout": 10} if "sqlite" not in db_url else {}
-    )
+        print(f">>> [DB.PY] ERROR FATAL CREANDO ENGINE: {str(e)}", file=sys.stderr)
+        raise e
 
 _engine = None
 
@@ -68,62 +101,74 @@ def init_db():
     print(">>> [DB.PY] INICIANDO VALIDACIÓN DE BASE DE DATOS...", file=sys.stderr)
     try:
         engine = get_db_engine()
-        # Test de conexión rápido antes de crear tablas
+        # Test de conexión rápido
         with engine.connect() as conn:
             print(">>> [DB.PY] CONEXIÓN EXITOSA CON EL SERVIDOR", file=sys.stderr)
         
+        # Crear tablas
         SQLModel.metadata.create_all(engine)
+        print(">>> [DB.PY] TABLAS CREADAS/VERIFICADAS", file=sys.stderr)
         
-        # Parche manual para columnas nuevas si la tabla ya existía
+        # Parches de esquema (columnas nuevas)
+        # Envolvemos en try/except individual para que no falle todo si la columna ya existe
         with engine.begin() as conn:
             from sqlalchemy import text
-            print(">>> [DB.PY] APLICANDO PARCHES DE ESQUEMA (SI SON NECESARIOS)...", file=sys.stderr)
-            conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS stripe_customer_id VARCHAR;"))
-            conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS stripe_public_key VARCHAR;"))
-            conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS stripe_secret_key VARCHAR;"))
-            conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS industry VARCHAR;"))
-            conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS phone VARCHAR;"))
-            conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS address VARCHAR;"))
-            conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS country VARCHAR;"))
-            conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS main_interest VARCHAR;"))
-            conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS business_hours VARCHAR;"))
-            conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS is_locked BOOLEAN DEFAULT FALSE;"))
-            conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS whatsapp_notifications_enabled BOOLEAN DEFAULT FALSE;"))
-            conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS smtp_host VARCHAR;"))
-            conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS smtp_port INTEGER;"))
-            conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS smtp_user VARCHAR;"))
-            conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS smtp_password VARCHAR;"))
-            conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS whatsapp_api_key VARCHAR;"))
-            conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS whatsapp_phone VARCHAR;"))
-            conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS whatsapp_instance_id VARCHAR;"))
-            conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS resend_api_key VARCHAR;"))
-            conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS google_calendar_token VARCHAR;"))
-            conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS primary_color VARCHAR DEFAULT '#6366f1';"))
-            conn.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS secondary_color VARCHAR DEFAULT '#22d3ee';"))
+            columns_to_add = [
+                "stripe_customer_id VARCHAR",
+                "stripe_public_key VARCHAR", 
+                "stripe_secret_key VARCHAR",
+                "industry VARCHAR",
+                "phone VARCHAR",
+                "address VARCHAR",
+                "country VARCHAR",
+                "main_interest VARCHAR",
+                "business_hours VARCHAR",
+                "is_locked BOOLEAN DEFAULT FALSE",
+                "whatsapp_notifications_enabled BOOLEAN DEFAULT FALSE",
+                "smtp_host VARCHAR",
+                "smtp_port INTEGER",
+                "smtp_user VARCHAR",
+                "smtp_password VARCHAR",
+                "whatsapp_api_key VARCHAR",
+                "whatsapp_phone VARCHAR",
+                "whatsapp_instance_id VARCHAR",
+                "resend_api_key VARCHAR",
+                "google_calendar_token VARCHAR",
+                "primary_color VARCHAR DEFAULT '#6366f1'",
+                "secondary_color VARCHAR DEFAULT '#22d3ee'"
+            ]
             
-            # Asegurar tabla de bookings si no se creó con create_all
-            conn.execute(text("""
-                CREATE TABLE IF NOT EXISTS booking (
-                    id UUID PRIMARY KEY,
-                    tenant_id UUID NOT NULL,
-                    property_name VARCHAR NOT NULL,
-                    customer_id UUID,
-                    start_date TIMESTAMP NOT NULL,
-                    end_date TIMESTAMP NOT NULL,
-                    status VARCHAR DEFAULT 'confirmed',
-                    total_price FLOAT DEFAULT 0.0,
-                    notes VARCHAR,
-                    created_at TIMESTAMP,
-                    updated_at TIMESTAMP
-                );
-            """))
+            for col_def in columns_to_add:
+                try:
+                    # Syntax compatible con Postgres y SQLite
+                    conn.execute(text(f"ALTER TABLE tenant ADD COLUMN IF NOT EXISTS {col_def};"))
+                except Exception as ex:
+                    # Ignoramos error si la columna ya existe (algunas DBs viejas no soportan IF NOT EXISTS)
+                    print(f">>> [DB.PY] Aviso menor al añadir columna: {str(ex)}", file=sys.stderr)
             
-        print(">>> [DB.PY] TABLAS Y ESQUEMA SINCRONIZADOS CORRECTAMENTE", file=sys.stderr)
+            # Asegurar tabla booking
+            try:
+                conn.execute(text("""
+                    CREATE TABLE IF NOT EXISTS booking (
+                        id UUID PRIMARY KEY,
+                        tenant_id UUID NOT NULL,
+                        property_name VARCHAR NOT NULL,
+                        customer_id UUID,
+                        start_date TIMESTAMP NOT NULL,
+                        end_date TIMESTAMP NOT NULL,
+                        status VARCHAR DEFAULT 'confirmed',
+                        total_price FLOAT DEFAULT 0.0,
+                        notes VARCHAR,
+                        created_at TIMESTAMP,
+                        updated_at TIMESTAMP
+                    );
+                """))
+            except Exception as ex:
+                print(f">>> [DB.PY] Aviso tabla booking: {str(ex)}", file=sys.stderr)
+            
+        print(">>> [DB.PY] ESQUEMA SINCRONIZADO CORRECTAMENTE", file=sys.stderr)
     except Exception as e:
-        print(f">>> [DB.PY] ERROR DE CONEXIÓN: {str(e)}", file=sys.stderr)
-        print(">>> [DB.PY] TIP: Si el error es 'Network is unreachable', verifica que estés usando el puerto 6543 de Supabase.", file=sys.stderr)
-        # No bloqueamos el inicio del servidor para permitir diagnóstico vía API
-        pass
+        print(f">>> [DB.PY] ERROR EN INIT_DB (No fatal, la app seguirá intentando): {str(e)}", file=sys.stderr)
 
 def get_session():
     engine = get_db_engine()
