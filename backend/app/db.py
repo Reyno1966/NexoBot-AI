@@ -26,7 +26,9 @@ def get_engine():
     if "supabase.co" in db_url and ":5432" in db_url:
         print(">>> [DB.PY] AVISO: Detectada URL de Supabase en puerto 5432. Si falla, usa el puerto 6543 (Transaction Pooler).", file=sys.stderr)
 
+    # AUTO-FIX: Corregir postgres:// a postgresql:// automáticamente
     if db_url.startswith("postgres://"):
+        print(">>> [DB.PY] AUTO-CORRECCIÓN: Cambiando 'postgres://' a 'postgresql://'", file=sys.stderr)
         db_url = db_url.replace("postgres://", "postgresql://", 1)
 
     try:
